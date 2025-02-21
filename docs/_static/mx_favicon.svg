@@ -1,0 +1,38 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+	<style>
+	    .bubble {
+	      fill: #000;
+	    }
+	    .gradient_white {
+		      display:none;
+	   	  }
+
+	    @media (prefers-color-scheme: dark) {
+	      .bubble {
+	        fill: #FFFAF4;
+	      }
+	      .gradient_white {
+		      display:initial;
+	   	  }
+
+	   	  .gradient_black {
+		      display:none;
+	   	  }
+	    }
+  	</style>
+	<path class="bubble" d="M36.4403 36.2968C42.6838 36.2968 47.7452 31.2355 47.7452 24.992C47.7452 18.7485 42.6838 13.6871 36.4403 13.6871C30.1968 13.6871 25.1355 18.7485 25.1355 24.992C25.1355 31.2355 30.1968 36.2968 36.4403 36.2968Z" />
+	<path class="gradient_white" d="M36.4403 13.6887H13.5758V13.7048C13.571 13.7048 13.5661 13.7048 13.5597 13.7048C7.31611 13.7048 2.25482 18.7661 2.25482 25.0097C2.25482 31.2532 7.31611 36.3145 13.5597 36.3145C13.7597 36.3145 13.9597 36.3097 14.1564 36.2984H36.4387V13.6887H36.4403Z" fill="url(#gradient_white)"/>
+	<path class="gradient_black" d="M36.4403 13.6887H13.5758V13.7048C13.571 13.7048 13.5661 13.7048 13.5597 13.7048C7.31611 13.7048 2.25482 18.7661 2.25482 25.0097C2.25482 31.2532 7.31611 36.3145 13.5597 36.3145C13.7597 36.3145 13.9597 36.3097 14.1564 36.2984H36.4387V13.6887H36.4403Z" fill="url(#gradient_black)"/>
+	<defs>
+	<linearGradient id="gradient_white" x1="2.256" y1="25" x2="47.0581" y2="25" gradientUnits="userSpaceOnUse">
+		<stop stop-color="#FFFAF4" stop-opacity="0"/>
+		<stop offset="0.6485" stop-color="#FFFAF4"/>
+	</linearGradient>
+
+	<linearGradient id="gradient_black" x1="2.256" y1="25" x2="47.0581" y2="25" gradientUnits="userSpaceOnUse">
+		<stop stop-opacity="0"/>
+		<stop offset="0.6485" />
+	</linearGradient>
+	</defs>
+</svg>

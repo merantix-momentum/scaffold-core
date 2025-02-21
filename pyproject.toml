@@ -1,0 +1,175 @@
+[tool.poetry]
+name = "mxm-scaffold"
+version = "0.17.7"
+description = "Client library for the Merantix Momentum AI Platform"
+authors = ["Merantix Momentum GmbH"]
+license = "MIT License"
+readme = "README.rst"
+packages = [{ include = "scaffold", from = "./src/" }, {include = "hydra_plugins", from = "./src/"}]
+repository = "https://github.com/merantix-momentum/scaffold/"
+documentation = "https://docs.scaffold.merantix-momentum.cloud/"
+homepage = "https://merantix-momentum.com"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Typing :: Typed",
+]
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[tool.poetry.dependencies]
+python = ">=3.9.0,<3.13"  # lower bound due to mx-sphinx-theme
+hydra-core = "^1.0.4"
+flatten-dict = "*"
+psutil = "*"
+PyJWT = ">=2.4.0"  # See: https://github.com/advisories/GHSA-ffqj-6fqr-9h24
+pynvml = "*"
+random-name = "*"
+numpy = [
+    {version = "*", python = "^3.10"},
+    {version = "<2.0.0", python = "<3.10"},  # issue with pyarrow if we dont explicitly downgrade in this case
+]
+# the two pins below are only necessary for poetry to converge in its dependency resolving
+urllib3 = ">=1.26.5"
+botocore = ">=1.36.3"
+
+# optional dependencies for extensions
+# data
+fsspec = { version = ">=2024.12.0", optional = true } # Experience shows best keep it updated
+gcsfs = { version = ">=2024.12.0", optional = true }  # Experience shows best keep it updated
+
+# flyte
+cookiecutter = { version = "^2.1.1", optional = true }  # Required by flyte, see https://github.com/advisories/GHSA-f4q6-9qm4-h8j4
+docker = { version = "^7.1.0", optional = true }  # This version resolves the need for pinning requests https://github.com/docker/docker-py/releases/tag/7.1.0
+flytekit = { version = ">=1.14.3,<2.0.0", optional = true }  # lower bound due to flytelauncher usage of flytekit api
+flytekitplugins-omegaconf = { version = "*", optional = true }
+flytekitplugins-pod = { version = "*", optional = true }
+GitPython = { version = "^3.1.26", optional = true }
+jsonpickle = { version = "*", optional = true }
+marshmallow-enum = {version = "^1.5.1", optional = true } # flytekit dependency that isn't resolved properly
+pyprojroot = { version = "^0.3.0", optional = true }
+
+# torch
+torch = { version = ">=1.13.0", optional = true }
+pytorch-lightning = { version = "~1.9.0", optional = true }  # Newer versions not backwards compatible with scaffold
+
+# wandb
+wandb = { version = "*", optional = true }
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "1.7.0"
+black = "22.8.0"
+mockito = "*"
+pre-commit = "^2.16.0"
+py = "*"
+pytest = "^7.2.0"
+pytest-cov = "*"
+pytest-git = "*"
+pytest-mock = "*"
+pytest-timeout = "^2.1.0"
+pytest-xdist = "^3.2.0"
+pytest-xprocess = "*"
+setuptools = ">65.5.1"  # See GHSA-r9hx-vwmv-q579
+twine = "5.1.1"
+importlib-metadata = "7.1.0"
+wheel = "^0.38.4"
+build = "^0.10.0"
+multiprocess = [{ version = "^0.70.14", markers = "sys_platform == 'darwin'" }]
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.0"
+sphinx-autoapi = "*"
+sphinx-rtd-theme = "2.0.0"
+click = "<8.1.0"  # https://github.com/streamlit/streamlit/issues/4555
+
+
+[tool.poetry.extras]
+data = ["fsspec", "gcsfs"]
+flyte = [
+    "cookiecutter",
+    "docker",
+    "flytekit",
+    "flytekitplugins-omegaconf",
+    "flytekitplugins-pod",
+    "jsonpickle",
+    "marshmallow-enum",
+    "pyprojroot",
+]
+wandb = ["wandb"]
+torch = ["pytorch-lightning", "torch"]
+all = [
+    "cookiecutter",
+    "docker",
+    "flytekit",
+    "flytekitplugins-omegaconf",
+    "flytekitplugins-pod",
+    "jsonpickle",
+    "marshmallow-enum",
+    "pyprojroot",
+    "pytorch-lightning",
+    "torch",
+    "wandb",
+]
+
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.autopep8]
+max_line_length = 120
+ignore = "E265,E501,E203"
+in-place = true
+recursive = true
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+
+[tool.isort]
+case_sensitive = false
+known_first_party = [
+]
+known_third_party = [
+]
+line_length = 120
+order_by_type = false
+profile = "black"
+
+[tool.ruff]
+ignore = [
+    # E203: Space before :. Deactivated because of incompatibility with black, see https://github.com/ambv/black#slices.
+    "E203",
+    # E402: Module level import not at top of file. We sometimes need this (e.g. mparams, dataflow).
+    "E402",
+    # W605: Invalid escape sequence 'x'. Necessary because of Flake8 update in
+    #       https://github.com/merantix/core/commit/dee61ff623b2cb08d6827afcea502edb9a8f76fb
+    "W605",
+    # Exceptions for the type hinting plugin, flake8-annotations
+    "ANN002", # Missing type annotation for *args
+    "ANN003", # Missing type annotation for **kwargs
+    "ANN101", # Missing type annotation for self in method
+    "ANN102", # Missing type annotation for cls in classmethod
+    "ANN204", # Missing return type annotation for special method, e.g. init
+    # The following is for the docstring plugin, to make it less whiny. We are happy if we have docs on all functions
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D104", # Missing docstring in public package
+    "D202", # No blank lines allowed after function docstring
+    "D205", # 1 blank line required between summary line and description
+    "D212", # Multi-line docstring summary should start at the first line
+    "D415", # First line should end with a period, question mark, or exclamation point
+]
+line-length = 120
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+ignore_missing_imports = true
+implicit_optional = true

@@ -1,0 +1,9 @@
+optimiser:
+  search_space:
+    parameters:
+      <parameter name in config>:
+        # For possible distributions and their parameters see:
+        # https://optuna.readthedocs.io/en/stable/reference/distributions.html
+        _target_: optuna.distributions.UniformDistribution
+        low: 0.0
+        high: 1.0

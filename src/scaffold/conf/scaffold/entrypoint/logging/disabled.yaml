@@ -1,0 +1,5 @@
+# Copied from hydra.conf.hydra.job_logging to provide the same options
+version: 1
+root:
+  level: ERROR
+disable_existing_loggers: true

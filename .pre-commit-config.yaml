@@ -1,0 +1,65 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+# See
+# https://medium.com/staqu-dev-logs/keeping-python-code-clean-with-pre-commit-hooks-black-flake8-and-isort-cac8b01e0ea1
+exclude: (?x)^(wandb|docs/_build)
+repos:
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black # Format Python code
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: v1.5.4 # Use the sha / tag you want to point at
+    hooks:
+      - id: autopep8
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.289
+    hooks:
+      - id: ruff
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+#  - repo: https://github.com/pre-commit/mirrors-mypy
+#    rev: v1.5.1
+#    hooks:
+#      - id: mypy
+#        args: [--install-types, --non-interactive, --explicit-package-bases]
+#        additional_dependencies: [--index-url=https://pypi.org/simple/, keyrings.google-artifactregistry-auth]
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.3
+    hooks:
+      - id: yamlfmt
+        name: yamlfmt
+        args: [--sequence, '4', --offset, '2', --mapping, '2', --width, '120', --implicit_start]
+        exclude: ^infrastructure/charts/[^/]+/templates
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.31.0
+    hooks:
+      - id: yamllint # Check YAML Files
+        args: [-d, '{extends: relaxed, rules: {line-length: {max: 120}}}']
+        exclude: ^infrastructure/charts/[^/]+/templates
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 0.4.0 # Oldest version with pre-commit hooks!
+    hooks:
+      - id: sqlfluff-lint
+        args: [--dialect, ansi]
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+      - id: sqlfluff-fix
+        args: [--dialect, ansi]
+        additional_dependencies: [--index-url=https://pypi.org/simple/]
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.17
+    hooks:
+      - id: helmlint
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.4
+    hooks:
+      - id: poetry-check
+        additional_dependencies: [--index-url=https://pypi.org/simple/]

@@ -1,0 +1,5 @@
+global-exclude *.pyc
+global-exclude __pycache__
+recursive-include src/scaffold/conf/* *.yaml
+recursive-include src/scaffold/manifests/* *.yaml
+recursive-include src/hydra_plugins/* *.yaml

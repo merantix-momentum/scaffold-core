@@ -1,0 +1,2 @@
+my_ctx:
+  _target_: scaffold.integration_test.helpers.MyContext

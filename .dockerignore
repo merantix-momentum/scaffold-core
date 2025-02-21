@@ -1,0 +1,13 @@
+# Ignore everthing to use this dockerignore as a whitelist
+*
+
+# Specifically add all files that should not be ignored
+!requirements.txt
+!setup.py
+!pyproject.toml
+!poetry.lock
+!README.md
+!src
+!.flake8
+!scripts
+!scaffold

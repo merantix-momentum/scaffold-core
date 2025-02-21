@@ -1,0 +1,11 @@
+defaults:
+  - /scaffold/hyperopt/optuna/sampler/TPESamplerConfig@optimiser.sampler
+  - /scaffold/hyperopt/optuna/pruner/HyperbandPrunerConfig@optimiser.pruner
+
+optimiser:
+  sampler:
+    seed: 123
+    consider_prior: true
+    n_startup_trials: 10
+  pruner:
+    reduction_factor: 2

@@ -1,0 +1,15 @@
+defaults:
+  - /scaffold/hyperopt/HyperOptConf@_here_                                   # Generic optimiser schema
+  - /scaffold/hyperopt/optuna/OptunaOptimiserConf@optimiser                  # Hyperopt/Optuna specifics
+  - /scaffold/hyperopt/optuna/sampler/TPESamplerConfig@optimiser.sampler     # Schema of parameter sampler
+  - /scaffold/hyperopt/optuna/pruner/HyperbandPrunerConfig@optimiser.pruner  # Schema of early termination algorithm
+
+target_entity: flyte_workflows.hyperopt.workflow.train_task    # Name under which the task or subworkflow are register in flyte.
+save_location:
+  location: gs://my-project-derived/hyperopt                   # Save location for the optimisation results (e.g. optuna study db).
+load_location:
+  location: gs://my-project-derived/hyperopt/study.db          # Optional result location of prior run to be resumed.
+num_executions: 10                # Maximum number of trials before termination (trials from prior runs included).
+concurrent_executions: 8          # Number of trials to be run in parallel.
+time_out: 120                     # Maximum duration (in mins) of each run (excluding time used by prior runs).
+poll_interval: 5                  # Interval (in secs) to check existing trials and start new ones upon termination.

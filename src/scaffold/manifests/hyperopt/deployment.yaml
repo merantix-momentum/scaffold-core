@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hyperopt-postgres-dpl
+  namespace: _placeholder_  # set by the optimiser at runtime
+  labels:
+    app: hyperopt-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hyperopt-postgres
+  template:
+    metadata:
+      labels:
+        app: hyperopt-postgres
+    spec:
+      volumes:
+        - name: hyperopt-postgres-volume
+          persistentVolumeClaim:
+            claimName: hyperopt-claim
+      containers:
+        - name: postgres
+          image: postgres:14
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500Mi
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_DB
+              value: postgresdb
+            - name: POSTGRES_USER
+              value: default
+            - name: POSTGRES_PASSWORD
+              value: hyperopt
+            - name: PGDATA
+              value: /var/lib/postgresql/data

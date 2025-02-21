@@ -1,0 +1,8 @@
+defaults:
+  - /scaffold/entrypoint/EntrypointConf@_here_
+  - override /scaffold/entrypoint/logging@logging: disabled
+
+contexts:
+  my_ctx_1:
+    _target_: __main__.MyContext  # This can be any python package path
+    message: Config also!

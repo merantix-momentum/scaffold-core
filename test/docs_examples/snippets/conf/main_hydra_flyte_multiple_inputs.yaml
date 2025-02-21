@@ -1,0 +1,6 @@
+strip_string: true
+make_lower_case: false
+
+hydra:
+  launcher:
+    run: false  # we only want to register the workflow, as we cannot pass the input data string via flyte launcher
