@@ -73,7 +73,7 @@ pytest-xdist = "^3.2.0"
 pytest-xprocess = "*"
 setuptools = ">65.5.1"  # See GHSA-r9hx-vwmv-q579
 twine = "5.1.1"
-importlib-metadata = "7.1.0"
+importlib-metadata = "8.6.1"
 wheel = "^0.38.4"
 build = "^0.10.0"
 multiprocess = [{ version = "^0.70.14", markers = "sys_platform == 'darwin'" }]
