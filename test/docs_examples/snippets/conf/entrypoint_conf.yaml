@@ -1,0 +1,3 @@
+defaults:
+  - /scaffold/entrypoint/EntrypointConf@_here_
+  - override /scaffold/entrypoint/logging@logging: disabled

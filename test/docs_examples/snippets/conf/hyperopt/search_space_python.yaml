@@ -1,0 +1,4 @@
+optimiser:
+  search_space:
+    _target_: flyte_workflows.workflow_name.config_module.CustomSearchSpace
+    parameters: {}

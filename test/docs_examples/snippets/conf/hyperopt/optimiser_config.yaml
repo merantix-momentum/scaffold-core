@@ -1,0 +1,4 @@
+optimiser:
+  study_name: TestStudy                   # Unique name under which the study is stored in the optuna database.
+  objective_metric: train_performance     # The name under which the metric to be optimised is logged.
+  direction: maximize                     # Optimisation direction either minimize or maximize.

@@ -1,0 +1,6 @@
+my_task_conf:
+  experiment_name: training
+  model:
+    learning_rate: 0.001
+my_task_2_conf:
+  another_key: yet_another_value

@@ -1,0 +1,5 @@
+defaults:
+  - model: model_conf
+  - _self_  # This specifies that the content of this file will be added after the "model" content.
+
+experiment_name: training

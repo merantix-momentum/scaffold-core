@@ -1,0 +1,11 @@
+service: scaffold-docs
+runtime: python310
+
+handlers:
+  - url: /
+    static_files: _build/html/index.html
+    upload: _build/html/index.html
+
+  - url: /(.*)
+    static_files: _build/html/\1
+    upload: _build/html/(.*)

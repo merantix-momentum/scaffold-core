@@ -1,0 +1,4 @@
+defaults:
+  - /my_project/schemas/ExampleEntrypointConf@_here_  # If you do not add any custom arguments, using EntrypointConf also works
+
+greeting: Hey from yaml

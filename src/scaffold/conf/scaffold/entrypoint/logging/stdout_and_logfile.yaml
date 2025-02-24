@@ -1,0 +1,21 @@
+# Copied from hydra.conf.hydra.job_logging to provide the same options
+version: 1
+formatters:
+  simple:
+    format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: simple
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: simple
+    # NOTE: filename can be configured in the job's config or will otherwise be set at runtime
+    # NOTE: null filename values can cause issues with flyte, see https://github.com/flyteorg/flytekit/pull/3056
+    filename:
+root:
+  level: INFO
+  handlers: [console, file]
+
+disable_existing_loggers: false
