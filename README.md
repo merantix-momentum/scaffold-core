@@ -2,7 +2,7 @@
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/_static/scaffold_logo_black.png" width="200">
       <source media="(prefers-color-scheme: light)" srcset="docs/_static/scaffold_logo_white.png" width="200">
-      <img alt="Scaffold Logo" src="https://github.com/user-attachments/assets/5908466f-fc27-4f21-b4ec-0e0c0580bd5c" width="200">
+      <img alt="Scaffold Logo" src="https://docs.scaffold.merantix-momentum.cloud/_static/scaffold_logo_white.png" width="200">
     </picture>
     <p align="center">Scaffold Core</p>
 </p>
