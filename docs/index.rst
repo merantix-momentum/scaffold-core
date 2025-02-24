@@ -19,7 +19,6 @@ Scaffold currently offers support for the current aspects of machine learning pr
 * Configuration management (Hydra)
 * CLI execution and support (Hydra)
 * Model training (Pytorch Lightning)
-* Model serving
 * Workflow orchestration/execution (Flyte)
 * Code organisation (Entrypoints)
 * Experiment tracking (Wandb)
