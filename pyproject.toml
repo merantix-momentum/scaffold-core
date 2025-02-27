@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mxm-scaffold"
-version = "0.18.0"
+version = "0.18.1"
 description = "Client library Created by the Merantix Momentum AI Platform Team"
 authors = ["Merantix Momentum GmbH"]
 license = "MIT License"
