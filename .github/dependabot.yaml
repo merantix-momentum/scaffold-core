@@ -5,7 +5,4 @@ updates:
     schedule:
       interval: weekly
     reviewers:
-      - SebS94
-      - mg515
-      - ThomasWollmann
-
+      - merantix-momentum/platform
