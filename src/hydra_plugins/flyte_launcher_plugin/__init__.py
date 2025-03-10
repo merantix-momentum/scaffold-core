@@ -11,5 +11,6 @@ if importlib.util.find_spec("flytekit") is None:
 else:
     # from . import  as flyte_launcher
     from . import _flyte_launcher as flyte_launcher
+    from ._flyte_launcher import FlyteLauncher
 
-    __all__ = [flyte_launcher]
+    __all__ = [flyte_launcher, FlyteLauncher]
