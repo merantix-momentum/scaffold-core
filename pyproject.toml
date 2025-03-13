@@ -87,7 +87,7 @@ optional = true
 sphinx = "^7.0"
 sphinx-autoapi = "*"
 sphinx-rtd-theme = "2.0.0"
-click = "<8.1.0"  # https://github.com/streamlit/streamlit/issues/4555
+click = "<8.2.0"  # https://github.com/streamlit/streamlit/issues/4555
 
 
 [tool.poetry.extras]
