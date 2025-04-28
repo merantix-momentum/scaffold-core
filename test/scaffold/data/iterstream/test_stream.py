@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 import tempfile
 import typing as t
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
 import numpy as np
 import pytest
 
+from scaffold.data.fs import get_fs_from_url
 from scaffold.data.iterstream import Composable, FilePathGenerator, IterableSource
 from scaffold.data.iterstream.iterators import take_
 
@@ -453,8 +455,37 @@ def test_filepathgenerator_nested() -> None:
 
         dirs = FilePathGenerator(url=tmp_dir).collect()
         files = FilePathGenerator(url=tmp_dir, nested=True).collect()
+
     assert len(dirs) == 2
     assert len(files) == 4
+    for fpath in files + dirs:
+        assert fpath.startswith(tmp_dir)
+
+
+@pytest.mark.skip(reason="Manual bucket test. Remove @skip to run.")
+@pytest.mark.parametrize("bucket_path", ["gs://<example_bucket>/test_filepathgenerator_scaffold"])
+def test_filepathgenerator_bucket(bucket_path: str) -> None:
+    """Test FilePathGenerator with the bucket path"""
+
+    fs = get_fs_from_url(bucket_path)
+    random_uuid = str(uuid.uuid4())
+
+    basedir = f"{bucket_path}/{random_uuid}"
+    for d in range(2):
+        for sub in range(2):
+            d_dir = f"{basedir}/{d}"
+            # save a dummy csv file to the bucket with the name: {d}/{sub}.csv
+            if not fs.exists(d_dir):
+                fs.makedirs(d_dir)
+            with fs.open(f"{d_dir}/{sub}.csv", mode="x") as f:
+                f.write("")
+
+    dirs = FilePathGenerator(url=basedir).collect()
+    files = FilePathGenerator(url=basedir, nested=True).collect()
+    assert len(dirs) == 2
+    assert len(files) == 4
+    for fpath in files + dirs:
+        assert fpath.startswith(bucket_path)
 
 
 def test_zip_index() -> None:
