@@ -9,14 +9,14 @@ from hydra.core.plugins import Plugins
 from hydra.plugins.launcher import Launcher
 from hydra.plugins.search_path_plugin import SearchPathPlugin
 
-from hydra_plugins.flyte_launcher_plugin.flyte_launcher import FlyteLauncher
+from hydra_plugins.flyte_launcher_plugin import flyte_launcher
 from hydra_plugins.scaffold_searchpath_plugin.scaffold_searchpath_plugin import ScaffoldSearchPathPlugin
 
 
 def test_discovery() -> None:
     """Tests that plugins can be discovered via the plugins subsystem when looking at all Plugins"""
     assert ScaffoldSearchPathPlugin.__name__ in [x.__name__ for x in Plugins.instance().discover(SearchPathPlugin)]
-    assert FlyteLauncher.__name__ in [x.__name__ for x in Plugins.instance().discover(Launcher)]
+    assert flyte_launcher.FlyteLauncher.__name__ in [x.__name__ for x in Plugins.instance().discover(Launcher)]
 
 
 def test_config_installed() -> None:
