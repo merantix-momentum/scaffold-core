@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mxm-scaffold"
-version = "0.18.2"
+version = "0.18.3"
 description = "Client library Created by the Merantix Momentum AI Platform Team"
 authors = ["Merantix Momentum GmbH"]
 license = "MIT License"
@@ -86,7 +86,7 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.0"
 sphinx-autoapi = "*"
-sphinx-rtd-theme = "2.0.0"
+sphinx-rtd-theme = "3.0.2"
 click = "<8.1.0"  # https://github.com/streamlit/streamlit/issues/4555
 
 
