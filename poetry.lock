@@ -4588,7 +4588,7 @@ name = "sphinx-rtd-theme"
 version = "3.0.2"
 description = "Read the Docs theme for Sphinx"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.6"
 groups = ["docs"]
 markers = "sys_platform != \"linux\""
 files = [
@@ -5176,19 +5176,19 @@ test = ["websockets"]
 
 [[package]]
 name = "wheel"
-version = "0.38.4"
+version = "0.45.1"
 description = "A built-package format for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["dev"]
 markers = "sys_platform != \"linux\""
 files = [
-    {file = "wheel-0.38.4-py3-none-any.whl", hash = "sha256:b60533f3f5d530e971d6737ca6d58681ee434818fab630c83a734bb10c083ce8"},
-    {file = "wheel-0.38.4.tar.gz", hash = "sha256:965f5259b566725405b05e7cf774052044b1ed30119b5d586b2703aafe8719ac"},
+    {file = "wheel-0.45.1-py3-none-any.whl", hash = "sha256:708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248"},
+    {file = "wheel-0.45.1.tar.gz", hash = "sha256:661e1abd9198507b1409a20c02106d9670b2576e916d58f520316666abca6729"},
 ]
 
 [package.extras]
-test = ["pytest (>=3.0.0)"]
+test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 
 [[package]]
 name = "wrapt"
@@ -5409,4 +5409,4 @@ wandb = ["wandb"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "e5d5dcb8e1464d7326ca902744ea1cdbfbd405ece5999f967e3cef6867b84f68"
+content-hash = "ccf36c7426a6bb953d3d8dd1b19e45a261bcd9c7865d58445facc2459079f4aa"
