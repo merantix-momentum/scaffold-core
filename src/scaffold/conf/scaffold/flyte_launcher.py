@@ -89,7 +89,7 @@ class FlyteNotificationConfig:
 
 @structured_config(group=GROUP, name="flyte")
 class LauncherConfig:
-    _target_: str = "hydra_plugins.flyte_launcher_plugin.flyte_launcher.FlyteLauncher"
+    _target_: str = "hydra_plugins.flyte_launcher_plugin._flyte_launcher.FlyteLauncher"
     execution_environment: ExecutionEnvironmentEnum = ExecutionEnvironmentEnum.remote
     endpoint: str = "localhost:30081"
     build_images: bool = True
