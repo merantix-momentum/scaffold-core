@@ -4,6 +4,7 @@ from typing import Callable, Iterable, Iterator, List, Optional, Union
 
 from fsspec.core import url_to_fs
 
+from scaffold.data.fs import get_protocol
 from scaffold.data.iterstream.base import AsyncContent, Composable
 from scaffold.data.iterstream.iterators import get_random_range
 
@@ -115,7 +116,7 @@ class FilePathGenerator(Composable):
         """
         super().__init__()
         self.url = url
-        self.protocol = url_to_fs(self.url)[0]._fs_token
+        self.protocol = get_protocol(url)
         self.nested = nested
         self.max_workers = max_workers
         self.max_keys = max_keys
@@ -135,12 +136,14 @@ class FilePathGenerator(Composable):
                         url = urls.pop()
                         if self.fs.isdir(path=url):
                             future = AsyncContent(url, self.fs.ls, pool)
+
                             dirs.append(future)
                         else:
                             yield f"{self.protocol}{url}"
                     if (len(dirs) >= self.max_dirs and len(urls) < self.max_keys) or len(urls) == 0 and dirs:
                         d = dirs.pop(0).value()
                         urls.extend(d)
+
         else:
             for url in urls:
                 yield f"{self.protocol}{url}"
