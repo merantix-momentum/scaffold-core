@@ -802,15 +802,15 @@ markers = {main = "sys_platform != \"linux\" and (extra == \"all\" or extra == \
 
 [[package]]
 name = "click"
-version = "8.1.8"
+version = "8.0.4"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.6"
 groups = ["main", "dev", "docs"]
 markers = "sys_platform != \"linux\""
 files = [
-    {file = "click-8.1.8-py3-none-any.whl", hash = "sha256:63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"},
-    {file = "click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a"},
+    {file = "click-8.0.4-py3-none-any.whl", hash = "sha256:6a7a62563bbfabfda3a38f3023a1db4a35978c0abd76f6c9605ecd6554d6d9b1"},
+    {file = "click-8.0.4.tar.gz", hash = "sha256:8458d7b1287c5fb128c90e23381cf99dcde74beaf6c7ff6384ce84d6fe090adb"},
 ]
 
 [package.dependencies]
@@ -1253,15 +1253,15 @@ six = ">=1.12,<2.0"
 
 [[package]]
 name = "flyteidl"
-version = "1.15.0"
+version = "1.15.3"
 description = "IDL for Flyte Platform"
 optional = true
 python-versions = "<3.13,>=3.8"
 groups = ["main"]
 markers = "sys_platform != \"linux\" and (extra == \"all\" or extra == \"flyte\")"
 files = [
-    {file = "flyteidl-1.15.0-py3-none-any.whl", hash = "sha256:35df478dba98483c1982f9d031ed6bf59fbc0ef830dbea0aef5ab147f2f7b62d"},
-    {file = "flyteidl-1.15.0.tar.gz", hash = "sha256:7af316bc63a9079852e7b732f9a63c950babe1bf0e7c899deb013092fe8feade"},
+    {file = "flyteidl-1.15.3-py3-none-any.whl", hash = "sha256:7dca58e85afec5594e029cd4dfd046c9f156d95537051b744ccdc9f18a236467"},
+    {file = "flyteidl-1.15.3.tar.gz", hash = "sha256:4c24aebd6b001efd4f65ee64b849ca0b22be7ab4ccd0e92bc247acb41fcc20cf"},
 ]
 
 [package.dependencies]
@@ -1271,15 +1271,15 @@ protoc-gen-openapiv2 = "*"
 
 [[package]]
 name = "flytekit"
-version = "1.15.0"
+version = "1.15.4"
 description = "Flyte SDK for Python"
 optional = true
 python-versions = "<3.13,>=3.9"
 groups = ["main"]
 markers = "sys_platform != \"linux\" and (extra == \"all\" or extra == \"flyte\")"
 files = [
-    {file = "flytekit-1.15.0-py3-none-any.whl", hash = "sha256:ed0c5a75a943ff70d3886bc84ec4460e5603225d30a1743f230464591134fdc2"},
-    {file = "flytekit-1.15.0.tar.gz", hash = "sha256:a8bb011cf6d2f27e39174527a3f4b7f0ee57b0c16c03acbc9256fd32896560b2"},
+    {file = "flytekit-1.15.4-py3-none-any.whl", hash = "sha256:c0a16cff5bb20b48c49525e974fe55a6885ca19e6f3c535fbe65e9815ffa566b"},
+    {file = "flytekit-1.15.4.tar.gz", hash = "sha256:3520c7dcdeafc7f7d7418c1e9dca114f867bf81efb076beeecff37a272e18e0f"},
 ]
 
 [package.dependencies]
@@ -1291,7 +1291,7 @@ dataclasses-json = ">=0.5.2,<0.5.12"
 diskcache = ">=5.2.1"
 docker = ">=4.0.0"
 docstring-parser = ">=0.9.0"
-flyteidl = ">=1.15.0"
+flyteidl = ">=1.15.1"
 fsspec = ">=2023.3.0"
 gcsfs = ">=2023.3.0"
 googleapis-common-protos = ">=1.57"
@@ -1319,6 +1319,9 @@ s3fs = ">=2023.3.0,<2024.3.1 || >2024.3.1"
 statsd = ">=3.0.0"
 typing_extensions = "*"
 urllib3 = ">=1.22"
+
+[package.extras]
+agent = ["grpcio-health-checking (<=1.68.0)", "httpx", "prometheus-client"]
 
 [[package]]
 name = "flytekitplugins-omegaconf"
@@ -3727,7 +3730,7 @@ name = "pytest"
 version = "8.3.5"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["dev"]
 markers = "sys_platform != \"linux\""
 files = [
@@ -3949,7 +3952,7 @@ name = "pytorch-lightning"
 version = "2.4.0"
 description = "PyTorch Lightning is the lightweight PyTorch wrapper for ML researchers. Scale your models. Write less boilerplate."
 optional = true
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 markers = "sys_platform != \"linux\" and (extra == \"all\" or extra == \"torch\")"
 files = [
@@ -3968,17 +3971,13 @@ tqdm = ">=4.57.0"
 typing-extensions = ">=4.4.0"
 
 [package.extras]
-all = ["colossalai (>=0.2.0)", "deepspeed (>=0.6.0)", "fairscale (>=0.4.5)", "gym[classic-control] (>=0.17.0)", "hivemind (==1.1.5) ; sys_platform == \"linux\"", "horovod (>=0.21.2,!=0.24.0)", "hydra-core (>=1.0.5)", "ipython[all] (<8.7.1)", "jsonargparse[signatures] (>=4.18.0)", "matplotlib (>3.1)", "omegaconf (>=2.0.5)", "rich (>=10.14.0,!=10.15.0.a)", "tensorboardX (>=2.2)", "torchmetrics (>=0.10.0)", "torchvision (>=0.11.1)"]
-colossalai = ["colossalai (>=0.2.0)"]
-deepspeed = ["deepspeed (>=0.6.0)"]
-dev = ["cloudpickle (>=1.3)", "codecov (==2.1.12)", "colossalai (>=0.2.0)", "coverage (==6.5.0)", "deepspeed (>=0.6.0)", "fairscale (>=0.4.5)", "fastapi (<0.87.0)", "gym[classic-control] (>=0.17.0)", "hivemind (==1.1.5) ; sys_platform == \"linux\"", "horovod (>=0.21.2,!=0.24.0)", "hydra-core (>=1.0.5)", "ipython[all] (<8.7.1)", "jsonargparse[signatures] (>=4.18.0)", "matplotlib (>3.1)", "omegaconf (>=2.0.5)", "onnx (<1.14.0)", "onnxruntime (<1.14.0)", "pandas (>1.0)", "pre-commit (==2.20.0)", "protobuf (<=3.20.1)", "psutil (<5.9.5)", "pytest (==7.2.0)", "pytest-cov (==4.0.0)", "pytest-forked (==1.4.0)", "pytest-rerunfailures (==10.3)", "rich (>=10.14.0,!=10.15.0.a)", "scikit-learn (>0.22.1)", "tensorboard (>=2.9.1)", "tensorboardX (>=2.2)", "torchmetrics (>=0.10.0)", "torchvision (>=0.11.1)", "uvicorn (<0.19.1)"]
-examples = ["gym[classic-control] (>=0.17.0)", "ipython[all] (<8.7.1)", "torchmetrics (>=0.10.0)", "torchvision (>=0.11.1)"]
-extra = ["hydra-core (>=1.0.5)", "jsonargparse[signatures] (>=4.18.0)", "matplotlib (>3.1)", "omegaconf (>=2.0.5)", "rich (>=10.14.0,!=10.15.0.a)", "tensorboardX (>=2.2)"]
-fairscale = ["fairscale (>=0.4.5)"]
-hivemind = ["hivemind (==1.1.5) ; sys_platform == \"linux\""]
-horovod = ["horovod (>=0.21.2,!=0.24.0)"]
-strategies = ["colossalai (>=0.2.0)", "deepspeed (>=0.6.0)", "fairscale (>=0.4.5)", "hivemind (==1.1.5) ; sys_platform == \"linux\"", "horovod (>=0.21.2,!=0.24.0)"]
-test = ["cloudpickle (>=1.3)", "codecov (==2.1.12)", "coverage (==6.5.0)", "fastapi (<0.87.0)", "onnx (<1.14.0)", "onnxruntime (<1.14.0)", "pandas (>1.0)", "pre-commit (==2.20.0)", "protobuf (<=3.20.1)", "psutil (<5.9.5)", "pytest (==7.2.0)", "pytest-cov (==4.0.0)", "pytest-forked (==1.4.0)", "pytest-rerunfailures (==10.3)", "scikit-learn (>0.22.1)", "tensorboard (>=2.9.1)", "uvicorn (<0.19.1)"]
+all = ["bitsandbytes (>=0.42.0)", "deepspeed (>=0.8.2,<=0.9.3) ; platform_system != \"Windows\" and platform_system != \"Darwin\"", "hydra-core (>=1.2.0)", "ipython[all] (<8.15.0)", "jsonargparse[signatures] (>=4.27.7)", "lightning-utilities (>=0.8.0)", "matplotlib (>3.1)", "omegaconf (>=2.2.3)", "requests (<2.32.0)", "rich (>=12.3.0)", "tensorboardX (>=2.2)", "torchmetrics (>=0.10.0)", "torchvision (>=0.16.0)"]
+deepspeed = ["deepspeed (>=0.8.2,<=0.9.3) ; platform_system != \"Windows\" and platform_system != \"Darwin\""]
+dev = ["bitsandbytes (>=0.42.0)", "cloudpickle (>=1.3)", "coverage (==7.3.1)", "deepspeed (>=0.8.2,<=0.9.3) ; platform_system != \"Windows\" and platform_system != \"Darwin\"", "fastapi", "hydra-core (>=1.2.0)", "ipython[all] (<8.15.0)", "jsonargparse[signatures] (>=4.27.7)", "lightning-utilities (>=0.8.0)", "matplotlib (>3.1)", "numpy (>=1.17.2)", "omegaconf (>=2.2.3)", "onnx (>=1.12.0)", "onnxruntime (>=1.12.0)", "pandas (>1.0)", "psutil (<5.9.6)", "pytest (==7.4.0)", "pytest-cov (==4.1.0)", "pytest-random-order (==1.1.0)", "pytest-rerunfailures (==12.0)", "pytest-timeout (==2.1.0)", "requests (<2.32.0)", "rich (>=12.3.0)", "scikit-learn (>0.22.1)", "tensorboard (>=2.9.1)", "tensorboardX (>=2.2)", "torchmetrics (>=0.10.0)", "torchvision (>=0.16.0)", "uvicorn"]
+examples = ["ipython[all] (<8.15.0)", "lightning-utilities (>=0.8.0)", "requests (<2.32.0)", "torchmetrics (>=0.10.0)", "torchvision (>=0.16.0)"]
+extra = ["bitsandbytes (>=0.42.0)", "hydra-core (>=1.2.0)", "jsonargparse[signatures] (>=4.27.7)", "matplotlib (>3.1)", "omegaconf (>=2.2.3)", "rich (>=12.3.0)", "tensorboardX (>=2.2)"]
+strategies = ["deepspeed (>=0.8.2,<=0.9.3) ; platform_system != \"Windows\" and platform_system != \"Darwin\""]
+test = ["cloudpickle (>=1.3)", "coverage (==7.3.1)", "fastapi", "numpy (>=1.17.2)", "onnx (>=1.12.0)", "onnxruntime (>=1.12.0)", "pandas (>1.0)", "psutil (<5.9.6)", "pytest (==7.4.0)", "pytest-cov (==4.1.0)", "pytest-random-order (==1.1.0)", "pytest-rerunfailures (==12.0)", "pytest-timeout (==2.1.0)", "scikit-learn (>0.22.1)", "tensorboard (>=2.9.1)", "uvicorn"]
 
 [[package]]
 name = "pytz"
@@ -4589,7 +4588,7 @@ name = "sphinx-rtd-theme"
 version = "3.0.2"
 description = "Read the Docs theme for Sphinx"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 groups = ["docs"]
 markers = "sys_platform != \"linux\""
 files = [
@@ -5177,19 +5176,19 @@ test = ["websockets"]
 
 [[package]]
 name = "wheel"
-version = "0.45.1"
+version = "0.38.4"
 description = "A built-package format for Python"
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 markers = "sys_platform != \"linux\""
 files = [
-    {file = "wheel-0.45.1-py3-none-any.whl", hash = "sha256:708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248"},
-    {file = "wheel-0.45.1.tar.gz", hash = "sha256:661e1abd9198507b1409a20c02106d9670b2576e916d58f520316666abca6729"},
+    {file = "wheel-0.38.4-py3-none-any.whl", hash = "sha256:b60533f3f5d530e971d6737ca6d58681ee434818fab630c83a734bb10c083ce8"},
+    {file = "wheel-0.38.4.tar.gz", hash = "sha256:965f5259b566725405b05e7cf774052044b1ed30119b5d586b2703aafe8719ac"},
 ]
 
 [package.extras]
-test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
+test = ["pytest (>=3.0.0)"]
 
 [[package]]
 name = "wrapt"
@@ -5410,4 +5409,4 @@ wandb = ["wandb"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "b938ce9a537510ed4f9c1ed2c6df51a813bc1fe198979bd1b4f29897a4a48135"
+content-hash = "9928cbb18c6496442b9e1dec56d86bc6c121a0fc159c257dd9cd2895859eccbd"
