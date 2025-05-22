@@ -1238,15 +1238,15 @@ six = ">=1.12,<2.0"
 
 [[package]]
 name = "flyteidl"
-version = "1.15.0"
+version = "1.15.3"
 description = "IDL for Flyte Platform"
 optional = true
 python-versions = "<3.13,>=3.8"
 groups = ["main"]
 markers = "extra == \"flyte\" or extra == \"all\""
 files = [
-    {file = "flyteidl-1.15.0-py3-none-any.whl", hash = "sha256:35df478dba98483c1982f9d031ed6bf59fbc0ef830dbea0aef5ab147f2f7b62d"},
-    {file = "flyteidl-1.15.0.tar.gz", hash = "sha256:7af316bc63a9079852e7b732f9a63c950babe1bf0e7c899deb013092fe8feade"},
+    {file = "flyteidl-1.15.3-py3-none-any.whl", hash = "sha256:7dca58e85afec5594e029cd4dfd046c9f156d95537051b744ccdc9f18a236467"},
+    {file = "flyteidl-1.15.3.tar.gz", hash = "sha256:4c24aebd6b001efd4f65ee64b849ca0b22be7ab4ccd0e92bc247acb41fcc20cf"},
 ]
 
 [package.dependencies]
@@ -1256,15 +1256,15 @@ protoc-gen-openapiv2 = "*"
 
 [[package]]
 name = "flytekit"
-version = "1.15.0"
+version = "1.15.4"
 description = "Flyte SDK for Python"
 optional = true
 python-versions = "<3.13,>=3.9"
 groups = ["main"]
 markers = "extra == \"flyte\" or extra == \"all\""
 files = [
-    {file = "flytekit-1.15.0-py3-none-any.whl", hash = "sha256:ed0c5a75a943ff70d3886bc84ec4460e5603225d30a1743f230464591134fdc2"},
-    {file = "flytekit-1.15.0.tar.gz", hash = "sha256:a8bb011cf6d2f27e39174527a3f4b7f0ee57b0c16c03acbc9256fd32896560b2"},
+    {file = "flytekit-1.15.4-py3-none-any.whl", hash = "sha256:c0a16cff5bb20b48c49525e974fe55a6885ca19e6f3c535fbe65e9815ffa566b"},
+    {file = "flytekit-1.15.4.tar.gz", hash = "sha256:3520c7dcdeafc7f7d7418c1e9dca114f867bf81efb076beeecff37a272e18e0f"},
 ]
 
 [package.dependencies]
@@ -1276,7 +1276,7 @@ dataclasses-json = ">=0.5.2,<0.5.12"
 diskcache = ">=5.2.1"
 docker = ">=4.0.0"
 docstring-parser = ">=0.9.0"
-flyteidl = ">=1.15.0"
+flyteidl = ">=1.15.1"
 fsspec = ">=2023.3.0"
 gcsfs = ">=2023.3.0"
 googleapis-common-protos = ">=1.57"
@@ -1304,6 +1304,9 @@ s3fs = ">=2023.3.0,<2024.3.1 || >2024.3.1"
 statsd = ">=3.0.0"
 typing_extensions = "*"
 urllib3 = ">=1.22"
+
+[package.extras]
+agent = ["grpcio-health-checking (<=1.68.0)", "httpx", "prometheus-client"]
 
 [[package]]
 name = "flytekitplugins-omegaconf"
