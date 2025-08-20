@@ -446,7 +446,7 @@ class FlyteLauncher(Launcher):
         """
         from croniter import croniter
         from hydra_zen import instantiate
-        from scaffold.hydra_zen.pydantic_santizer import sanitized_pydantic_parser
+        from scaffold.hydra_zen.pydantic_sanitizer import sanitized_pydantic_parser
         from flytekit import CronSchedule, LaunchPlan
 
         kickoff_time_arg_name = "kickoff_time"
