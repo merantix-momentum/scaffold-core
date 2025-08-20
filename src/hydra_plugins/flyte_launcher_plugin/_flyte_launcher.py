@@ -29,7 +29,7 @@ except ImportError:
 from hydra.core.utils import configure_log, filter_overrides, JobReturn, run_job, setup_globals
 from hydra.plugins.launcher import Launcher
 from hydra.types import HydraContext, TaskFunction
-from omegaconf import DictConfig, OmegaConf, open_dict
+from omegaconf import DictConfig, ListConfig, OmegaConf, open_dict
 
 from scaffold.conf.scaffold.flyte_launcher import (
     ExecutionEnvironmentEnum,
@@ -375,8 +375,8 @@ class FlyteLauncher(Launcher):
 
         extra_images = {}
         default_image_tag = (
-            f"{self.config.hydra.launcher.workflow.default_image.base_image}:"
-            f"{self.config.hydra.launcher.workflow.default_image.base_image_version}"
+            f"{self.config.hydra.launcher.workflow.default_image.target_image}:"
+            f"{self.config.hydra.launcher.workflow.default_image.target_image_version}"
         )
         _check_if_image_exists(default_image_tag)
         if self.config.hydra.launcher.workflow.extra_images is not None:
@@ -445,14 +445,12 @@ class FlyteLauncher(Launcher):
 
         """
         from croniter import croniter
+        from hydra_zen import instantiate
+        from scaffold.hydra_zen.pydantic_santizer import sanitized_pydantic_parser
         from flytekit import CronSchedule, LaunchPlan
 
-        cfg_arg_name = "cfg"
         kickoff_time_arg_name = "kickoff_time"
         kwargs = {}
-
-        if cfg_arg_name not in workflow.interface.inputs.keys():
-            raise ValueError(f"The arguments of the main workflow must contain '{cfg_arg_name}'")
 
         if (cron_exp := cfg.hydra.launcher.workflow.cron_schedule) is not None:
             assert idx == 0, "Cronjobs can't be registered with multiple overrides!"
@@ -470,13 +468,25 @@ class FlyteLauncher(Launcher):
         with open_dict(cfg):
             del cfg["hydra"]
 
+        defaults = {}
+        for key in workflow.interface.inputs.keys():
+            if key == kickoff_time_arg_name:
+                # Skip the schedule argument
+                pass
+            elif not isinstance(workflow.python_interface.inputs[key], DictConfig) and not isinstance(
+                workflow.python_interface.inputs[key], ListConfig):
+                # Arguments which are Omegaconfs can be taken directly from the config
+                defaults[key] = instantiate(cfg[key], _target_wrapper_=sanitized_pydantic_parser)
+            else:
+                # All other configs should be instantiated using hydra-zen
+                defaults[key] = cfg[key]
+
+
         templated_lp = LaunchPlan.create(
             f"hydra_workflow_cfg_{module_name}_{config_name}_{idx}",
             workflow=workflow,
             notifications=notifications,
-            default_inputs={
-                cfg_arg_name: cfg,
-            },
+            default_inputs=defaults,
             **kwargs,
         )
         if not hasattr(templated_lp, "__name__"):
