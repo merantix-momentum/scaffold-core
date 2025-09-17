@@ -26,7 +26,7 @@ hydra-core = "^1.0.4"
 flatten-dict = "*"
 psutil = "*"
 PyJWT = ">=2.4.0"  # See: https://github.com/advisories/GHSA-ffqj-6fqr-9h24
-pynvml = "*"
+nvidia-ml-py = "*"
 random-name = "*"
 numpy = [
     {version = "*", python = "^3.10"},
