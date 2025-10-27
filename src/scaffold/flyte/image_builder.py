@@ -61,6 +61,8 @@ def build_image(
 
     # Overwrite default values if they are not provided
     timeout = kwargs.pop("timeout", BUILD_TIMEOUT)
+    if isinstance(timeout, str):
+        timeout = int(timeout)
 
     # Use cli call to take advantage of BUILDKIT features
     os.environ["DOCKER_BUILDKIT"] = "1"
