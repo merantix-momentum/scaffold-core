@@ -1,16 +1,37 @@
 from __future__ import annotations
 
+import functools
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 from types import MethodType
-from typing import Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from hydra.core.config_store import ConfigStore
+from omegaconf import DictConfig, OmegaConf
 
 CONFIG_STORE = ConfigStore.instance()
+
+
+def check_cfg_for_missing_values(allowed_missing: Optional[List[str]] = None):
+    """Ensures we have no entries with MISSING values that didnt get overwritten via yaml or cli."""
+
+    def decorator(func: Callable[..., Any]):
+        @functools.wraps(func)
+        def wrapper(cfg: DictConfig):
+            missing = OmegaConf.missing_keys(cfg)
+            for missing_entry in missing:
+                if allowed_missing is None or missing_entry not in allowed_missing:
+                    raise ValueError(
+                        f'"{missing_entry}" in config has a missing value and was not excluded ({allowed_missing =})'
+                    )
+            return func(cfg)
+
+        return wrapper
+
+    return decorator
 
 
 class StructuredConfig:
