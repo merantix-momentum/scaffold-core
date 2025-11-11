@@ -46,4 +46,4 @@ Alternatively, build the publicly available documentation locally:
 Contribute
 ---------------------
 
-We use poetry for resolving and installing dependencies. [Check the documentation for more information on how to contribute](<https://docs.scaffold.merantix-momentum.cloud/usage/contribute.html>).
+We use uv for resolving and installing dependencies. [Check the documentation for more information on how to contribute](<https://docs.scaffold.merantix-momentum.cloud/usage/contribute.html>).
