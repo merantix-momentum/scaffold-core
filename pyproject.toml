@@ -119,8 +119,11 @@ requires = ["uv_build>=0.8.11,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-root = "./src"
-module-name = "scaffold"
+namespace = true
+packages = [
+    { include = "scaffold", from = "./src/" },
+    { include = "hydra_plugins", from = "./src/" }
+]
 
 [tool.autopep8]
 max_line_length = 120
