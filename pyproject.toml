@@ -133,6 +133,10 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 namespace = true
+packages = [
+    { include = "scaffold", from = "./src/" },
+    { include = "hydra_plugins", from = "./src/" }
+]
 
 [tool.autopep8]
 max_line_length = 120
