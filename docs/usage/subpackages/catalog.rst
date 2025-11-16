@@ -6,6 +6,7 @@ The functionality is provided through the :py:class:`Catalog` and :py:class:`Dat
 
 Simple Catalog Example
 ----------------
+
 Create the catalog
 
 .. code-block:: python
@@ -36,6 +37,7 @@ A catalog implements the :py:class:`MutableMapping` interface. Use it like a py:
 
 Store and share catalogs
 ----------------------
+
 Catalogs can be serialized and deserialized with :py:mod:`Pydantic` compatible framework. 
 We prefer using :py:mod:`hydra-zen`. Scaffold provides a helper target to safely load a catalog from arbitrary sources called :py:class:`SafeInit`.
 
@@ -54,6 +56,7 @@ We prefer using :py:mod:`hydra-zen`. Scaffold provides a helper target to safely
 
 Custom Dataset Types
 --------------------
+
 You can create custom dataset types by subclassing :py:class:`Dataset`. Let's build a csv dataloader:
 
 .. code-block:: python
@@ -76,6 +79,7 @@ You can create custom dataset types by subclassing :py:class:`Dataset`. Let's bu
 
 Versioned Datasets
 ------------------
+
 Datasets can have multiple versions. Use the :py:class:`VersionedDataset` to manage multiple versions of a dataset.
 
 .. code-block:: python
@@ -105,7 +109,9 @@ Datasets can have multiple versions. Use the :py:class:`VersionedDataset` to man
 
 Hierarchical Catalogs
 ---------------------
+
 Catalogs can be nested to create hierarchical structures. Use another :py:class:`Catalog` as value in a parent catalog.
+
 .. code-block:: python
 
     from scaffold.data.catalog import Catalog, partialDataset
