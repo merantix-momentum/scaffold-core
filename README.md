@@ -4,19 +4,19 @@
       <source media="(prefers-color-scheme: light)" srcset="docs/_static/scaffold_logo_white.png" width="200">
       <img alt="Scaffold Logo" src="https://docs.scaffold.merantix-momentum.cloud/_static/scaffold_logo_white.png" width="200">
     </picture>
-    <p align="center">Scaffold Core</p>
+    <h2 align="center">Scaffold Core</h2>
 </p>
 
 Scaffold is the foundational Python package for all AI development at Merantix Momentum. It provides the "scaffolding" to accelerate building, deploying, and orchestrating AI systems on our platform.
 
-This library is opinionated by design. It contains a collection of wrappers, convenience functions, and boilerplate code that enforce our best practices and ensure seamless integration between our most-used tools (like Flyte, PyTorch, and internal platform services).
+This library is **opinionated** by design. It contains a collection of wrappers, convenience functions, and boilerplate code that enforce our best practices and ensure seamless integration between our most-used tools (like Flyte, PyTorch, and internal platform services).
 
 ## 🚀 Key Features
 
-* **⚡ Accelerate Development:** Reduces boilerplate for common tasks like data handling, configuration management, and model orchestration
-* **🧩 Modular Installation:** Install only the dependencies you need using "extras" (e.g., flyte, torch)
-* **⚙️ Standardized:** Enforces Merantix Momentum's processes for building and scaling AI projects
-* **🔗 Platform Integration:** Provides simple, high-level APIs for interacting with the Merantix Momentum AI Platform
+**⚡ Accelerate Development:** Reduces boilerplate for common tasks like data handling, configuration management, and model orchestration
+**🧩 Modular Installation:** Install only the dependencies you need using "extras" (e.g., flyte, torch)
+**⚙️ Standardized:** Enforces Merantix Momentum's processes for building and scaling AI projects
+**🔗 Platform Integration:** Provides simple, high-level APIs for interacting with the Merantix Momentum AI Platform
 
 
 ## 📦 Installation
@@ -65,4 +65,4 @@ Alternatively, build the publicly available documentation locally:
 
 This is an internal tool, and contributions from all teams are welcome!
 
-We use uv for resolving and installing dependencies. [Check the documentation for more information on how to contribute](<https://docs.scaffold.merantix-momentum.cloud/usage/contribute.html>).
+[Check the documentation for more information on how to contribute](<https://docs.scaffold.merantix-momentum.cloud/usage/contribute.html>).
