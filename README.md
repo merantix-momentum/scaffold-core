@@ -13,10 +13,10 @@ This library is **opinionated** by design. It contains a collection of wrappers,
 
 ## 🚀 Key Features
 
-**⚡ Accelerate Development:** Reduces boilerplate for common tasks like data handling, configuration management, and model orchestration
-**🧩 Modular Installation:** Install only the dependencies you need using "extras" (e.g., flyte, torch)
-**⚙️ Standardized:** Enforces Merantix Momentum's processes for building and scaling AI projects
-**🔗 Platform Integration:** Provides simple, high-level APIs for interacting with the Merantix Momentum AI Platform
+* **⚡ Accelerate Development:** Reduces boilerplate for common tasks like data handling, configuration management, and model orchestration
+* **🧩 Modular Installation:** Install only the dependencies you need using "extras" (e.g., flyte, torch)
+* **⚙️ Standardized:** Enforces Merantix Momentum's processes for building and scaling AI projects
+* **🔗 Platform Integration:** Provides simple, high-level APIs for interacting with the Merantix Momentum AI Platform
 
 
 ## 📦 Installation
