@@ -1,6 +1,5 @@
-from scaffold.data.catalog.catalog import Catalog
-from scaffold.data.catalog.dataloader import DATALOADER
-from scaffold.data.catalog.dataproduct import DataProduct, DataSource
-from scaffold.data.catalog.memorycatalog import MemoryCatalog
+from scaffold.data.catalog.catalog import ALLOWED_DATASETS, Catalog, SafeInit
+from scaffold.data.catalog.dataset import Dataset, partialDataset
+from scaffold.data.catalog.versioned_dataset import VersionedDataset
 
-__all__ = ["Catalog", "MemoryCatalog", "DataProduct", "DataSource", "DATALOADER"]
+__all__ = ["Catalog", "SafeInit", "Dataset", "partialDataset", "ALLOWED_DATASETS", "VersionedDataset"]
