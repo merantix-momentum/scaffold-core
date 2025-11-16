@@ -1,7 +1,7 @@
-IterStream
+Data Catalog
 ==========
 
-Scaffold provides an API for organising datasets within your datascience project.
+Scaffold provides an API for organizing datasets within your data science project.
 The functionality is provided through the :py:class:`Catalog` and :py:class:`Dataset` classes.
 
 Simple Catalog Example
@@ -54,7 +54,7 @@ We prefer using :py:mod:`hydra-zen`. Scaffold provides a helper target to safely
 
 Custom Dataset Types
 --------------------
-You can create custom dataset types by subclassing :py:class:`Dataset`. Let's build a csv dataloder
+You can create custom dataset types by subclassing :py:class:`Dataset`. Let's build a csv dataloader:
 
 .. code-block:: python
 
