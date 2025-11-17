@@ -17,4 +17,4 @@ COPY pyproject.toml uv.lock ./
 COPY . .
 
 # Install dependencies
-RUN uv sync --frozen --all-extras --no-dev
+RUN uv sync --frozen --all-extras
