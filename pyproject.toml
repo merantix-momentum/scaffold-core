@@ -1,6 +1,6 @@
 [project]
 name = "mxm-scaffold"
-version = "0.18.4"
+version = "0.18.5"
 description = "Client library Created by the Merantix Momentum AI Platform Team"
 authors = [
     {name = "Merantix Momentum GmbH"}
@@ -20,7 +20,7 @@ dependencies = [
     "flatten-dict",
     "psutil",
     "PyJWT>=2.4.0",  # See: https://github.com/advisories/GHSA-ffqj-6fqr-9h24
-    "pynvml",
+    "nvidia-ml-py",
     "random-name",
     "numpy>=1.0.0; python_version>='3.10'",
     "numpy<2.0.0; python_version<'3.10'",  # issue with pyarrow if we dont explicitly downgrade in this case
