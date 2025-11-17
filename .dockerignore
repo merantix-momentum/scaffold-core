@@ -5,7 +5,7 @@
 !requirements.txt
 !setup.py
 !pyproject.toml
-!poetry.lock
+!uv.lock
 !README.md
 !src
 !.flake8

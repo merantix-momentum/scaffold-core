@@ -14,7 +14,7 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Copy dependency files
-ADD pyproject.toml poetry.lock ./
+ADD pyproject.toml uv.lock ./
 
 # Install dependencies
 RUN /opt/poetry/bin/poetry install --no-interaction --no-ansi --no-root --all-extras --with docs && \
