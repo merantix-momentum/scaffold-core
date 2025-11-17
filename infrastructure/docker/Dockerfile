@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 ENV UV_VERSION="0.9.3"
 RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
