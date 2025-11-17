@@ -1,7 +1,5 @@
 FROM python:3.9-slim
 
-# Set working directory
-WORKDIR /app
 
 # Install required tools
 RUN apt-get update && apt-get install -y \
@@ -22,4 +20,4 @@ COPY . .
 # Install dependencies
 RUN uv sync --frozen --all-extras
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/.venv/bin:$PATH"
