@@ -133,6 +133,7 @@ requires = ["uv_build>=0.8.11,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
+module-name = ["scaffold", "hydra_plugins"]
 namespace = true
 
 [tool.autopep8]
