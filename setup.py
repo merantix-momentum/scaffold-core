@@ -64,7 +64,7 @@ if __name__ == "__main__":
     subprocess.run(
         (
             f"sed -r -i.bak 's/^version.*$/version = \"{version}\"/' pyproject.toml && "
-            "/opt/poetry/bin/poetry build && "
+            "uv build && "
             "mv pyproject.toml.bak pyproject.toml"
         ),
         shell=True,
