@@ -1,16 +1,53 @@
 from __future__ import annotations
 
+import functools
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 from types import MethodType
-from typing import Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from hydra.core.config_store import ConfigStore
+from omegaconf import DictConfig, OmegaConf
 
 CONFIG_STORE = ConfigStore.instance()
+
+
+def check_cfg_for_missing_values(allowed_missing: Optional[List[str]] = None):
+    """
+    Decorator function that ensures we have no entries with MISSING values.
+
+    It checks entries to see if they have not been overwritten via YAML or CLI.
+    Entries ending with logging, like the entry that is part of the EntrypointConf, are not checked.
+
+    Usage:
+    >>> @hydra.main(
+    ...     config_name="my_config",
+    ... )
+    ... @check_cfg_for_missing_values(['myconfig.subconfig_tree.this_entry_may_be_missing'])
+    ... def main(cfg: DictConfig) -> None:
+    ...     pass
+    """
+
+    def decorator(func: Callable[..., Any]):
+        @functools.wraps(func)
+        def wrapper(cfg: DictConfig, **kwargs: Any) -> Any:
+            missing = OmegaConf.missing_keys(cfg)
+            missing = [itm for itm in missing if not itm.endswith("logging")]
+            if allowed_missing is not None:
+                missing = [itm for itm in missing if itm not in allowed_missing]
+            if len(missing) > 0:
+                raise ValueError(
+                    f"Entries in the config have missing values without being explicitly allowed: ({missing}\nPlease "
+                    f'either set value for them in the yaml files or via CLI or add them to the list "allowed_missing")'
+                )
+            return func(cfg, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class StructuredConfig:

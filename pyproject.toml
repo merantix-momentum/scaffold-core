@@ -1,6 +1,6 @@
 [project]
 name = "mxm-scaffold"
-version = "0.18.4"
+version = "0.18.5"
 description = "Merantix Momentum AI Platform client library"
 authors = [
     {name = "Merantix Momentum GmbH"}
@@ -8,7 +8,6 @@ authors = [
 license = {text = "MIT License"}
 readme = "README.md"
 requires-python = ">=3.9.0,<3.13"
-
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
@@ -119,11 +118,8 @@ requires = ["uv_build>=0.8.11,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
+module-name = ["scaffold", "hydra_plugins"]
 namespace = true
-packages = [
-    { include = "scaffold", from = "./src/" },
-    { include = "hydra_plugins", from = "./src/" }
-]
 
 [tool.autopep8]
 max_line_length = 120
@@ -177,3 +173,8 @@ convention = "google"
 [tool.mypy]
 ignore_missing_imports = true
 implicit_optional = true
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["test"]
+python_files = ["test_*.py"]

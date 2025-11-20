@@ -1,23 +1,23 @@
 FROM python:3.9-slim
 
+
 # Install required tools
 RUN apt-get update && apt-get install -y \
     curl git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Configure Poetry environment
-ENV POETRY_VERSION="1.7.1"
-ENV POETRY_HOME="/opt/poetry"
-ENV POETRY_VIRTUALENVS_CREATE=false
-
-# Install poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
+# Install uv
+ENV UV_VERSION="0.9.3"
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy dependency files
-ADD pyproject.toml poetry.lock ./
+COPY pyproject.toml uv.lock ./
+
+# Copy source code
+COPY . .
 
 # Install dependencies
-RUN /opt/poetry/bin/poetry install --no-interaction --no-ansi --no-root --all-extras --with docs && \
-    /opt/poetry/bin/poetry -n cache clear --all .
+RUN uv sync --frozen --all-extras
 
-ADD . .
+ENV PATH="/.venv/bin:$PATH"
