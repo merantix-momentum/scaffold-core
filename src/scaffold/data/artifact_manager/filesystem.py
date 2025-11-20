@@ -98,6 +98,58 @@ class FileSystemArtifactManager(ArtifactManager):
                 self.fs.mkdirs(target_dir, exist_ok=True)
             self.fs.put(local_path, target_dir, recursive=True)
 
+    def list_artifacts(self, collection: str = None) -> t.List[str]:
+        """Get sorted versions for an artifact.
+
+        Args:
+            collection (str): Collection name.
+
+        Returns:
+            List[str]: List of artifact strings.
+        """
+        if collection is None:
+            collection = self.active_collection
+
+        base_path = join_path(self.url, collection)
+        if not self.fs.exists(base_path):
+            return []
+
+        try:
+            entries = self.fs.ls(base_path, detail=True)
+            entries = [entry["name"].split("/")[-1] for entry in entries if entry.get("type") == "directory"]
+            return entries
+        except Exception:
+            return []
+
+    def list_versions(self, artifact: str, collection: str = None) -> t.List[str]:
+        """Get sorted versions for an artifact.
+
+        Args:
+            artifact (str): Artifact name.
+            collection (str): Collection name.
+
+        Returns:
+            List[str]: List of version strings sorted by version number (e.g., ["v0", "v1", "v2"]).
+        """
+        if collection is None:
+            collection = self.active_collection
+
+        base_artifact_path = join_path(self.url, collection, artifact)
+        if not self.fs.exists(base_artifact_path):
+            return []
+
+        try:
+            entries = self.fs.ls(base_artifact_path, detail=True)
+            versions: t.List[t.Tuple[int, str]] = []
+            for entry in entries:
+                ver = entry["name"].split("/")[-1]
+                if ver.startswith("v") and ver[1:].isdigit():
+                    versions.append((int(ver[1:]), ver))
+            versions.sort()
+            return [ver for _, ver in versions]
+        except Exception:
+            return []
+
     def download_artifact(
         self,
         artifact: str,
