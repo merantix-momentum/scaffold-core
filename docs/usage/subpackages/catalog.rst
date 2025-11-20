@@ -77,34 +77,34 @@ You can create custom dataset types by subclassing :py:class:`Dataset`. Let's bu
     c["csv_dataset"] = CSVLoader(path="path/to/csv/file.csv")
     print(c["csv_dataset"]().head())  # prints the first few rows of the CSV file
 
-Versioned Datasets
+Artifacts
 ------------------
 
-Datasets can have multiple versions. Use the :py:class:`VersionedDataset` to manage multiple versions of a dataset.
+Scaffold supports versioned artifacts through the :py:class:`Artifact` class. Artifacts are managed by an artifact manager, such as :py:class:`FileSystemArtifactManagerDataset` or :py:class:`WandBArtifactManagerDataset`.
 
 .. code-block:: python
 
-    from scaffold.data.catalog import Catalog, VersionedDataset, partialDataset
-    from scaffold.data.iterstream import IterableSource
+    from scaffold.data.catalog import Catalog, Artifact, FileSystemArtifactManagerDataset
 
     c = Catalog()
+    
+    # Define an artifact manager
+    manager = FileSystemArtifactManagerDataset(url="./artifacts")
 
-    c['myds'] = VersionedDataset(vals={
-        "1.0": partialDataset(IterableSource, range(5)),
-        "1.1": partialDataset(IterableSource, range(10)),
-    }, version="1.1")
+    # Add an artifact to the catalog
+    c["my_model"] = Artifact(artifact_name="model", manager=manager)
 
-    # Access specific version
-    print(c['myds']['1.0']().collect())  # prints [0, 1, 2, 3, 4]
+    # Push a file as a new version of the artifact
+    c["my_model"].push("path/to/model.pt")
 
-    # Access latest version
-    print(c['myds'].latest().collect())  # prints [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    # List all versions
+    print(c["my_model"].sorted_versions())
 
-    # Add new version
-    c['myds'].latest.push(partialDataset(IterableSource, range(15)))
+    # Get the latest version
+    latest_model = c["my_model"].latest()
 
-    print(list(c['myds'].keys()))  # prints ['1.0', '1.1', '1.2']
-    print(c['myds'].latest.version)  # prints '1.2'
+    # Get a specific version
+    v1_model = c["my_model"]["v1"]()
 
 
 Hierarchical Catalogs
