@@ -58,7 +58,7 @@ flyte = [
 # torch
 torch = [
     "torch>=1.13.0",
-    "pytorch-lightning>=1.9,<2.5",  # Newer versions not backwards compatible with scaffold
+    "pytorch-lightning>=1.9,<2.6",  # Newer versions not backwards compatible with scaffold
 ]
 
 # wandb
@@ -76,7 +76,7 @@ all = [
     "jsonpickle",
     "marshmallow-enum>=1.5.1",
     "pyprojroot>=0.3.0",
-    "pytorch-lightning>=1.9,<2.5",
+    "pytorch-lightning>=1.9,<2.6",
     "torch>=1.13.0",
     "wandb",
     "fsspec>=2024.12.0",
