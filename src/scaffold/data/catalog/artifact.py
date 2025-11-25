@@ -33,21 +33,21 @@ class FileSystemArtifactManagerDataset(Dataset):
         return self._manager
 
 
-class Artifact(Dataset, Mapping):
+class ArtifactDataset(Dataset, Mapping):
     artifact_name: str
     manager: WandBArtifactManagerDataset | FileSystemArtifactManagerDataset
     version: str | None = None
 
-    def __getitem__(self, key: str) -> Artifact:
+    def __getitem__(self, key: str) -> ArtifactDataset:
         self.version = key
         return self
 
     @property
-    def latest(self) -> Artifact:
+    def latest(self) -> ArtifactDataset:
         self.version = self.sorted_versions()[-1]
         return self
 
-    def push(self, path: str) -> Artifact:
+    def push(self, path: str) -> ArtifactDataset:
         self.manager().log_files(self.artifact_name, path)
         self.version = self.sorted_versions()[-1]
         return self
@@ -67,6 +67,6 @@ class Artifact(Dataset, Mapping):
         return len(self.sorted_versions())
 
 
-ALLOWED_DATASETS.append(Artifact)
+ALLOWED_DATASETS.append(ArtifactDataset)
 ALLOWED_DATASETS.append(FileSystemArtifactManagerDataset)
 ALLOWED_DATASETS.append(WandBArtifactManagerDataset)

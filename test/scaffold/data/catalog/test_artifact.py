@@ -2,7 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scaffold.data.catalog.artifact import Artifact, FileSystemArtifactManagerDataset, WandBArtifactManagerDataset
+from scaffold.data.catalog.artifact import (
+    ArtifactDataset,
+    FileSystemArtifactManagerDataset,
+    WandBArtifactManagerDataset,
+)
 
 
 class TestWandBArtifactManagerDataset:
@@ -68,14 +72,14 @@ class TestArtifact:
 
     def test_init(self, mock_manager_dataset):
         manager_ds, _ = mock_manager_dataset
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         assert artifact.artifact_name == "my-artifact"
         assert artifact.manager == manager_ds
         assert artifact.version is None
 
     def test_getitem(self, mock_manager_dataset):
         manager_ds, _ = mock_manager_dataset
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
 
         # Test getting a specific version
         res = artifact["v1"]
@@ -86,7 +90,7 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2", "v3"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         versions = artifact.sorted_versions()
 
         assert versions == ["v1", "v2", "v3"]
@@ -96,7 +100,7 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2", "v3"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         res = artifact.latest
 
         assert res == artifact
@@ -106,7 +110,7 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         res = artifact.push("/path/to/files")
 
         assert res == artifact
@@ -117,7 +121,7 @@ class TestArtifact:
     def test_call_download_with_version(self, mock_manager_dataset):
         manager_ds, manager = mock_manager_dataset
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds, version="v1")
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds, version="v1")
         artifact("/download/path")
 
         manager.download_artifact.assert_called_once_with("my-artifact", version="v1", to="/download/path")
@@ -126,7 +130,7 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         artifact("/download/path")
 
         # Should fetch latest version if none specified
@@ -137,7 +141,7 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         versions = list(artifact)
 
         assert versions == ["v1", "v2"]
@@ -146,5 +150,5 @@ class TestArtifact:
         manager_ds, manager = mock_manager_dataset
         manager.list_versions.return_value = ["v1", "v2", "v3"]
 
-        artifact = Artifact(artifact_name="my-artifact", manager=manager_ds)
+        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
         assert len(artifact) == 3

@@ -1,4 +1,8 @@
-from scaffold.data.catalog.artifact import Artifact, FileSystemArtifactManagerDataset, WandBArtifactManagerDataset
+from scaffold.data.catalog.artifact import (
+    ArtifactDataset,
+    FileSystemArtifactManagerDataset,
+    WandBArtifactManagerDataset,
+)
 from scaffold.data.catalog.catalog import ALLOWED_DATASETS, Catalog, SafeInit
 from scaffold.data.catalog.dataset import Dataset, partialDataset
 
@@ -8,7 +12,7 @@ __all__ = [
     "Dataset",
     "partialDataset",
     "ALLOWED_DATASETS",
-    "Artifact",
+    "ArtifactDataset",
     "WandBArtifactManagerDataset",
     "FileSystemArtifactManagerDataset",
 ]
