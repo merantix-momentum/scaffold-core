@@ -7,8 +7,9 @@ Scaffold has several loosely coupled subpackages, which are motivated and their 
    :maxdepth: 1
    :caption: Contents:
 
-   subpackages/artifact_manager
-   subpackages/iterstream
    subpackages/hydra
+   subpackages/iterstream
+   subpackages/catalog
+   subpackages/artifact_manager
    subpackages/entrypoints
    subpackages/plotting
