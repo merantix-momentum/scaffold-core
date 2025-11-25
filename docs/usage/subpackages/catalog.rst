@@ -80,11 +80,11 @@ You can create custom dataset types by subclassing :py:class:`Dataset`. Let's bu
 Artifacts
 ------------------
 
-Scaffold supports versioned artifacts through the :py:class:`Artifact` class. Artifacts are managed by an artifact manager, such as :py:class:`FileSystemArtifactManagerDataset` or :py:class:`WandBArtifactManagerDataset`.
+Scaffold supports versioned artifacts through the :py:class:`ArtifactDataset` class. Artifacts are managed by an artifact manager, such as :py:class:`FileSystemArtifactManagerDataset` or :py:class:`WandBArtifactManagerDataset`.
 
 .. code-block:: python
 
-    from scaffold.data.catalog import Catalog, Artifact, FileSystemArtifactManagerDataset
+    from scaffold.data.catalog import Catalog, ArtifactDataset, FileSystemArtifactManagerDataset
 
     c = Catalog()
     
@@ -92,7 +92,7 @@ Scaffold supports versioned artifacts through the :py:class:`Artifact` class. Ar
     manager = FileSystemArtifactManagerDataset(url="./artifacts")
 
     # Add an artifact to the catalog
-    c["my_model"] = Artifact(artifact_name="model", manager=manager)
+    c["my_model"] = ArtifactDataset(artifact_name="model", manager=manager)
 
     # Push a file as a new version of the artifact
     c["my_model"].push("path/to/model.pt")
