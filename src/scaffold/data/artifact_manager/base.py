@@ -46,9 +46,6 @@ class TmpArtifact:
         """
         self.artifact_manager = artifact_manager
         self.tempdir = tempfile.mkdtemp()
-        self.collection = collection
-        self.artifact_name = artifact
-        self.version = version
         self.artifact = Artifact(name=artifact, collection=collection, version=version)
 
     def __enter__(self) -> str:
@@ -57,7 +54,9 @@ class TmpArtifact:
         Returns:
             str: The path to the temporary directory containing the artifact.
         """
-        self.artifact_manager.download_artifact(self.artifact_name, self.collection, self.version, to=self.tempdir)
+        self.artifact_manager.download_artifact(
+            self.artifact.name, self.artifact.collection, self.artifact.version, to=self.tempdir
+        )
         return self.tempdir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -82,8 +81,8 @@ class DirectoryLogger:
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
-        self.artifact_name = artifact
-        self.collection = collection or artifact_manager.active_collection
+        self._artifact_name = artifact
+        self._collection = collection or artifact_manager.active_collection
         self.tempdir = tempfile.mkdtemp()
         self.artifact: Optional[Artifact] = None
 
@@ -93,14 +92,14 @@ class DirectoryLogger:
         Returns:
             str: The path to the logging directory.
         """
-        self.artifact_dir = join_path(self.tempdir, self.artifact_name)
+        self.artifact_dir = join_path(self.tempdir, self._artifact_name)
         os.makedirs(self.artifact_dir, exist_ok=False)
         return self.artifact_dir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact = self.artifact_manager.log_files(self.artifact_name, self.artifact_dir, self.collection)
+            self.artifact = self.artifact_manager.log_files(self._artifact_name, self.artifact_dir, self._collection)
         shutil.rmtree(self.tempdir)
 
 
