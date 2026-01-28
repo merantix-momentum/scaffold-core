@@ -72,7 +72,9 @@ class DirectoryLogger:
     as an artifact.
     """
 
-    def __init__(self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None) -> None:
+    def __init__(
+        self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None
+    ) -> None:
         """Initialize a DirectoryLogger.
 
         Args:
@@ -171,7 +173,11 @@ class ArtifactManager(ABC):
 
     @abstractmethod
     def download_artifact(
-        self, artifact_name: str, collection: Optional[str] = None, version: Optional[str] = None, to: Optional[str] = None
+        self,
+        artifact_name: str,
+        collection: Optional[str] = None,
+        version: Optional[str] = None,
+        to: Optional[str] = None,
     ) -> Union[Artifact, TmpArtifact]:
         """
         Download artifact contents (from current collection) to specific location and return a source listing them.
@@ -193,7 +199,9 @@ class ArtifactManager(ABC):
 
     def exists(self, artifact_name: str) -> bool:
         """Check if artifact exists in specified collection."""
-        return any([self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()])
+        return any(
+            [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
+        )
 
     def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:
         """Create a context manager for logging a directory of files as a single artifact."""
