@@ -1,6 +1,6 @@
 import typing as t
 
-from scaffold.data.artifact_manager.base import ArtifactManager, TmpArtifact
+from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
 
 
@@ -54,7 +54,7 @@ class FileSystemArtifactManager(ArtifactManager):
         local_path: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
-    ) -> None:
+    ) -> Artifact:
         """Log a file or folder as an artifact.
 
         This method uploads the file (or folder) located at `local_path` to the artifact store.
@@ -66,6 +66,9 @@ class FileSystemArtifactManager(ArtifactManager):
             local_path (str): The local path to the file or folder.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
+
+        Returns:
+            Artifact: The logged artifact with its metadata (name, collection, version).
         """
         collection = collection or self.active_collection
         base_artifact_path = join_path(self.url, collection, artifact_name)
@@ -97,6 +100,8 @@ class FileSystemArtifactManager(ArtifactManager):
             if not self.fs.exists(target_dir):
                 self.fs.mkdirs(target_dir, exist_ok=True)
             self.fs.put(local_path, target_dir, recursive=True)
+
+        return Artifact(name=artifact_name, collection=collection, version=new_version)
 
     def list_artifacts(self, collection: str = None) -> t.List[str]:
         """Get sorted versions for an artifact.
@@ -156,7 +161,7 @@ class FileSystemArtifactManager(ArtifactManager):
         collection: t.Optional[str] = None,
         version: t.Optional[str] = None,
         to: t.Optional[str] = None,
-    ) -> t.Union[str, TmpArtifact]:
+    ) -> t.Union[Artifact, TmpArtifact]:
         """Download an artifact from the artifact store.
 
         If a destination path `to` is provided, the contents of the artifact version are copied
@@ -169,7 +174,8 @@ class FileSystemArtifactManager(ArtifactManager):
             to (Optional[str]): The destination path. If not provided, a temporary directory is used.
 
         Returns:
-            Union[str, TmpArtifact]: The destination path or a TmpArtifact context manager.
+            Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
+                Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
         collection = collection or self.active_collection
         base_artifact_path = join_path(self.url, collection, artifact)
@@ -188,6 +194,6 @@ class FileSystemArtifactManager(ArtifactManager):
         remote_artifact_path = join_path(base_artifact_path, version)
         if to is not None:
             self.fs.get(join_path(remote_artifact_path, "*"), to, recursive=True)
-            return to
+            return Artifact(name=artifact, collection=collection, version=version)
         else:
             return TmpArtifact(self, collection, artifact, version)

@@ -4,12 +4,28 @@ import re
 import shutil
 import tempfile
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 from scaffold.data.fs import join_path
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class Artifact:
+    """Immutable dataclass representing an artifact with its metadata.
+
+    Attributes:
+        name: The artifact name.
+        collection: The collection name.
+        version: The artifact version (e.g., "v0", "v1", "latest").
+    """
+
+    name: str
+    collection: str
+    version: str
 
 
 class TmpArtifact:
@@ -31,8 +47,9 @@ class TmpArtifact:
         self.artifact_manager = artifact_manager
         self.tempdir = tempfile.mkdtemp()
         self.collection = collection
-        self.artifact = artifact
+        self.artifact_name = artifact
         self.version = version
+        self.artifact = Artifact(name=artifact, collection=collection, version=version)
 
     def __enter__(self) -> str:
         """Download the artifact into a temporary directory.
@@ -40,7 +57,7 @@ class TmpArtifact:
         Returns:
             str: The path to the temporary directory containing the artifact.
         """
-        self.artifact_manager.download_artifact(self.artifact, self.collection, self.version, to=self.tempdir)
+        self.artifact_manager.download_artifact(self.artifact_name, self.collection, self.version, to=self.tempdir)
         return self.tempdir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -65,9 +82,10 @@ class DirectoryLogger:
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
-        self.artifact = artifact
+        self.artifact_name = artifact
         self.collection = collection or artifact_manager.active_collection
         self.tempdir = tempfile.mkdtemp()
+        self.artifact: Optional[Artifact] = None
 
     def __enter__(self) -> str:
         """Create and return a directory for logging files.
@@ -75,14 +93,16 @@ class DirectoryLogger:
         Returns:
             str: The path to the logging directory.
         """
-        self.artifact_dir = join_path(self.tempdir, self.artifact)
+        self.artifact_dir = join_path(self.tempdir, self.artifact_name)
         os.makedirs(self.artifact_dir, exist_ok=False)
         return self.artifact_dir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact_manager.log_files(self.artifact, self.artifact_dir, self.collection)
+            self.artifact = self.artifact_manager.log_files(
+                self.artifact_name, self.artifact_dir, self.collection
+            )
         shutil.rmtree(self.tempdir)
 
 
@@ -138,7 +158,7 @@ class ArtifactManager(ABC):
         local_path: Path,
         collection: Optional[str] = None,
         artifact_path: Optional[Path] = None,
-    ) -> None:
+    ) -> Artifact:
         """
         Upload a file or folder into (current) collection, increment version automatically
 
@@ -147,18 +167,31 @@ class ArtifactManager(ABC):
             local_path: Local path to the file or folder to log
             collection: Name of collection to log to, defaults to the active collection
             artifact_path: path under which to log the files within the artifact, defaults to "./"
+
+        Returns:
+            Artifact: The logged artifact with its metadata (name, collection, version).
         """
         raise NotImplementedError
 
     @abstractmethod
     def download_artifact(
         self, artifact: str, collection: Optional[str] = None, version: Optional[str] = None, to: Optional[str] = None
-    ) -> Union[str, TmpArtifact]:
+    ) -> Union[Artifact, TmpArtifact]:
         """
         Download artifact contents (from current collection) to specific location and return a source listing them.
 
         If no target location is specified, a context manager for a temporary directory is created and the path to it
         is returned. Retrieve latest version unless specified.
+
+        Args:
+            artifact: The artifact name.
+            collection: The collection name. Defaults to the active collection.
+            version: The artifact version. If None, the latest version is used.
+            to: The destination path. If not provided, a TmpArtifact context manager is returned.
+
+        Returns:
+            Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
+                Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
         raise NotImplementedError
 

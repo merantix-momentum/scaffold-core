@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from scaffold.data.artifact_manager.base import Artifact
 from scaffold.data.artifact_manager.filesystem import FileSystemArtifactManager
 from scaffold.data.fs import get_fs_from_url, join_path
 
@@ -72,7 +73,11 @@ def test_log_file(temp_src_dir, artifact_manager):
     with open(src_file, "w") as f:
         f.write("Test: Foo")
 
-    manager.log_files(artifact_name, src_file, collection, artifact_path="foo.txt")
+    artifact = manager.log_files(artifact_name, src_file, collection, artifact_path="foo.txt")
+    assert isinstance(artifact, Artifact)
+    assert artifact.name == artifact_name
+    assert artifact.collection == collection
+    assert artifact.version == "v0"
     target_file = join_path(manager.url, collection, artifact_name, "v0", "foo.txt")
     fs = get_fs_from_url(manager.url)
     assert fs.exists(target_file)
@@ -84,7 +89,11 @@ def test_log_file(temp_src_dir, artifact_manager):
     src_file2 = join_path(temp_src_dir, "bar.txt")
     with open(src_file2, "w") as f:
         f.write("Test: Bar")
-    manager.log_files(artifact_name, src_file2, collection, artifact_path="bar.txt")
+    artifact2 = manager.log_files(artifact_name, src_file2, collection, artifact_path="bar.txt")
+    assert isinstance(artifact2, Artifact)
+    assert artifact2.name == artifact_name
+    assert artifact2.collection == collection
+    assert artifact2.version == "v1"
     target_file2 = join_path(manager.url, collection, artifact_name, "v1", "bar.txt")
     assert fs.exists(target_file2)
     with fs.open(target_file2, "rt") as f:
@@ -127,7 +136,11 @@ def test_get_file(temp_src_dir, artifact_manager):
     download_dir = join_path(temp_src_dir, "downloaded")
     fs_local = get_fs_from_url(download_dir)
     fs_local.mkdirs(download_dir, exist_ok=True)
-    manager.download_artifact(artifact_name, collection, version="v0", to=download_dir)
+    downloaded_artifact = manager.download_artifact(artifact_name, collection, version="v0", to=download_dir)
+    assert isinstance(downloaded_artifact, Artifact)
+    assert downloaded_artifact.name == artifact_name
+    assert downloaded_artifact.collection == collection
+    assert downloaded_artifact.version == "v0"
     target_file = join_path(download_dir, "bar.txt")
     assert fs_local.exists(target_file)
     with fs_local.open(target_file, "rt") as f:
@@ -137,7 +150,11 @@ def test_get_file(temp_src_dir, artifact_manager):
     # Download version "v1" (second version)
     download_dir2 = join_path(temp_src_dir, "downloaded2")
     fs_local.mkdirs(download_dir2, exist_ok=True)
-    manager.download_artifact(artifact_name, collection, version="v1", to=download_dir2)
+    downloaded_artifact2 = manager.download_artifact(artifact_name, collection, version="v1", to=download_dir2)
+    assert isinstance(downloaded_artifact2, Artifact)
+    assert downloaded_artifact2.name == artifact_name
+    assert downloaded_artifact2.collection == collection
+    assert downloaded_artifact2.version == "v1"
     target_file2 = join_path(download_dir2, "baz.txt")
     assert fs_local.exists(target_file2)
     with fs_local.open(target_file2, "rt") as f:
@@ -154,13 +171,25 @@ def test_log_folder_and_download(temp_src_dir, artifact_manager):
         ("bar.txt", "Test: Bar"),
         ("baz.txt", "Test: Baz"),
     ]
-    with manager.log_folder("my_artifact", collection) as folder:
+    logger = manager.log_folder("my_artifact", collection)
+    with logger as folder:
         for filename, content in test_files:
             file_path = join_path(folder, filename)
             with open(file_path, "w") as f:
                 f.write(content)
+    # Verify artifact property is available after context exit
+    assert logger.artifact is not None
+    assert isinstance(logger.artifact, Artifact)
+    assert logger.artifact.name == "my_artifact"
+    assert logger.artifact.collection == collection
+    assert logger.artifact.version == "v0"
     assert manager.exists_in_collection("my_artifact", collection)
-    local_downloaded_path = manager.download_artifact("my_artifact", collection, version="v0", to=temp_src_dir)
+    downloaded_artifact = manager.download_artifact("my_artifact", collection, version="v0", to=temp_src_dir)
+    assert isinstance(downloaded_artifact, Artifact)
+    assert downloaded_artifact.name == "my_artifact"
+    assert downloaded_artifact.collection == collection
+    assert downloaded_artifact.version == "v0"
+    local_downloaded_path = temp_src_dir
     fs_local = get_fs_from_url(local_downloaded_path)
     for filename, content in test_files:
         downloaded_file = join_path(local_downloaded_path, filename)
@@ -179,7 +208,14 @@ def test_download_tmp(temp_src_dir, artifact_manager):
         for filename, content in test_files.items():
             with open(join_path(tmp_dir, filename), "w") as f:
                 f.write(content)
-    with manager.download_artifact("my_artifact", collection, version="v0") as tmp_download_dir:
+    tmp_artifact = manager.download_artifact("my_artifact", collection, version="v0")
+    # Verify TmpArtifact has artifact property
+    assert hasattr(tmp_artifact, "artifact")
+    assert isinstance(tmp_artifact.artifact, Artifact)
+    assert tmp_artifact.artifact.name == "my_artifact"
+    assert tmp_artifact.artifact.collection == collection
+    assert tmp_artifact.artifact.version == "v0"
+    with tmp_artifact as tmp_download_dir:
         fs_temp = get_fs_from_url(tmp_download_dir)
         # List files in temp_path using fs.ls
         files_list = fs_temp.ls(tmp_download_dir)
