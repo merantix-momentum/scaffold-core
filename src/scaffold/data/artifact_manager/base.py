@@ -35,18 +35,18 @@ class TmpArtifact:
     a context, and cleans up the directory upon exit.
     """
 
-    def __init__(self, artifact_manager: "ArtifactManager", collection: str, artifact: str, version: str) -> None:
+    def __init__(self, artifact_manager: "ArtifactManager", collection: str, artifact_name: str, version: str) -> None:
         """Initialize a temporary artifact context.
 
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
             collection (str): The collection name.
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             version (str): The artifact version.
         """
         self.artifact_manager = artifact_manager
         self.tempdir = tempfile.mkdtemp()
-        self.artifact = Artifact(name=artifact, collection=collection, version=version)
+        self.artifact = Artifact(name=artifact_name, collection=collection, version=version)
 
     def __enter__(self) -> str:
         """Download the artifact into a temporary directory.
@@ -72,19 +72,18 @@ class DirectoryLogger:
     as an artifact.
     """
 
-    def __init__(self, artifact_manager: "ArtifactManager", artifact: str, collection: Optional[str] = None) -> None:
+    def __init__(self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None) -> None:
         """Initialize a DirectoryLogger.
 
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
-        self._artifact_name = artifact
+        self._artifact_name = artifact_name
         self._collection = collection or artifact_manager.active_collection
         self.tempdir = tempfile.mkdtemp()
-        self.artifact: Optional[Artifact] = None
 
     def __enter__(self) -> str:
         """Create and return a directory for logging files.
@@ -144,7 +143,7 @@ class ArtifactManager(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def exists_in_collection(self, artifact: str, collection: Optional[str] = None) -> bool:
+    def exists_in_collection(self, artifact_name: str, collection: Optional[str] = None) -> bool:
         """Check if artifact exists in specified collection."""
         raise NotImplementedError
 
@@ -172,7 +171,7 @@ class ArtifactManager(ABC):
 
     @abstractmethod
     def download_artifact(
-        self, artifact: str, collection: Optional[str] = None, version: Optional[str] = None, to: Optional[str] = None
+        self, artifact_name: str, collection: Optional[str] = None, version: Optional[str] = None, to: Optional[str] = None
     ) -> Union[Artifact, TmpArtifact]:
         """
         Download artifact contents (from current collection) to specific location and return a source listing them.
@@ -181,7 +180,7 @@ class ArtifactManager(ABC):
         is returned. Retrieve latest version unless specified.
 
         Args:
-            artifact: The artifact name.
+            artifact_name: The artifact name.
             collection: The collection name. Defaults to the active collection.
             version: The artifact version. If None, the latest version is used.
             to: The destination path. If not provided, a TmpArtifact context manager is returned.
@@ -192,10 +191,10 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
-    def exists(self, artifact: str) -> bool:
+    def exists(self, artifact_name: str) -> bool:
         """Check if artifact exists in specified collection."""
-        return any([self.exists_in_collection(artifact, collection) for collection in self.list_collection_names()])
+        return any([self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()])
 
-    def log_folder(self, artifact: str, collection: Optional[str] = None) -> DirectoryLogger:
+    def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:
         """Create a context manager for logging a directory of files as a single artifact."""
-        return DirectoryLogger(self, artifact, collection)
+        return DirectoryLogger(self, artifact_name, collection)

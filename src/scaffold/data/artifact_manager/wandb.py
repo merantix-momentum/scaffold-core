@@ -64,7 +64,7 @@ class WandbArtifactManager(ArtifactManager):
         """
         return [collection.name for collection in wandb.Api().artifact_types(project=self.project)]
 
-    def exists_in_collection(self, artifact: str, collection: t.Optional[str] = None) -> bool:
+    def exists_in_collection(self, artifact_name: str, collection: t.Optional[str] = None) -> bool:
         """Check if an artifact exists in the specified collection.
 
         Note:
@@ -72,7 +72,7 @@ class WandbArtifactManager(ArtifactManager):
             by listing all artifacts in the collection.
 
         Args:
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
 
         Returns:
@@ -81,7 +81,7 @@ class WandbArtifactManager(ArtifactManager):
         collection = collection or self.active_collection
         if collection not in self.list_collection_names():
             return False
-        return artifact in [
+        return artifact_name in [
             art.name for art in wandb.Api().artifact_type(type_name=collection, project=self.project).collections()
         ]
 
@@ -122,7 +122,7 @@ class WandbArtifactManager(ArtifactManager):
 
     def download_artifact(
         self,
-        artifact: str,
+        artifact_name: str,
         collection: t.Optional[str] = None,
         version: t.Optional[str] = None,
         to: t.Optional[str] = None,
@@ -132,7 +132,7 @@ class WandbArtifactManager(ArtifactManager):
         WandB artifacts are downloaded in a nested folder structure.
 
         Args:
-            artifact (str): The name of the artifact to download.
+            artifact_name (str): The name of the artifact to download.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
             version (Optional[str]): The version of the artifact to download. If None, 'latest' is used.
             to (Optional[str]): The local destination path where the artifact should be downloaded.
@@ -146,12 +146,12 @@ class WandbArtifactManager(ArtifactManager):
         if version is None:
             version = "latest"
         if wandb.run is None:
-            art = wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact}:{version}", type=collection)
+            art = wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
         else:
-            art = wandb.run.use_artifact(f"{self.entity}/{self.project}/{artifact}:{version}", type=collection)
+            art = wandb.run.use_artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
 
         if to is not None:
             art.download(to)
-            return Artifact(name=artifact, collection=collection, version=version)
+            return Artifact(name=artifact_name, collection=collection, version=version)
         else:
-            return TmpArtifact(self, collection, artifact, version)
+            return TmpArtifact(self, collection, artifact_name, version)
