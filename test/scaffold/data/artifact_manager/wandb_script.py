@@ -27,7 +27,9 @@ for filename, artifact_name, version, content in file_descriptions:
     with open(file_path, "w") as f:
         f.write(content)
     # Log the file; log_files() now returns an Artifact.
-    logged_artifact = artifact_manager.log_files(artifact_name=artifact_name, local_path=file_path, collection=collection)
+    logged_artifact = artifact_manager.log_files(
+        artifact_name=artifact_name, local_path=file_path, collection=collection
+    )
     assert isinstance(logged_artifact, Artifact)
     assert logged_artifact.name == artifact_name
     assert logged_artifact.collection == collection
@@ -70,9 +72,9 @@ assert artifact_manager.exists("foo"), "Artifact 'foo' should exist"
 assert artifact_manager.exists("bar"), "Artifact 'bar' should exist"
 assert artifact_manager.exists_in_collection("foo", collection), "Artifact 'foo' should exist in collection"
 assert artifact_manager.exists_in_collection("bar", collection), "Artifact 'bar' should exist in collection"
-assert not artifact_manager.exists_in_collection("foo", "other_collection"), (
-    "Artifact 'foo' should not exist in other_collection"
-)
+assert not artifact_manager.exists_in_collection(
+    "foo", "other_collection"
+), "Artifact 'foo' should not exist in other_collection"
 
 # --- Log a folder using DirectoryLogger context manager ---
 logger = artifact_manager.log_folder("test_folder_artifact", collection)

@@ -100,9 +100,7 @@ class DirectoryLogger:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact = self.artifact_manager.log_files(
-                self.artifact_name, self.artifact_dir, self.collection
-            )
+            self.artifact = self.artifact_manager.log_files(self.artifact_name, self.artifact_dir, self.collection)
         shutil.rmtree(self.tempdir)
 
 
