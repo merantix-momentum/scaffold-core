@@ -49,14 +49,21 @@ download it back to a local directory.
 
     # Log a file artifact.
     # This call uploads the file located at "/path/to/local/file.txt" as "my_artifact".
-    manager.log_files("my_artifact", "/path/to/local/file.txt")
+    # log_files() returns an Artifact object with metadata about the logged artifact.
+    artifact = manager.log_files("my_artifact", "/path/to/local/file.txt")
+    print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
-    local_path = manager.download_artifact("my_artifact", to="/path/to/download")
-    print(f"Artifact downloaded to: {local_path}")
+    # download_artifact() returns an Artifact object when 'to' is provided.
+    downloaded_artifact = manager.download_artifact("my_artifact", to="/path/to/download")
+    print(f"Downloaded artifact: {downloaded_artifact.name}, version: {downloaded_artifact.version}")
 
     # Alternatively, use the context manager to deal with the artifact directly.
-    with manager.download_artifact("my_artifact") as tmp_download_dir:
+    # When 'to' is not provided, download_artifact() returns a TmpArtifact context manager
+    # that has an 'artifact' property with the artifact metadata.
+    tmp_artifact = manager.download_artifact("my_artifact")
+    print(f"Temporary artifact: {tmp_artifact.artifact.name}, version: {tmp_artifact.artifact.version}")
+    with tmp_artifact as tmp_download_dir:
         # Open the file and read its contents, no need to worry about cleanup.
         with open(f"{tmp_download_dir}/file.txt", "r") as f:
             pass
@@ -80,14 +87,21 @@ a file artifact and then downloads it.
     manager = WandbArtifactManager(project="my-project", collection="my_collection")
 
     # Log a file artifact.
-    manager.log_files("example_artifact", "/path/to/local/file.txt")
+    # log_files() returns an Artifact object with metadata about the logged artifact.
+    artifact = manager.log_files("example_artifact", "/path/to/local/file.txt")
+    print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
-    local_path = manager.download_artifact("example_artifact", to="/path/to/download")
-    print(f"Artifact downloaded to: {local_path}")
+    # download_artifact() returns an Artifact object when 'to' is provided.
+    downloaded_artifact = manager.download_artifact("example_artifact", to="/path/to/download")
+    print(f"Downloaded artifact: {downloaded_artifact.name}, version: {downloaded_artifact.version}")
 
     # Alternatively, use the context manager to deal with the artifact directly.
-    with manager.download_artifact("example_artifact") as tmp_download_dir:
+    # When 'to' is not provided, download_artifact() returns a TmpArtifact context manager
+    # that has an 'artifact' property with the artifact metadata.
+    tmp_artifact = manager.download_artifact("example_artifact")
+    print(f"Temporary artifact: {tmp_artifact.artifact.name}, version: {tmp_artifact.artifact.version}")
+    with tmp_artifact as tmp_download_dir:
         # Open the file and read its contents, no need to worry about cleanup.
         with open(f"{tmp_download_dir}/file.txt", "r") as f:
             pass
@@ -102,17 +116,27 @@ artifact is automatically logged when the context is exited. Later, the artifact
 .. code-block:: python
 
     # Log an entire folder as an artifact.
-    with manager.log_folder("my_awesome_artifact", "my_collection") as tmp_dir:
+    # log_folder() returns a DirectoryLogger context manager.
+    logger = manager.log_folder("my_awesome_artifact", "my_collection")
+    with logger as tmp_dir:
          # Write files to the temporary folder.
          with open(f"{tmp_dir}/example.txt", "w") as f:
              f.write("Example content")
+    # After the context exits, the artifact is logged and the logger.artifact property
+    # contains the Artifact object with metadata about the logged artifact.
+    print(f"Logged artifact: {logger.artifact.name}, version: {logger.artifact.version}")
 
     # Download the logged folder artifact.
-    download_path = manager.download_artifact("my_awesome_artifact", "my_collection", to="/path/to/download")
-    print(f"Folder artifact downloaded to: {download_path}")
+    # download_artifact() returns an Artifact object when 'to' is provided.
+    downloaded_artifact = manager.download_artifact("my_awesome_artifact", "my_collection", to="/path/to/download")
+    print(f"Downloaded artifact: {downloaded_artifact.name}, version: {downloaded_artifact.version}")
 
     # You can also use the context manager:
-    with manager.download_artifact("my_awesome_artifact", "my_collection") as tmp_download_dir:
+    # When 'to' is not provided, download_artifact() returns a TmpArtifact context manager
+    # that has an 'artifact' property with the artifact metadata.
+    tmp_artifact = manager.download_artifact("my_awesome_artifact", "my_collection")
+    print(f"Temporary artifact: {tmp_artifact.artifact.name}, version: {tmp_artifact.artifact.version}")
+    with tmp_artifact as tmp_download_dir:
         # Open the file and read its contents, no need to worry about cleanup.
         with open(f"{tmp_download_dir}/example.txt", "r") as f:
             pass

@@ -4,12 +4,28 @@ import re
 import shutil
 import tempfile
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 from scaffold.data.fs import join_path
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class Artifact:
+    """Immutable dataclass representing an artifact with its metadata.
+
+    Attributes:
+        name: The artifact name.
+        collection: The collection name.
+        version: The artifact version (e.g., "v0", "v1", "latest").
+    """
+
+    name: str
+    collection: str
+    version: str
 
 
 class TmpArtifact:
@@ -19,20 +35,18 @@ class TmpArtifact:
     a context, and cleans up the directory upon exit.
     """
 
-    def __init__(self, artifact_manager: "ArtifactManager", collection: str, artifact: str, version: str) -> None:
+    def __init__(self, artifact_manager: "ArtifactManager", collection: str, artifact_name: str, version: str) -> None:
         """Initialize a temporary artifact context.
 
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
             collection (str): The collection name.
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             version (str): The artifact version.
         """
         self.artifact_manager = artifact_manager
         self.tempdir = tempfile.mkdtemp()
-        self.collection = collection
-        self.artifact = artifact
-        self.version = version
+        self.artifact = Artifact(name=artifact_name, collection=collection, version=version)
 
     def __enter__(self) -> str:
         """Download the artifact into a temporary directory.
@@ -40,7 +54,9 @@ class TmpArtifact:
         Returns:
             str: The path to the temporary directory containing the artifact.
         """
-        self.artifact_manager.download_artifact(self.artifact, self.collection, self.version, to=self.tempdir)
+        self.artifact_manager.download_artifact(
+            self.artifact.name, self.artifact.collection, self.artifact.version, to=self.tempdir
+        )
         return self.tempdir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -56,17 +72,19 @@ class DirectoryLogger:
     as an artifact.
     """
 
-    def __init__(self, artifact_manager: "ArtifactManager", artifact: str, collection: Optional[str] = None) -> None:
+    def __init__(
+        self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None
+    ) -> None:
         """Initialize a DirectoryLogger.
 
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
-        self.artifact = artifact
-        self.collection = collection or artifact_manager.active_collection
+        self._artifact_name = artifact_name
+        self._collection = collection or artifact_manager.active_collection
         self.tempdir = tempfile.mkdtemp()
 
     def __enter__(self) -> str:
@@ -75,14 +93,14 @@ class DirectoryLogger:
         Returns:
             str: The path to the logging directory.
         """
-        self.artifact_dir = join_path(self.tempdir, self.artifact)
+        self.artifact_dir = join_path(self.tempdir, self._artifact_name)
         os.makedirs(self.artifact_dir, exist_ok=False)
         return self.artifact_dir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact_manager.log_files(self.artifact, self.artifact_dir, self.collection)
+            self.artifact = self.artifact_manager.log_files(self._artifact_name, self.artifact_dir, self._collection)
         shutil.rmtree(self.tempdir)
 
 
@@ -127,7 +145,7 @@ class ArtifactManager(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def exists_in_collection(self, artifact: str, collection: Optional[str] = None) -> bool:
+    def exists_in_collection(self, artifact_name: str, collection: Optional[str] = None) -> bool:
         """Check if artifact exists in specified collection."""
         raise NotImplementedError
 
@@ -138,7 +156,7 @@ class ArtifactManager(ABC):
         local_path: Path,
         collection: Optional[str] = None,
         artifact_path: Optional[Path] = None,
-    ) -> None:
+    ) -> Artifact:
         """
         Upload a file or folder into (current) collection, increment version automatically
 
@@ -147,25 +165,44 @@ class ArtifactManager(ABC):
             local_path: Local path to the file or folder to log
             collection: Name of collection to log to, defaults to the active collection
             artifact_path: path under which to log the files within the artifact, defaults to "./"
+
+        Returns:
+            Artifact: The logged artifact with its metadata (name, collection, version).
         """
         raise NotImplementedError
 
     @abstractmethod
     def download_artifact(
-        self, artifact: str, collection: Optional[str] = None, version: Optional[str] = None, to: Optional[str] = None
-    ) -> Union[str, TmpArtifact]:
+        self,
+        artifact_name: str,
+        collection: Optional[str] = None,
+        version: Optional[str] = None,
+        to: Optional[str] = None,
+    ) -> Union[Artifact, TmpArtifact]:
         """
         Download artifact contents (from current collection) to specific location and return a source listing them.
 
         If no target location is specified, a context manager for a temporary directory is created and the path to it
         is returned. Retrieve latest version unless specified.
+
+        Args:
+            artifact_name: The artifact name.
+            collection: The collection name. Defaults to the active collection.
+            version: The artifact version. If None, the latest version is used.
+            to: The destination path. If not provided, a TmpArtifact context manager is returned.
+
+        Returns:
+            Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
+                Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
         raise NotImplementedError
 
-    def exists(self, artifact: str) -> bool:
+    def exists(self, artifact_name: str) -> bool:
         """Check if artifact exists in specified collection."""
-        return any([self.exists_in_collection(artifact, collection) for collection in self.list_collection_names()])
+        return any(
+            [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
+        )
 
-    def log_folder(self, artifact: str, collection: Optional[str] = None) -> DirectoryLogger:
+    def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:
         """Create a context manager for logging a directory of files as a single artifact."""
-        return DirectoryLogger(self, artifact, collection)
+        return DirectoryLogger(self, artifact_name, collection)

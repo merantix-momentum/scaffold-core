@@ -120,6 +120,8 @@ class ModelLogger:
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        with self.artifact_manager.download_artifact(artifact=afid, collection=collection, version=version) as artdir:
+        with self.artifact_manager.download_artifact(
+            artifact_name=afid, collection=collection, version=version
+        ) as artdir:
             model = torch.load(Path(artdir) / STATE_FILENAME, map_location=torch.device(device), weights_only=False)
         return model

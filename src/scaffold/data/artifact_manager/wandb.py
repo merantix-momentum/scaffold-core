@@ -3,7 +3,7 @@ import typing as t
 
 import wandb
 
-from scaffold.data.artifact_manager.base import ArtifactManager, TmpArtifact
+from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class WandbArtifactManager(ArtifactManager):
         """
         return [collection.name for collection in wandb.Api().artifact_types(project=self.project)]
 
-    def exists_in_collection(self, artifact: str, collection: t.Optional[str] = None) -> bool:
+    def exists_in_collection(self, artifact_name: str, collection: t.Optional[str] = None) -> bool:
         """Check if an artifact exists in the specified collection.
 
         Note:
@@ -72,7 +72,7 @@ class WandbArtifactManager(ArtifactManager):
             by listing all artifacts in the collection.
 
         Args:
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
 
         Returns:
@@ -81,7 +81,7 @@ class WandbArtifactManager(ArtifactManager):
         collection = collection or self.active_collection
         if collection not in self.list_collection_names():
             return False
-        return artifact in [
+        return artifact_name in [
             art.name for art in wandb.Api().artifact_type(type_name=collection, project=self.project).collections()
         ]
 
@@ -91,7 +91,7 @@ class WandbArtifactManager(ArtifactManager):
         local_path: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
-    ) -> None:
+    ) -> Artifact:
         """Log files or a directory as a WandB artifact.
 
         This method uploads the file or directory located at `local_path` to WandB. If `local_path` is a directory,
@@ -102,6 +102,10 @@ class WandbArtifactManager(ArtifactManager):
             local_path (str): The local path to the file or directory to be logged.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
             artifact_path (Optional[str]): An optional subpath within the artifact.
+
+        Returns:
+            Artifact: The logged artifact with its metadata (name, collection, version).
+                For WandB, the version is typically "latest" as WandB manages versions internally.
         """
         collection = collection or self.active_collection
         artifact = wandb.Artifact(artifact_name, type=collection)
@@ -112,39 +116,42 @@ class WandbArtifactManager(ArtifactManager):
             artifact.add_file(str(local_path), name=artifact_path)
         artifact.save()
         artifact.wait()
+        # WandB uses "latest" as the version alias for the most recent artifact
+        # The actual version is managed by WandB internally, but "latest" is the standard way to reference it
+        return Artifact(name=artifact_name, collection=collection, version="latest")
 
     def download_artifact(
         self,
-        artifact: str,
+        artifact_name: str,
         collection: t.Optional[str] = None,
         version: t.Optional[str] = None,
         to: t.Optional[str] = None,
-    ) -> t.Union[str, TmpArtifact]:
+    ) -> t.Union[Artifact, TmpArtifact]:
         """Download a specific artifact to a local path.
 
         WandB artifacts are downloaded in a nested folder structure.
 
         Args:
-            artifact (str): The name of the artifact to download.
+            artifact_name (str): The name of the artifact to download.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
             version (Optional[str]): The version of the artifact to download. If None, 'latest' is used.
             to (Optional[str]): The local destination path where the artifact should be downloaded.
                 If not provided, a TmpArtifact context manager is returned.
 
         Returns:
-            Union[str, TmpArtifact]: The local path where the artifact was downloaded, or a
-                TmpArtifact context manager if no destination is provided.
+            Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
+                Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
         collection = collection or self.active_collection
         if version is None:
             version = "latest"
         if wandb.run is None:
-            art = wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact}:{version}", type=collection)
+            art = wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
         else:
-            art = wandb.run.use_artifact(f"{self.entity}/{self.project}/{artifact}:{version}", type=collection)
+            art = wandb.run.use_artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
 
         if to is not None:
             art.download(to)
-            return to
+            return Artifact(name=artifact_name, collection=collection, version=version)
         else:
-            return TmpArtifact(self, collection, artifact, version)
+            return TmpArtifact(self, collection, artifact_name, version)

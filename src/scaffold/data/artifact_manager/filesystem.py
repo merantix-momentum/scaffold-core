@@ -1,6 +1,6 @@
 import typing as t
 
-from scaffold.data.artifact_manager.base import ArtifactManager, TmpArtifact
+from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
 
 
@@ -34,18 +34,18 @@ class FileSystemArtifactManager(ArtifactManager):
             return []
         return [item["name"].split("/")[-1] for item in items if item.get("type") == "directory"]
 
-    def exists_in_collection(self, artifact: str, collection: t.Optional[str] = None) -> bool:
+    def exists_in_collection(self, artifact_name: str, collection: t.Optional[str] = None) -> bool:
         """Check if an artifact exists in a specific collection.
 
         Args:
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the active collection.
 
         Returns:
             bool: True if the artifact exists, False otherwise.
         """
         collection = collection or self.active_collection
-        artifact_dir = join_path(self.url, collection, artifact)
+        artifact_dir = join_path(self.url, collection, artifact_name)
         return self.fs.exists(artifact_dir)
 
     def log_files(
@@ -54,7 +54,7 @@ class FileSystemArtifactManager(ArtifactManager):
         local_path: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
-    ) -> None:
+    ) -> Artifact:
         """Log a file or folder as an artifact.
 
         This method uploads the file (or folder) located at `local_path` to the artifact store.
@@ -66,6 +66,9 @@ class FileSystemArtifactManager(ArtifactManager):
             local_path (str): The local path to the file or folder.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
+
+        Returns:
+            Artifact: The logged artifact with its metadata (name, collection, version).
         """
         collection = collection or self.active_collection
         base_artifact_path = join_path(self.url, collection, artifact_name)
@@ -98,6 +101,8 @@ class FileSystemArtifactManager(ArtifactManager):
                 self.fs.mkdirs(target_dir, exist_ok=True)
             self.fs.put(local_path, target_dir, recursive=True)
 
+        return Artifact(name=artifact_name, collection=collection, version=new_version)
+
     def list_artifacts(self, collection: str = None) -> t.List[str]:
         """Get sorted versions for an artifact.
 
@@ -121,11 +126,11 @@ class FileSystemArtifactManager(ArtifactManager):
         except Exception:
             return []
 
-    def list_versions(self, artifact: str, collection: str = None) -> t.List[str]:
+    def list_versions(self, artifact_name: str, collection: str = None) -> t.List[str]:
         """Get sorted versions for an artifact.
 
         Args:
-            artifact (str): Artifact name.
+            artifact_name (str): Artifact name.
             collection (str): Collection name.
 
         Returns:
@@ -134,7 +139,7 @@ class FileSystemArtifactManager(ArtifactManager):
         if collection is None:
             collection = self.active_collection
 
-        base_artifact_path = join_path(self.url, collection, artifact)
+        base_artifact_path = join_path(self.url, collection, artifact_name)
         if not self.fs.exists(base_artifact_path):
             return []
 
@@ -152,30 +157,31 @@ class FileSystemArtifactManager(ArtifactManager):
 
     def download_artifact(
         self,
-        artifact: str,
+        artifact_name: str,
         collection: t.Optional[str] = None,
         version: t.Optional[str] = None,
         to: t.Optional[str] = None,
-    ) -> t.Union[str, TmpArtifact]:
+    ) -> t.Union[Artifact, TmpArtifact]:
         """Download an artifact from the artifact store.
 
         If a destination path `to` is provided, the contents of the artifact version are copied
         there. Otherwise, a TmpArtifact context manager is returned.
 
         Args:
-            artifact (str): The artifact name.
+            artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             version (Optional[str]): The version of the artifact. If None or "latest", the latest version is used.
             to (Optional[str]): The destination path. If not provided, a temporary directory is used.
 
         Returns:
-            Union[str, TmpArtifact]: The destination path or a TmpArtifact context manager.
+            Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
+                Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
         collection = collection or self.active_collection
-        base_artifact_path = join_path(self.url, collection, artifact)
+        base_artifact_path = join_path(self.url, collection, artifact_name)
         if version is None or version == "latest":
             if not self.fs.exists(base_artifact_path):
-                raise ValueError(f"Artifact {artifact} not found in collection {collection}")
+                raise ValueError(f"Artifact {artifact_name} not found in collection {collection}")
             entries = self.fs.ls(base_artifact_path, detail=True)
             version_nums: t.List[int] = []
             for entry in entries:
@@ -183,11 +189,11 @@ class FileSystemArtifactManager(ArtifactManager):
                 if ver.startswith("v") and ver[1:].isdigit():
                     version_nums.append(int(ver[1:]))
             if not version_nums:
-                raise ValueError(f"No version found for artifact {artifact} in collection {collection}")
+                raise ValueError(f"No version found for artifact {artifact_name} in collection {collection}")
             version = f"v{max(version_nums)}"
         remote_artifact_path = join_path(base_artifact_path, version)
         if to is not None:
             self.fs.get(join_path(remote_artifact_path, "*"), to, recursive=True)
-            return to
+            return Artifact(name=artifact_name, collection=collection, version=version)
         else:
-            return TmpArtifact(self, collection, artifact, version)
+            return TmpArtifact(self, collection, artifact_name, version)
