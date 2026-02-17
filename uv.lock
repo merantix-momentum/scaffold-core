@@ -1198,7 +1198,7 @@ name = "cuda-bindings"
 version = "12.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "python_full_version >= '3.10'" },
+    { name = "cuda-pathfinder", marker = "python_full_version >= '3.10' and sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/d8/b546104b8da3f562c1ff8ab36d130c8fe1dd6a045ced80b4f6ad74f7d4e1/cuda_bindings-12.9.4-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4d3c842c2a4303b2a580fe955018e31aea30278be19795ae05226235268032e5", size = 12148218, upload-time = "2025-10-21T14:51:28.855Z" },
@@ -1461,110 +1461,56 @@ wheels = [
 name = "flytekit"
 version = "1.16.12"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.10' and sys_platform == 'linux'",
-    "python_full_version < '3.10' and sys_platform != 'linux'",
-]
 dependencies = [
     { name = "adlfs", version = "2025.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "adlfs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "cachetools", version = "6.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "cachetools", version = "7.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "click", version = "8.1.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "cloudpickle", marker = "python_full_version < '3.10'" },
-    { name = "croniter", marker = "python_full_version < '3.10'" },
-    { name = "dataclasses-json", marker = "python_full_version < '3.10'" },
-    { name = "diskcache", marker = "python_full_version < '3.10'" },
-    { name = "docker", marker = "python_full_version < '3.10'" },
-    { name = "docstring-parser", marker = "python_full_version < '3.10'" },
-    { name = "flyteidl", marker = "python_full_version < '3.10'" },
+    { name = "click", version = "8.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "cloudpickle" },
+    { name = "croniter" },
+    { name = "dataclasses-json" },
+    { name = "diskcache" },
+    { name = "docker" },
+    { name = "docstring-parser" },
+    { name = "flyteidl" },
     { name = "fsspec", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "fsspec", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "gcsfs", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "googleapis-common-protos", marker = "python_full_version < '3.10'" },
-    { name = "grpcio", marker = "python_full_version < '3.10'" },
-    { name = "grpcio-status", marker = "python_full_version < '3.10'" },
-    { name = "importlib-metadata", marker = "python_full_version < '3.10'" },
-    { name = "joblib", marker = "python_full_version < '3.10'" },
-    { name = "jsonlines", marker = "python_full_version < '3.10'" },
-    { name = "jsonpickle", marker = "python_full_version < '3.10'" },
-    { name = "keyring", marker = "python_full_version < '3.10'" },
+    { name = "gcsfs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "googleapis-common-protos" },
+    { name = "grpcio" },
+    { name = "grpcio-status" },
+    { name = "importlib-metadata" },
+    { name = "joblib" },
+    { name = "jsonlines" },
+    { name = "jsonpickle" },
+    { name = "keyring" },
     { name = "markdown-it-py", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "marshmallow-enum", marker = "python_full_version < '3.10'" },
-    { name = "marshmallow-jsonschema", marker = "python_full_version < '3.10'" },
-    { name = "mashumaro", marker = "python_full_version < '3.10'" },
-    { name = "msgpack", marker = "python_full_version < '3.10'" },
-    { name = "protobuf", marker = "python_full_version < '3.10'" },
-    { name = "pygments", marker = "python_full_version < '3.10'" },
-    { name = "python-json-logger", marker = "python_full_version < '3.10'" },
-    { name = "pytimeparse", marker = "python_full_version < '3.10'" },
-    { name = "pyyaml", marker = "python_full_version < '3.10'" },
-    { name = "requests", marker = "python_full_version < '3.10'" },
-    { name = "rich", marker = "python_full_version < '3.10'" },
-    { name = "rich-click", marker = "python_full_version < '3.10'" },
+    { name = "markdown-it-py", version = "4.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "marshmallow-enum" },
+    { name = "marshmallow-jsonschema" },
+    { name = "mashumaro" },
+    { name = "msgpack" },
+    { name = "protobuf" },
+    { name = "pygments" },
+    { name = "python-json-logger" },
+    { name = "pytimeparse" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "rich-click" },
     { name = "s3fs", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "statsd", marker = "python_full_version < '3.10'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.10'" },
+    { name = "s3fs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "statsd" },
+    { name = "typing-extensions" },
     { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/88/68496700d8798404b9a81fe490e9731a337833fc683e299cd008419b04a1/flytekit-1.16.12.tar.gz", hash = "sha256:41c44ef1bff18377fc227263938828733734b48d33ba4aaccf56f7d7b7e61ca6", size = 568869, upload-time = "2026-01-09T20:00:29.366Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/6b/9b9b0e230a7014e3ee021a8bc7f94006cecaf7151acf6e9ca4b49f16e1a4/flytekit-1.16.12-py3-none-any.whl", hash = "sha256:0c16af92c9a10e94282c812005c7718982f3bdbc72696299be08b4f889c6bd1c", size = 670778, upload-time = "2026-01-09T20:00:26.735Z" },
-]
-
-[[package]]
-name = "flytekit"
-version = "1.16.14"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'linux'",
-    "python_full_version >= '3.12' and sys_platform != 'linux'",
-    "python_full_version == '3.11.*' and sys_platform == 'linux'",
-    "python_full_version == '3.11.*' and sys_platform != 'linux'",
-    "python_full_version == '3.10.*' and sys_platform == 'linux'",
-    "python_full_version == '3.10.*' and sys_platform != 'linux'",
-]
-dependencies = [
-    { name = "adlfs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "cachetools", version = "7.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "click", version = "8.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "cloudpickle", marker = "python_full_version >= '3.10'" },
-    { name = "croniter", marker = "python_full_version >= '3.10'" },
-    { name = "dataclasses-json", marker = "python_full_version >= '3.10'" },
-    { name = "diskcache", marker = "python_full_version >= '3.10'" },
-    { name = "docker", marker = "python_full_version >= '3.10'" },
-    { name = "docstring-parser", marker = "python_full_version >= '3.10'" },
-    { name = "flyteidl", marker = "python_full_version >= '3.10'" },
-    { name = "fsspec", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "gcsfs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "googleapis-common-protos", marker = "python_full_version >= '3.10'" },
-    { name = "grpcio", marker = "python_full_version >= '3.10'" },
-    { name = "grpcio-status", marker = "python_full_version >= '3.10'" },
-    { name = "importlib-metadata", marker = "python_full_version >= '3.10'" },
-    { name = "joblib", marker = "python_full_version >= '3.10'" },
-    { name = "jsonlines", marker = "python_full_version >= '3.10'" },
-    { name = "jsonpickle", marker = "python_full_version >= '3.10'" },
-    { name = "keyring", marker = "python_full_version >= '3.10'" },
-    { name = "markdown-it-py", version = "4.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "marshmallow", marker = "python_full_version >= '3.10'" },
-    { name = "marshmallow-enum", marker = "python_full_version >= '3.10'" },
-    { name = "marshmallow-jsonschema", marker = "python_full_version >= '3.10'" },
-    { name = "mashumaro", marker = "python_full_version >= '3.10'" },
-    { name = "msgpack", marker = "python_full_version >= '3.10'" },
-    { name = "protobuf", marker = "python_full_version >= '3.10'" },
-    { name = "pygments", marker = "python_full_version >= '3.10'" },
-    { name = "python-json-logger", marker = "python_full_version >= '3.10'" },
-    { name = "pytimeparse", marker = "python_full_version >= '3.10'" },
-    { name = "pyyaml", marker = "python_full_version >= '3.10'" },
-    { name = "requests", marker = "python_full_version >= '3.10'" },
-    { name = "rich", marker = "python_full_version >= '3.10'" },
-    { name = "rich-click", marker = "python_full_version >= '3.10'" },
-    { name = "s3fs", version = "2026.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "setuptools", marker = "python_full_version >= '3.10'" },
-    { name = "statsd", marker = "python_full_version >= '3.10'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.10'" },
-    { name = "urllib3", version = "2.6.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/66/95/8187a79222cf4b106d4dedc9436fc3812b990fa5852df4f926463c678a46/flytekit-1.16.14.tar.gz", hash = "sha256:091c82a5fecc9465ac3db642bf0d3d29fca63edc9c7ae142ddf75ba1e9117fcc", size = 570389, upload-time = "2026-02-13T18:11:43.787Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/85/25f6ec2b82a6489fa82bc8d9ee7435426b37d3722e7337974b6ca2c998a3/flytekit-1.16.14-py3-none-any.whl", hash = "sha256:5ec1ba99ae99cae10f6d759435e8a91d09d51625ba29308174cec303be7704a0", size = 672037, upload-time = "2026-02-13T18:11:41.912Z" },
 ]
 
 [[package]]
@@ -1573,8 +1519,7 @@ version = "1.16.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flatten-dict" },
-    { name = "flytekit", version = "1.16.12", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "flytekit", version = "1.16.14", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "flytekit" },
     { name = "omegaconf" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/47/82/f8e75c8e3e085a821e3cf21a03166b51a4d0a95369576887b92b56d63e5a/flytekitplugins_omegaconf-1.16.14.tar.gz", hash = "sha256:d62582cf9a6a824971c745b9b5a05659e4e930d6968894aa06917f3f3131ecb3", size = 12264, upload-time = "2026-02-13T18:13:08.586Z" }
@@ -1587,8 +1532,7 @@ name = "flytekitplugins-pod"
 version = "1.16.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "flytekit", version = "1.16.12", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "flytekit", version = "1.16.14", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "flytekit" },
     { name = "kubernetes" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/da/2c352ddd974245e684cb78d73ead59c4114c665038273d6fad33eeff5d22/flytekitplugins_pod-1.16.14.tar.gz", hash = "sha256:7129616e384d9cdfee176e8b0f96d8a62176ecb89d805856f87b1fa13c842c9c", size = 7340, upload-time = "2026-02-13T18:13:03.078Z" }
@@ -3294,7 +3238,7 @@ name = "multiprocess"
 version = "0.70.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "dill" },
+    { name = "dill", marker = "sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a2/f2/e783ac7f2aeeed14e9e12801f22529cc7e6b7ab80928d6dcce4e9f00922d/multiprocess-0.70.19.tar.gz", hash = "sha256:952021e0e6c55a4a9fe4cd787895b86e239a40e76802a789d6305398d3975897", size = 2079989, upload-time = "2026-01-19T06:47:39.744Z" }
 wheels = [
@@ -3336,8 +3280,7 @@ data = [
 flyte = [
     { name = "cookiecutter" },
     { name = "docker" },
-    { name = "flytekit", version = "1.16.12", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "flytekit", version = "1.16.14", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "flytekit" },
     { name = "flytekitplugins-omegaconf" },
     { name = "flytekitplugins-pod" },
     { name = "gitpython" },
@@ -3715,7 +3658,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/51/e123d997aa098c61d029f76663dedbfb9bc8dcf8c60cbd6adbe42f76d049/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8", size = 706758467, upload-time = "2025-06-06T21:54:08.597Z" },
@@ -3726,7 +3669,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/13/ee4e00f30e676b66ae65b4f08cb5bcbb8392c03f54f2d5413ea99a5d1c80/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4d2dd21ec0b88cf61b62e6b43564355e5222e4a3fb394cac0db101f2dd0d4f74", size = 193118695, upload-time = "2025-03-07T01:45:27.821Z" },
@@ -3753,9 +3696,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
-    { name = "nvidia-cusparse-cu12" },
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/48/9a13d2975803e8cf2777d5ed57b87a0b6ca2cc795f9a4f59796a910bfb80/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:4376c11ad263152bd50ea295c05370360776f8c3427b30991df774f9fb26c450", size = 267506905, upload-time = "2025-03-07T01:47:16.273Z" },
@@ -3766,7 +3709,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/f5/e1854cb2f2bcd4280c44736c93550cc300ff4b8c95ebe370d0aa7d2b473d/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:1ec05d76bbbd8b61b06a80e1eaf8cf4959c3d4ce8e711b65ebd0443bb0ebb13b", size = 288216466, upload-time = "2025-03-07T01:48:13.779Z" },
@@ -5206,11 +5149,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "69.5.1"
+version = "78.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d6/4f/b10f707e14ef7de524fe1f8988a294fb262a29c9b5b12275c7e188864aed/setuptools-69.5.1.tar.gz", hash = "sha256:6c1fccdac05a97e598fb0ae3bbed5904ccb317337a51139dcd51453611bbb987", size = 2291314, upload-time = "2024-04-13T21:06:28.589Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/9c/42314ee079a3e9c24b27515f9fbc7a3c1d29992c33451779011c74488375/setuptools-78.1.1.tar.gz", hash = "sha256:fcc17fd9cd898242f6b4adfaca46137a9edef687f43e6f78469692a5e70d851d", size = 1368163, upload-time = "2025-04-19T18:23:36.68Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/29/13965af254e3373bceae8fb9a0e6ea0d0e571171b80d6646932131d6439b/setuptools-69.5.1-py3-none-any.whl", hash = "sha256:c636ac361bc47580504644275c9ad802c50415c7522212252c033bd15f301f32", size = 894566, upload-time = "2024-04-13T21:06:23.256Z" },
+    { url = "https://files.pythonhosted.org/packages/90/99/158ad0609729111163fc1f674a5a42f2605371a4cf036d0441070e2f7455/setuptools-78.1.1-py3-none-any.whl", hash = "sha256:c3a9c4211ff4c309edb8b8c4f1cbfa7ae324c4ba9f91ff254e3d305b9fd54561", size = 1256462, upload-time = "2025-04-19T18:23:34.525Z" },
 ]
 
 [[package]]
@@ -5760,8 +5703,8 @@ resolution-markers = [
     "python_full_version < '3.10' and sys_platform == 'linux'",
 ]
 dependencies = [
-    { name = "importlib-metadata", marker = "python_full_version < '3.10'" },
-    { name = "setuptools", marker = "python_full_version < '3.10'" },
+    { name = "importlib-metadata", marker = "python_full_version < '3.10' and sys_platform == 'linux'" },
+    { name = "setuptools", marker = "python_full_version < '3.10' and sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/ee/0ee5f64a87eeda19bbad9bc54ae5ca5b98186ed00055281fd40fb4beb10e/triton-3.4.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7ff2785de9bc02f500e085420273bb5cc9c9bb767584a4aa28d6e360cec70128", size = 155430069, upload-time = "2025-07-30T19:58:21.715Z" },
