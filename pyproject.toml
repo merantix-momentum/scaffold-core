@@ -73,7 +73,7 @@ wandb = [
 dev = [
     "ipykernel>=6.31.0",
     "autopep8==1.7.0",
-    "black==22.8.0",
+    "black==24.3.0",
     "mockito",
     "pre-commit>=2.16.0",
     "py",
