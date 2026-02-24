@@ -13,3 +13,4 @@ Scaffold has several loosely coupled subpackages, which are motivated and their 
    subpackages/artifact_manager
    subpackages/entrypoints
    subpackages/plotting
+   subpackages/aim_utils
