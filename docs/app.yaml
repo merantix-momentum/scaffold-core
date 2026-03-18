@@ -1,4 +1,4 @@
-service: devtool-labs-docs
+service: scaffold-docs
 runtime: custom
 env: flex
 network:
