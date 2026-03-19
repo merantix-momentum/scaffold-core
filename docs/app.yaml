@@ -1,11 +1,9 @@
 service: scaffold-docs
-runtime: python310
-
-handlers:
-  - url: /
-    static_files: _build/html/index.html
-    upload: _build/html/index.html
-
-  - url: /(.*)
-    static_files: _build/html/\1
-    upload: _build/html/(.*)
+runtime: custom
+env: flex
+network:
+  name: mx-labs-devops-vpc
+  subnetwork_name: mx-labs-devops-subnet
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 2
