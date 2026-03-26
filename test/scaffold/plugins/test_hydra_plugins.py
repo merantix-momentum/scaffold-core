@@ -23,8 +23,7 @@ def test_config_installed() -> None:
     """Tests if the scaffold configs are correctly added to the config store."""
     with initialize(config_path=None):
         config_loader = GlobalHydra.instance().config_loader()
-        assert "ArtifactManagerConf" in config_loader.get_group_options("scaffold/artifact_manager")
-        assert "EntrypointConf" in config_loader.get_group_options("scaffold/entrypoint")
+        assert "WandbArtifactManagerConf" in config_loader.get_group_options("scaffold/artifact_manager")
         assert "FlyteWorkflowConfig" in config_loader.get_group_options("scaffold/flyte_launcher")
 
 
@@ -49,7 +48,6 @@ def test_hydra_plugin_available() -> None:
     [
         "scaffold/flyte_launcher/FlyteDockerImageConfig",
         "scaffold/flyte_launcher/FlyteWorkflowConfig",
-        "scaffold/entrypoint/EntrypointConf",
     ],
 )
 def test_config_store_available_through_plugin(config_name: str) -> None:

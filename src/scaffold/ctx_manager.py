@@ -3,11 +3,48 @@ import os
 import typing as t
 from contextlib import AbstractContextManager, contextmanager, ExitStack
 
-from omegaconf import DictConfig
-
-from scaffold.hydra import compose
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"}},
+    "root": {"level": "INFO", "handlers": ["console"]},
+    "disable_existing_loggers": False,
+}
+
+STDOUT_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "%(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"}},
+    "root": {"level": "INFO", "handlers": ["console"]},
+    "disable_existing_loggers": False,
+}
+
+DISABLED_LOGGING: dict = {
+    "version": 1,
+    "root": {"level": "ERROR"},
+    "disable_existing_loggers": True,
+}
+
+NONE_LOGGING: dict = {
+    "version": 1,
+    "root": {},
+    "disable_existing_loggers": False,
+}
+
+STDOUT_AND_LOGFILE_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"},
+        "file": {"class": "logging.FileHandler", "formatter": "simple", "filename": None},
+    },
+    "root": {"level": "INFO", "handlers": ["console", "file"]},
+    "disable_existing_loggers": False,
+}
 
 
 class LoggingContext(AbstractContextManager):
@@ -25,8 +62,8 @@ class LoggingContext(AbstractContextManager):
     ```
     """
 
-    DEFAULT_CONFIGURATION = compose("scaffold/entrypoint/logging/default.yaml")
-    SILENT_CONFIGURATION = compose("scaffold/entrypoint/logging/disabled.yaml")
+    DEFAULT_CONFIGURATION: DictConfig = OmegaConf.create(DEFAULT_LOGGING)
+    SILENT_CONFIGURATION: DictConfig = OmegaConf.create(DISABLED_LOGGING)
 
     def __init__(
         self,

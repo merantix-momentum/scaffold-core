@@ -36,9 +36,9 @@ def mxm_register(nodes: List[Union[PythonTask, WorkflowBase]]) -> Callable:
     """
 
     def decorator(func: Callable) -> Callable:
-        assert isinstance(func, PythonTask) or isinstance(func, WorkflowBase), (
-            f"Can only annotate Flyte entities not {type(func)}"
-        )
+        assert isinstance(func, PythonTask) or isinstance(
+            func, WorkflowBase
+        ), f"Can only annotate Flyte entities not {type(func)}"
         func.mxm_nodes = nodes
         return func
 

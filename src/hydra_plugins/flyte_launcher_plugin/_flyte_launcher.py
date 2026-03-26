@@ -11,13 +11,16 @@ import string
 import sys
 import tarfile
 import tempfile
+from dataclasses import dataclass, field
+from enum import Enum, unique
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
 import pyprojroot
 from flytekit import Email, Slack
 from flytekit.core.notification import Notification
 from flytekit.exceptions.user import FlyteEntityNotExistException, FlyteInvalidInputException
+from flytekit.models.core.execution import WorkflowExecutionPhase
 
 try:
     # not available in older flyte versions
@@ -26,17 +29,11 @@ try:
     imported_unavailable_exceptions = True
 except ImportError:
     imported_unavailable_exceptions = False
-from hydra.core.utils import JobReturn, configure_log, filter_overrides, run_job, setup_globals
+from hydra.core.utils import configure_log, filter_overrides, JobReturn, run_job, setup_globals
 from hydra.plugins.launcher import Launcher
 from hydra.types import HydraContext, TaskFunction
 from omegaconf import DictConfig, OmegaConf, open_dict
 
-from scaffold.conf.scaffold.flyte_launcher import (
-    ExecutionEnvironmentEnum,
-    FlyteDockerImageConfig,
-    FlyteNotificationConfig,
-    FlyteNotificationEnum,
-)
 from scaffold.constants import RUNTIME_CFG_KEY
 
 if TYPE_CHECKING:
@@ -49,6 +46,76 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+@unique
+class FlyteDomainEnum(str, Enum):
+    development = "development"
+    staging = "staging"
+    production = "production"
+
+
+@unique
+class FlyteNotificationEnum(str, Enum):
+    email = "email"
+    slack = "slack"
+
+
+@unique
+class FlyteWorkflowExecutionPhaseEnum(str, Enum):
+    UNDEFINED = WorkflowExecutionPhase.UNDEFINED
+    QUEUED = WorkflowExecutionPhase.QUEUED
+    RUNNING = WorkflowExecutionPhase.RUNNING
+    SUCCEEDING = WorkflowExecutionPhase.SUCCEEDING
+    SUCCEEDED = WorkflowExecutionPhase.SUCCEEDED
+    FAILING = WorkflowExecutionPhase.FAILING
+    FAILED = WorkflowExecutionPhase.FAILED
+    ABORTED = WorkflowExecutionPhase.ABORTED
+    TIMED_OUT = WorkflowExecutionPhase.TIMED_OUT
+    ABORTING = WorkflowExecutionPhase.ABORTING
+
+
+@unique
+class ExecutionEnvironmentEnum(str, Enum):
+    local = "local"
+    remote = "remote"
+
+
+@dataclass
+class FlyteDockerImageConfig:
+    base_image: str = "${hydra.launcher.workflow.default_image.base_image}"
+    base_image_version: Optional[str] = "${hydra.launcher.workflow.default_image.base_image_version}"
+    target_image: str = "${hydra.launcher.workflow.default_image.target_image}"
+    target_image_version: Optional[str] = "${hydra.launcher.workflow.version}"
+    dockerfile_path: str = "infrastructure/docker/Dockerfile"
+    docker_context: str = "."
+    buildargs: dict = field(default_factory=dict)
+    secrets: Optional[List[str]] = None
+    docker_kwargs: dict = field(default_factory=dict)
+    flyte_image_name: str = "default"
+
+
+@dataclass
+class FlyteWorkflowConfig:
+    default_image: FlyteDockerImageConfig = field(
+        default_factory=lambda: FlyteDockerImageConfig(
+            base_image="${hydra.launcher.workflow.default_image.target_image}",
+            base_image_version="latest",
+        )
+    )
+    extra_images: List[FlyteDockerImageConfig] = field(default_factory=list)
+    ignore: str = ".flyteignore"
+    version: Optional[str] = None
+    project: str = "default"
+    domain: FlyteDomainEnum = FlyteDomainEnum.development
+    cron_schedule: Optional[str] = None
+
+
+@dataclass
+class FlyteNotificationConfig:
+    type: FlyteNotificationEnum = FlyteNotificationEnum.email
+    phases: List[FlyteWorkflowExecutionPhaseEnum] = field(default_factory=list)
+    recipients: List[str] = field(default_factory=list)
+
+
 class FlyteLauncher(Launcher):
     def __init__(
         self,
@@ -58,7 +125,8 @@ class FlyteLauncher(Launcher):
         fast_serialization: bool,
         run: bool,
         notifications: Optional[List[DictConfig]],
-        **_: object,  # absorbs workflow= and any future config-only fields; TODO: Can we get rid of this? Removed since the passed arguments are not accessed at all and are more confusing than helpful
+        **_: object,  # Hydra passes all launcher config fields (incl. workflow) as kwargs;
+        # fields not needed in __init__ are absorbed here — they're accessed via self.config after setup().
     ) -> None:
         """
         Construct Flyte launcher.
