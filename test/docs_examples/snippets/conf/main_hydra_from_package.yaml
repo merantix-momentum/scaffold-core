@@ -1,6 +1,5 @@
 defaults:
   - model: model_conf
-  - scaffold/entrypoint/logging@my_logging: default
   - _self_
 
 experiment_name: training
