@@ -4,8 +4,8 @@ import logging
 import typing as t
 from typing import Any, Callable
 
+from flytekit import task
 from flytekit.configuration import Config as FlyteConfig
-from flytekit.core import task
 from flytekit.core.cache import Cache
 from flytekit.remote import FlyteLaunchPlan, FlyteRemote
 from hydra_zen import zen
