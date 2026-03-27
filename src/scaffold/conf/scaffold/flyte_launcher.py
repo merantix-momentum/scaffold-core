@@ -1,5 +1,4 @@
 from hydra_zen import builds, store
-from omegaconf import MISSING
 
 from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
     ExecutionEnvironmentEnum,
@@ -18,7 +17,7 @@ LauncherConf = builds(
     build_images=True,
     fast_serialization=False,
     run=True,
-    workflow=MISSING,
+    workflow=None,
     notifications=[],
 )
 
