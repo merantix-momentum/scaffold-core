@@ -1,6 +1,6 @@
 .. _ml-pipelines:
 
-Machine Learning Pipelines
+ML Pipelines
 ==========================
 
 This section covers how we build, configure, and deploy machine learning pipelines using
