@@ -9,19 +9,12 @@ https://pytest.org/en/6.2.x/writing_plugins.html#conftest-py-local-per-directory
 """
 import sys
 from contextlib import AbstractContextManager
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
 from scaffold.integration_test.helpers import configure_mock
 from scaffold.integration_test.shared_fixtures import *  # noqa: F401, F403
-
-
-@pytest.fixture()
-def absolute_test_config_dir() -> str:
-    """Absolute config dir for the test configs."""
-    return str((Path(__file__).parent / "scaffold" / "conf").resolve())
 
 
 @pytest.fixture(scope="session")

@@ -20,7 +20,7 @@ def check_cfg_for_missing_values(allowed_missing: Optional[List[str]] = None):
     Decorator function that ensures we have no entries with MISSING values.
 
     It checks entries to see if they have not been overwritten via YAML or CLI.
-    Entries ending with logging, like the entry that is part of the EntrypointConf, are not checked.
+    Entries ending with logging are not checked.
 
     Usage:
     >>> @hydra.main(
