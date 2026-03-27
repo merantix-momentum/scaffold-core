@@ -73,7 +73,11 @@ class DirectoryLogger:
     """
 
     def __init__(
-        self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None
+        self,
+        artifact_manager: "ArtifactManager",
+        artifact_name: str,
+        collection: Optional[str] = None,
+        artifact_description: Optional[str] = None,
     ) -> None:
         """Initialize a DirectoryLogger.
 
@@ -81,10 +85,15 @@ class DirectoryLogger:
             artifact_manager (ArtifactManager): The artifact manager to use.
             artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
+            artifact_description:
+                Description of the artifact, defaults to None.
+                Will be logged and serves to reduce undocumented artifact clutter.
+                Must be provided if the artifact does not exist yet. Will raise ValueError otherwise.
         """
         self.artifact_manager = artifact_manager
         self._artifact_name = artifact_name
         self._collection = collection or artifact_manager.active_collection
+        self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
 
     def __enter__(self) -> str:
@@ -100,7 +109,14 @@ class DirectoryLogger:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact = self.artifact_manager.log_files(self._artifact_name, self.artifact_dir, self._collection)
+            try:
+                self.artifact = self.artifact_manager.log_files(
+                    self._artifact_name, self.artifact_dir, self._collection, description=self._artifact_description
+                )
+            except ValueError as e:
+                raise ValueError(
+                    "Please specify an artifact_description to the DirectoryLogger (the artifact does not exist yet)."
+                ) from e
         shutil.rmtree(self.tempdir)
 
 
@@ -156,6 +172,7 @@ class ArtifactManager(ABC):
         local_path: Path,
         collection: Optional[str] = None,
         artifact_path: Optional[Path] = None,
+        description: Optional[str] = None,
     ) -> Artifact:
         """
         Upload a file or folder into (current) collection, increment version automatically
@@ -165,7 +182,7 @@ class ArtifactManager(ABC):
             local_path: Local path to the file or folder to log
             collection: Name of collection to log to, defaults to the active collection
             artifact_path: path under which to log the files within the artifact, defaults to "./"
-
+            description: Description of the artifact, defaults to None.
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """

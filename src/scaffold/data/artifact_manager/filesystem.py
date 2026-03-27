@@ -48,12 +48,35 @@ class FileSystemArtifactManager(ArtifactManager):
         artifact_dir = join_path(self.url, collection, artifact_name)
         return self.fs.exists(artifact_dir)
 
+    def log_meta(
+        self, artifact_name: str, local_path: str, *, collection: t.Optional[str] = None, metafile_name: str = None
+    ) -> None:
+        """Log a file as a metafile of an artifact
+
+        This method uploads the file located at `local_path` to the artifact store's meta directory.
+        If `artifact_path` is provided, the file is uploaded to a subpath within the artifact.
+        Args:
+            artifact_name (str): The artifact name.
+            local_path (str): The local path to the file.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+            metafile_name (Optional[str]): The name of the metafile. Defaults to the name of the local file.
+        """
+        collection = collection or self.active_collection
+        base_artifact_path = join_path(self.url, collection, artifact_name)
+        target_dir = join_path(base_artifact_path, "meta")
+        if not self.fs.exists(target_dir):
+            self.fs.mkdirs(target_dir, exist_ok=True)
+        if metafile_name:
+            target_dir = join_path(target_dir, metafile_name)
+        self.fs.put(local_path, target_dir, recursive=False)
+
     def log_files(
         self,
         artifact_name: str,
         local_path: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
+        description: t.Optional[str] = None,
     ) -> Artifact:
         """Log a file or folder as an artifact.
 
@@ -66,7 +89,10 @@ class FileSystemArtifactManager(ArtifactManager):
             local_path (str): The local path to the file or folder.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
-
+            description:
+                Description of the artifact, defaults to None.
+                Will be logged and serves to reduce undocumented artifact clutter.
+                Must be provided if the artifact does not exist yet. Will raise ValueError otherwise.
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
@@ -87,6 +113,14 @@ class FileSystemArtifactManager(ArtifactManager):
         else:
             new_version = "v0"
         target_dir = join_path(base_artifact_path, new_version)
+
+        if new_version == "v0" and description is None:
+            raise ValueError("Description must be provided: the artifact does not exist yet.")
+        if description:
+            self.fs.mkdirs(target_dir, exist_ok=True)
+            desc_file = join_path(target_dir, "description.txt")
+            with self.fs.open(desc_file, "wb") as f:
+                f.write(description.encode("utf-8"))
 
         if artifact_path:
             # Upload a single file to target_dir/artifact_path.
