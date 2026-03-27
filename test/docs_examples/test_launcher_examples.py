@@ -11,9 +11,6 @@ CONFIG_OUTPUT_2 = CONFIG_OUTPUT + "Let me tell you about cfg.another_key='yet_an
     "filename,output",
     [
         ("main.py", "Doing things!\n"),
-        ("main_hydra.py", CONFIG_OUTPUT),
-        ("main_hydra_group.py", CONFIG_OUTPUT),
-        ("main_hydra_from_package.py", CONFIG_OUTPUT),
         ("main_hydra_flyte.py", CONFIG_OUTPUT),
         ("main_hydra_flyte_two_tasks.py", CONFIG_OUTPUT_2),
     ],

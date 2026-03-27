@@ -1,10 +1,5 @@
 Examples
 -----------------
 
-This section collects some example code snippets for different use cases.
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Contents:
-
-   examples/hydra_entrypoint
+End-to-end examples are embedded in the :doc:`hydra_flyte_launcher/hydra_flyte_launcher` section.
+See in particular :ref:`minimal-usage` and :ref:`full-example-workflow`.

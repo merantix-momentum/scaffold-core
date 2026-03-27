@@ -4,9 +4,16 @@ import typing as t
 import flytekitplugins.omegaconf  # noqa F401
 import hydra
 from flytekit import task, workflow
+from hydra_zen import make_config, store
 from omegaconf import DictConfig, OmegaConf
 
 logging.disable(logging.CRITICAL)  # Remove logs when comparing expected output
+
+
+PipelineConf = make_config(strip_string=True, make_lower_case=False)
+
+store(PipelineConf, name="pipeline")
+store.add_to_hydra_store()
 
 
 @task(cache=True)
@@ -15,12 +22,11 @@ def prepare_config(cfg: DictConfig, overrides: t.Optional[t.Dict[str, t.List[int
 
     Args:
         overrides: Overrides to apply to the config with keys in dot notation
-        cfg (DictConfig): Workflow config of type TrainingWorkflowConf.
+        cfg (DictConfig): Workflow config.
 
     Returns:
-        t.Tuple[DictConfig, ...]: Updated config
+        DictConfig: Updated config
     """
-
     if overrides is not None:
         for key, value in overrides.items():
             OmegaConf.update(cfg, key, value)
@@ -46,7 +52,7 @@ def pipeline(cfg: DictConfig, data_string: str, overrides: t.Optional[t.Dict[str
     This code is not executed (when running on kubernetes), but follows python syntax.
 
     Args:
-        cfg (DictConfig): Workflow config of type TrainingWorkflowConf.
+        cfg (DictConfig): Workflow config.
         overrides: Overrides to apply to the config with keys in dot notation. Convenience for easier changing the cfg.
         data_string: The data to process, any string that will be cleaned.
     """
@@ -54,7 +60,7 @@ def pipeline(cfg: DictConfig, data_string: str, overrides: t.Optional[t.Dict[str
     clean_string_task(cfg=cfg, data_string=data_string)
 
 
-@hydra.main(config_path="./conf", config_name="main_hydra_flyte_multiple_inputs.yaml")
+@hydra.main(config_name="pipeline", version_base=None)
 def main(cfg: DictConfig) -> None:
     """Parses the config locally and triggers the hydra flyte launcher."""
     pipeline(cfg=cfg)

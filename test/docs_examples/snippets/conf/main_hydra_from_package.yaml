@@ -1,5 +1,0 @@
-defaults:
-  - model: model_conf
-  - _self_
-
-experiment_name: training
