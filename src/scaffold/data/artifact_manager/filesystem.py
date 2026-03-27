@@ -1,5 +1,6 @@
 import typing as t
 
+from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
 from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
 
@@ -52,6 +53,7 @@ class FileSystemArtifactManager(ArtifactManager):
         self,
         artifact_name: str,
         local_path: str,
+        description: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
     ) -> Artifact:
@@ -64,9 +66,12 @@ class FileSystemArtifactManager(ArtifactManager):
         Args:
             artifact_name (str): The artifact name.
             local_path (str): The local path to the file or folder.
+            description:
+                Description of the artifact.
+                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
+                and serves to reduce undocumented artifact clutter.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
-
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
@@ -87,6 +92,13 @@ class FileSystemArtifactManager(ArtifactManager):
         else:
             new_version = "v0"
         target_dir = join_path(base_artifact_path, new_version)
+
+        # write description
+        meta_dir = join_path(base_artifact_path, ARTIFACT_META_DIR)
+        self.fs.mkdirs(meta_dir, exist_ok=True)
+        desc_file = join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE)
+        with self.fs.open(desc_file, "w") as f:
+            f.write(description)
 
         if artifact_path:
             # Upload a single file to target_dir/artifact_path.
