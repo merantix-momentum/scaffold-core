@@ -20,8 +20,7 @@ for configuration, `Flyte <https://flyte.org/>`_ for orchestration, and Scaffold
    gotchas
 
 
-Why these tools?
-----------------
+**Why these tools?**
 
 As ML projects move from proof-of-concept to production, managing configuration, reproducibility,
 and cloud execution manually becomes prohibitively expensive. Classical software engineering has
@@ -53,8 +52,7 @@ Google refers to as
 and Martin Fowler calls `CD4ML <https://martinfowler.com/articles/cd4ml.html>`_.
 
 
-When should you use Flyte?
---------------------------
+**When should you use Flyte?**
 
 Local execution is always the starting point. Reach for Flyte when you need any of the following
 — and especially when you need several of them together:
@@ -66,8 +64,7 @@ Local execution is always the starting point. Reach for Flyte when you need any 
 - **CD4ML** — CI/CD automatically registers and runs a new workflow version on every merge
 
 
-How it works at a glance
-------------------------
+**How it works at a glance**
 
 A pipeline file follows a five-step structure:
 
