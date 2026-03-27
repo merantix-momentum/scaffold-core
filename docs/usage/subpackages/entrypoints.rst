@@ -3,6 +3,9 @@
 Entrypoints
 ===========
 
+.. deprecated::
+    The entrypoint module is deprecated and will be removed in a future release.
+
 Scaffold :code:`entrypoint` is a callable class that structures entry points, i.e. python modules, that are supposed to be executed directly.
 They are configured using an already parsed hydra :code:`DictConfig`, which is usually provided by using :code:`hydra.main()`.
 

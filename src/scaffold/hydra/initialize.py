@@ -1,4 +1,5 @@
 import os
+import warnings
 from contextlib import contextmanager
 from typing import Iterator, Optional
 
@@ -14,11 +15,23 @@ def initialize(
 ) -> Iterator[GlobalHydra]:
     """Context manager, that either uses an existing hydra instance, or initializes one temporarily.
 
+    .. deprecated::
+        This helper is no longer needed in most cases. Use hydra's own ``hydra.initialize`` directly,
+        or define configs with ``hydra_zen.builds()`` and ``hydra_zen.store()`` which do not require
+        manual initialization. This function will be removed in a future release.
+
     Args:
         config_dir (Optional[str]): Absolute directory that should be added to the search path.
         job_name (Optional[str]): hydra.job.name which should be set.
         exists_ok (Optional[bool]): Do not fail if hydra is already initialized and yield GlobalHydra.instance().
     """
+    warnings.warn(
+        "scaffold.hydra.initialize is deprecated and will be removed in a future release. "
+        "Use hydra's own initialize directly, or define configs with hydra_zen.builds() and hydra_zen.store() "
+        "which do not require manual initialization.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if config_dir is not None and not os.path.isabs(config_dir):
         raise ValueError("scaffold.hydra.initialize() requires an absolute config_dir!")
     if GlobalHydra.instance().is_initialized():

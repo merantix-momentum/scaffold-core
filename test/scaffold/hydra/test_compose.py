@@ -1,3 +1,4 @@
+import warnings
 from dataclasses import field
 from typing import Any, List
 
@@ -8,6 +9,11 @@ from omegaconf import MISSING
 
 from scaffold.hydra import compose
 from scaffold.hydra.config_helpers import structured_config
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
 @structured_config

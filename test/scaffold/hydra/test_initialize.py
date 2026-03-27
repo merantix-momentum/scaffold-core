@@ -7,6 +7,8 @@ from hydra.core.global_hydra import GlobalHydra
 from scaffold.hydra import initialize
 from scaffold.hydra.constants import VERSION_BASE
 
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+
 
 def test_hydra_initialize() -> None:
     """test_hydra_initialize"""

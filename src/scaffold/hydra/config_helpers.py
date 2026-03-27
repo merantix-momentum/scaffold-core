@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
@@ -19,6 +20,10 @@ def check_cfg_for_missing_values(allowed_missing: Optional[List[str]] = None):
     """
     Decorator function that ensures we have no entries with MISSING values.
 
+    .. deprecated::
+        Use :func:`hydra_zen.builds` with ``populate_full_signature=True`` and rely on hydra's
+        built-in ``MISSING`` handling instead. This helper will be removed in a future release.
+
     It checks entries to see if they have not been overwritten via YAML or CLI.
     Entries ending with logging are not checked.
 
@@ -30,6 +35,12 @@ def check_cfg_for_missing_values(allowed_missing: Optional[List[str]] = None):
     ... def main(cfg: DictConfig) -> None:
     ...     pass
     """
+    warnings.warn(
+        "check_cfg_for_missing_values is deprecated and will be removed in a future release. "
+        "Use hydra-zen's builds() with MISSING fields and rely on hydra's built-in validation instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def decorator(func: Callable[..., Any]):
         @functools.wraps(func)
@@ -117,6 +128,16 @@ def structured_config(
     2. Adds the base type StructuredConfig to the class
     3. Adds a class method get_store_args() which can be used to get the store location from the class.
 
+    .. deprecated::
+        Use :func:`hydra_zen.builds` and :func:`hydra_zen.store` instead::
+
+            from hydra_zen import builds, store
+
+            MyConf = builds(MyClass, arg=value)
+            store(MyConf, group="my/group", name="MyConf")
+
+        This decorator will be removed in a future release.
+
     NOTE: The decorated class is only registered, if the module containing it is imported!
 
     Example:
@@ -142,6 +163,13 @@ def structured_config(
 
     @wraps(_cls, updated=())  # See wraps use for classes https://stackoverflow.com/a/65470430
     def struct_config_decorator(cls: type) -> type:
+        warnings.warn(
+            f"@structured_config is deprecated and will be removed in a future release. "
+            f"Use hydra_zen.builds() and hydra_zen.store() instead. "
+            f"Affected class: {cls.__name__}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         dataclass_decorator = dataclass(frozen=frozen)
         cls = dataclass_decorator(cls)
 
