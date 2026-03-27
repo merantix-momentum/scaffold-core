@@ -119,7 +119,7 @@ class FlyteNotificationConfig:
 class FlyteLauncher(Launcher):
     def __init__(
         self,
-        execution_environment: str,
+        execution_environment: str | ExecutionEnvironmentEnum,
         endpoint: str,
         build_images: bool,
         fast_serialization: bool,
@@ -131,7 +131,7 @@ class FlyteLauncher(Launcher):
         Construct Flyte launcher.
 
         Args:
-            execution_environment (str): Can be either 'local' or 'remote'
+            execution_environment (str | ExecutionEnvironmentEnum): Can be either 'local' or 'remote'
             endpoint (str): The Flyte platform endpoint to connect to
             build_images (bool): whether the launcher should build the docker images containing the workflow code
             fast_serialization (bool): whether to use fast serialization to inject code into existing containers
@@ -771,11 +771,13 @@ class FlyteLauncher(Launcher):
             an array of return values from run_job with indexes corresponding to the input list indexes.
         """
 
+        # TODO: also allow enum comparison here
         if self.execution_environment == ExecutionEnvironmentEnum.local:
             return self._launch_local(job_overrides, initial_job_idx)
         elif self.execution_environment == ExecutionEnvironmentEnum.remote:
             return self._launch_remote(job_overrides, initial_job_idx)
         else:
             raise ValueError(
-                f"Execution environment must be either 'local' or 'remote', but was '{self.execution_environment}'."
+                f"Execution environment must be either 'local' or 'remote', but was '{self.execution_environment}"
+                f"({type(self.execution_environment)})'."
             )
