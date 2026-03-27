@@ -1,11 +1,11 @@
 Data Catalog
-==========
+============
 
 Scaffold provides an API for organizing datasets within your data science project.
 The functionality is provided through the :py:class:`Catalog` and :py:class:`Dataset` classes.
 
 Simple Catalog Example
-----------------
+----------------------
 
 Create the catalog
 
@@ -36,9 +36,9 @@ A catalog implements the :py:class:`MutableMapping` interface. Use it like a py:
 
 
 Store and share catalogs
-----------------------
+------------------------
 
-Catalogs can be serialized and deserialized with :py:mod:`Pydantic` compatible framework. 
+Catalogs can be serialized and deserialized with :py:mod:`Pydantic` compatible framework.
 We prefer using :py:mod:`hydra-zen`. Scaffold provides a helper target to safely load a catalog from arbitrary sources called :py:class:`SafeInit`.
 
 .. code-block:: python
@@ -87,7 +87,7 @@ Scaffold supports versioned artifacts through the :py:class:`ArtifactDataset` cl
     from scaffold.data.catalog import Catalog, ArtifactDataset, FileSystemArtifactManagerDataset
 
     c = Catalog()
-    
+
     # Define an artifact manager
     manager = FileSystemArtifactManagerDataset(url="./artifacts")
 

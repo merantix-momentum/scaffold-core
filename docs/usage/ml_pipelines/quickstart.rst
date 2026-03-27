@@ -18,7 +18,7 @@ Running the pipeline
 
 .. code-block:: console
 
-    python workflow.py
+    python workflow.py hydra.launcher.execution_environment=local
 
 This executes :code:`main()` directly, which calls :code:`run_local_workflow`. Flyte tasks and
 the workflow run as ordinary Python functions in the current process — no containers, no Flyte backend.
@@ -27,7 +27,7 @@ the workflow run as ordinary Python functions in the current process — no cont
 
 .. code-block:: console
 
-    python workflow.py
+    python workflow.py hydra.launcher.execution_environment=remote
 
 The :code:`__main__` block sets :code:`HydraConf(mode=RunMode.MULTIRUN)` before calling :code:`main()`.
 MULTIRUN mode is what activates the Flyte launcher — without it, the launcher is never invoked.

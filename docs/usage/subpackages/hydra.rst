@@ -28,7 +28,7 @@ Some highlights:
 - An alternative to hydra's ``initialize`` which does not fail if there is an existing hydra instance.
 
 
-Also see :ref:`example1`.
+Also see :ref:`quickstart`.
 
 Registering schemas with @structured_config
 --------------------------------------------
@@ -131,3 +131,12 @@ Lets start with the same schema from before:
    hydra.compose("/my/grouped/config"), this results in a config with the keys config["my"]["group"][...].
    Setting return_leaf=True (Default), scaffold.hydra.compose will automatically return the result of config["my"]["group"]
    instead of adding all group keys.
+
+.. _hydra-zen-section:
+
+hydra-zen
+---------
+
+New projects should use `hydra-zen <https://mit-ll-responsible-ai.github.io/hydra-zen/>`_ for
+configuration instead of the deprecated helpers above.
+See :ref:`ml-pipelines` for end-to-end examples using hydra-zen with Scaffold.

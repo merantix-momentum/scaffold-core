@@ -1,5 +1,5 @@
 Examples
 -----------------
 
-End-to-end examples are embedded in the :doc:`hydra_flyte_launcher/hydra_flyte_launcher` section.
-See in particular :ref:`minimal-usage` and :ref:`full-example-workflow`.
+End-to-end examples are embedded in the :doc:`ml_pipelines/index` section.
+See in particular :ref:`quickstart` and :ref:`full-example`.

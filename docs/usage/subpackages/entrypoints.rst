@@ -15,7 +15,7 @@ Scaffold entrypoints aim at:
 - Bootstrap projects by adding useful, general functionality like configuring python logging, tracking configuration.
 - Ease the hydra integration and define a standard.
 
-See :ref:`example1`, for an example use case of structuring your code and using callbacks.
+See :ref:`quickstart`, for an example use case of structuring your code and using callbacks.
 
 
 Minimal usage
@@ -31,13 +31,9 @@ This minimal example mostly just structures your code by
 * Note also that entrypoint definition can take a generic type parameter, which allows us to specify the config type, which is then used to type hint the structured config object in the entrypoint methods.
 
 
-.. literalinclude:: /../test/docs_examples/snippets/conf/entrypoint_conf.yaml
-    :caption: conf/entrypoint_conf.yaml
-    :language: yaml
-
-.. literalinclude:: /../test/docs_examples/snippets/entrypoint.py
-    :caption: entrypoint.py
-    :language: python
+.. note::
+    Example configuration and entrypoint snippet files have been removed.
+    See the :ref:`ml-pipelines` section for current examples.
 
 
 EntrypointCallback
@@ -66,17 +62,9 @@ Implementations inherit from a base class:
 
 An example for defining your own callback could look something like this:
 
-.. literalinclude:: /../test/docs_examples/snippets/entrypoint_callback.py
-    :caption: entrypoint_callback.py
-    :language: python
-
-
-You can also add callbacks through config targets, instead of passing them in as python arguments.
-Additionally, you can choose in which order the callbacks are executed (either first in first out: :code:`fifo`, or first in last out: :code:`fifo`).
-
-.. literalinclude:: /../test/docs_examples/snippets/conf/entrypoint_callback_conf.yaml
-    :caption: conf/entrypoint_callback_conf.yaml
-    :language: yaml
+.. note::
+    Example callback snippet files have been removed.
+    See the :ref:`ml-pipelines` section for current examples.
 
 .. note::
     The callbacks from the config are added first, the python argument callbacks are appended!

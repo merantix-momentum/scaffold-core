@@ -32,4 +32,3 @@ Scaffold currently offers support for the current aspects of machine learning pr
    usage/subpackages
    usage/ml_pipelines/index
    usage/examples
-   usage/document

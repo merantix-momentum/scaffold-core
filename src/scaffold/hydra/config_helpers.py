@@ -123,6 +123,7 @@ def structured_config(
     frozen: bool = False,
 ) -> Callable:
     """Decorator which extends the @dataclass in the following ways:
+
     1. Adds the decorated class to the config store with reasonable defaults for
        name (class name) and provider (python package)
     2. Adds the base type StructuredConfig to the class
@@ -141,12 +142,16 @@ def structured_config(
     NOTE: The decorated class is only registered, if the module containing it is imported!
 
     Example:
-        >>> @structured_config
-            class MyRootConfig()
-                ...
-        >>> @structured_config(group="my/group")
-            class MyGroupConfig()
-                ...
+
+    .. code-block:: python
+
+        @structured_config
+        class MyRootConfig():
+            ...
+
+        @structured_config(group="my/group")
+        class MyGroupConfig():
+            ...
 
     Args:
         name (Optional[str]): Name of the config node. By default the class.__name__.

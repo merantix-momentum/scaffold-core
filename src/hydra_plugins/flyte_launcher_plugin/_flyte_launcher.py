@@ -124,9 +124,8 @@ class FlyteLauncher(Launcher):
         build_images: bool,
         fast_serialization: bool,
         run: bool,
+        workflow: FlyteWorkflowConfig,
         notifications: Optional[List[DictConfig]],
-        **_: object,  # Hydra passes all launcher config fields (incl. workflow) as kwargs;
-        # fields not needed in __init__ are absorbed here — they're accessed via self.config after setup().
     ) -> None:
         """
         Construct Flyte launcher.
@@ -137,6 +136,8 @@ class FlyteLauncher(Launcher):
             build_images (bool): whether the launcher should build the docker images containing the workflow code
             fast_serialization (bool): whether to use fast serialization to inject code into existing containers
             run (bool): whether the workflow is executed after registration
+            workflow (FlyteWorkflowConfig): Configuration for the workflow to be launched,
+                including image details and cron schedule.
             notifications (Optional[List[FlyteNotificationConfig]]): A list of `FlyteNotificationConfig` objects,
                 each specifying the notification settings for the workflow. These configurations define:
                     - **Phases**: Workflow execution phases that will trigger the notification.

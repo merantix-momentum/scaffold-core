@@ -36,15 +36,14 @@ def build_image(
     Args:
         dockerfile (Path): path to the dockerfile
         workdir_path (Path): path to the working directory/docker context
-        image_repo (str): fqn of the image repository. e.g eu.gcr.io/<proj_name>/<repo>
-        image_tag (str): tag of the image. e.g <commit-hash>-dev
-    Kwargs:
+        image_repo (str): fqn of the image repository, e.g. ``eu.gcr.io/<proj_name>/<repo>``
+        image_tag (str): tag of the image, e.g. ``<commit-hash>-dev``
         buildargs (Dict[str,str]): Build args for docker build command
-        secrets (List[str]): List of secret names to be used in the build
+        secrets (List[str]): List of secret names to be used in the build.
             Example, to mount google credentials from the host machine to the build context,
-            you can pass `secrets=["id=gcp-cred,src=<path-to-creds-file>"]`
+            you can pass ``secrets=["id=gcp-cred,src=<path-to-creds-file>"]``
         push_image (bool, optional): flag to push the image to remote repo. Defaults to False.
-        kwargs (Dict[str,str]): Additional arguments for docker build CLI call
+        **kwargs (Dict[str,str]): Additional arguments for docker build CLI call
     Returns:
         str: fqn:tag of the image
 

@@ -14,7 +14,7 @@ launcher_store(
                 target_image="<registry>/<project>/workflow",
                 dockerfile_path="Dockerfile.flyte",
             )
-        )
+        ),
     ),
     name="flyte",
     group="hydra/launcher",

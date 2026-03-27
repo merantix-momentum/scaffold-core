@@ -51,15 +51,16 @@ class LoggingContext(AbstractContextManager):
     """
     Context manager for configuring the logging system.
     It wraps the hydra's logging configuration and allows to specify verbosity level per module,
-        see hydra documentation for more details: https://hydra.cc/docs/tutorials/basic/running_your_app/logging/
+    see hydra documentation for more details: https://hydra.cc/docs/tutorials/basic/running_your_app/logging/
 
     Example usage:
-    ```
+
+    .. code-block:: python
+
         cfg = LoggingContext.DEFAULT_CONFIGURATION
         with LoggingContext(cfg) as log_context:
             logging.info("This message should be logged with the specified configuration.")
         logging.info("This error should be logged with default configuration.")
-    ```
     """
 
     DEFAULT_CONFIGURATION: DictConfig = OmegaConf.create(DEFAULT_LOGGING)
@@ -143,11 +144,12 @@ class WandBContext(AbstractContextManager):
     Context manager for configuring wandb, starting and exiting a wandb run.
 
     Example usage:
-    ```
+
+    .. code-block:: python
+
         with WandBContext(project="chameleon", entity="mg515") as wandb_ctx:
             # Do something with the WandB context
             wandb.log({"metric": 0.5})
-    ```
     """
 
     def __init__(
@@ -230,10 +232,10 @@ def combined_context(*contexts: t.List[AbstractContextManager]):
 
     Example use case:
 
-    ```
-    with combined_context(LoggingContext(), WandBContext()) as (logger, wandb):
-        ...
-    ```
+    .. code-block:: python
+
+        with combined_context(LoggingContext(), WandBContext()) as (logger, wandb):
+            ...
     """
     with ExitStack() as stack:
         yield [stack.enter_context(cls) for cls in contexts]

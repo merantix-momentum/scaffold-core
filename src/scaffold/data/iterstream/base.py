@@ -33,8 +33,7 @@ class Composable(Iterable):
         assert "source" not in kw
         if "__init__" in constructor.__dict__ and "source" in inspect.signature(constructor).parameters:
             raise ValueError(
-                "If the provided constructor argument has an __init__ method, it should not "
-                "have the source argument."
+                "If the provided constructor argument has an __init__ method, it should not have the source argument."
             )
         return constructor(*args, **kw).source_(self)
 
@@ -49,7 +48,7 @@ class Composable(Iterable):
         return self
 
     def map(self, callback: Callable, **kw) -> _Iterable:
-        """Applies the `callback` to each item in the stream. Specify key-word arguments for callback in **kw"""
+        """Applies the ``callback`` to each item in the stream. Specify key-word arguments for callback in ``kw``"""
         partial_callback = partial(callback, **kw)
         return self.to(map_, partial_callback)
 
@@ -83,10 +82,10 @@ class Composable(Iterable):
                 `async_map`; you can pass the same `executor` to each `async_map` to share resources. If
                 `dask.distributed.Client` is passed, tasks will be executed with the provided client (local or remote).
 
-                **Note** if the executor is provided, it will not be closed in this function even after the iterator
+                Note: if the executor is provided, it will not be closed in this function even after the iterator
                 is exhausted.
 
-                **Note** if executor is provided, the argument `max_workers` will be ignored. You should
+                Note: if executor is provided, the argument ``max_workers`` will be ignored. You should
                 specify this in the executor that is being passed.
             **kw (dict): key-word arguments for callback
 

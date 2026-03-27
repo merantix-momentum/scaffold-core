@@ -182,7 +182,7 @@ def get_serialization_settings(
             `container_image="{{.images.spark.fqn}}:{{.images.default.version}}"`.
         fast_serialization_settings (FastSerializationSettings): Details of image injections in fast serialisation mode
         project (str): the flyte project
-        domain (str): domain, normally one of `development`, `staging` or `production
+        domain (str): domain, normally one of ``development``, ``staging`` or ``production``
     Returns:
         Flyte SerializationSettings for registering flyte entities.
     """
