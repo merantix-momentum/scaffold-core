@@ -18,9 +18,9 @@ Scaffold currently offers support for the current aspects of machine learning pr
 
 * Configuration management (`Hydra <https://hydra.cc/>`_ + `hydra-zen <https://mit-ll-responsible-ai.github.io/hydra-zen/>`_)
 * CLI execution and support (Hydra)
-* Model training (Pytorch Lightning)
+* Model training (PyTorch Lightning)
 * Workflow orchestration/execution (Flyte)
-* Experiment tracking (Wandb)
+* Experiment tracking (W&B)
 * Plotting (Matplotlib)
 
 .. toctree::

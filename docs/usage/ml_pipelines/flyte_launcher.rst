@@ -12,8 +12,8 @@ How invocation works
 --------------------
 
 When you run :code:`python workflow.py` from the :code:`__main__` block, the
-:code:`HydraConf(mode=RunMode.MULTIRUN)` entry in the store switches hydra to multirun mode.
-Multirun mode is what activates a hydra launcher plugin — without it, the launcher is never called
+:code:`HydraConf(mode=RunMode.MULTIRUN)` entry in the store switches Hydra to multirun mode.
+Multirun mode is what activates a Hydra launcher plugin — without it, the launcher is never called
 and the workflow runs locally via :code:`main()`.
 
 .. code-block:: python
@@ -29,7 +29,7 @@ What happens when :code:`execution_environment=remote`:
 1. Hydra renders the full config and calls the launcher's :code:`launch()` method.
 2. The launcher identifies the main :code:`@workflow` in the script (the one not used as a sub-workflow).
 3. It builds the Docker image(s) for the tasks (unless :code:`build_images=False`).
-4. It serialises and registers the workflow + all tasks with the Flyte backend.
+4. It serializes and registers the workflow and all tasks with the Flyte backend.
 5. If :code:`run=True` (default), it immediately executes the registered workflow.
 
 When :code:`execution_environment=local`, the launcher runs the workflow as a standard Python call —
@@ -93,14 +93,14 @@ The version string is logged at the end of every registration and is also visibl
 Projects and domains
 --------------------
 
-Flyte organises workflows by **project** (a logical grouping, e.g. one ML use case) and
+Flyte organizes workflows by **project** (a logical grouping, e.g. one ML use case) and
 **domain** (environment: development, staging, production).
 
 The launcher registers to :code:`development` domain by default. The conventional mapping is:
 
 - **development** — feature branch runs from a developer's machine
-- **staging** — registered by CICD on merge to main
-- **production** — registered by CICD on a tagged release
+- **staging** — registered by CI/CD on merge to main
+- **production** — registered by CI/CD on a tagged release
 
 The workflow version string automatically encodes the git branch name and commit hash, making it
 easy to identify exactly what code a given registered version contains.

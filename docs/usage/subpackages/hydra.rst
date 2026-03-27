@@ -3,7 +3,7 @@
 Hydra
 =======
 
-Scaffold's ``hydra`` subpackage provides utilities to ease the usage of hydra in projects.
+Scaffold's ``hydra`` subpackage provides utilities to ease the usage of Hydra in projects.
 
 .. warning::
     The helpers described in this page (``structured_config``, ``compose``, ``initialize``) are

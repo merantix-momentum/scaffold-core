@@ -1,7 +1,7 @@
 Contribute
 ====================
 
-To contribute to developing this package, check out its Github repository and push commits there.
+To contribute to developing this package, check out its GitHub repository and push commits there.
 
 
 Dependency Management
@@ -16,7 +16,7 @@ For an overview of poetry basic commands, visit the `official documentation: <ht
 #. When adding new dependencies, use ``poetry add [my-package]`` or
    add them manually to ``pyproject.toml`` and update the lockfile ``poetry lock --no-update``.
 #. Commit ``poetry.lock`` in a PR.
-   Once merged to main, GithubActions will build the image with the new dependencies.
+   Once merged to main, GitHub Actions will build the image with the new dependencies.
 
 Tests
 -----

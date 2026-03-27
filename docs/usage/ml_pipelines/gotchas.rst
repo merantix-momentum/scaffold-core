@@ -7,7 +7,7 @@ Common Gotchas
 Enum serialization in Flyte
 ----------------------------
 
-Flyte serialises task inputs and outputs through its type system. If you use a Python
+Flyte serializes task inputs and outputs through its type system. If you use a Python
 :code:`Enum` inside a :code:`DictConfig`, you may encounter issues with Flyte being unable to
 reconstruct the enum value correctly on the remote side.
 
@@ -49,7 +49,7 @@ See :ref:`deployment` for the full :code:`FlyteDockerImageConfig` reference.
 Google Cloud SDK missing in custom task images
 -----------------------------------------------
 
-Flyte uses Google Cloud Storage internally for type serialisation, even if your tasks don't
+Flyte uses Google Cloud Storage internally for type serialization, even if your tasks don't
 explicitly write to GCS. If a task runs in a custom container image that does not have the
 Google Cloud SDK installed, it will fail with a cryptic storage error.
 

@@ -61,7 +61,7 @@ in the registry under the current version tag:
 
     python workflow.py hydra.launcher.build_images=false
 
-**Fast serialisation** — inject your local source code into an existing container without rebuilding.
+**Fast serialization** — inject your local source code into an existing container without rebuilding.
 The container must already exist with all dependencies installed. Useful when you only changed Python code:
 
 .. code-block:: python
@@ -114,7 +114,7 @@ Define the extra image in :code:`FlyteWorkflowConfig.extra_images` and reference
         group="hydra/launcher",
     )
 
-Reference the image by name in the task decorator using flyte's image interpolation syntax:
+Reference the image by name in the task decorator using Flyte's image interpolation syntax:
 
 .. code-block:: python
 
@@ -127,4 +127,4 @@ Reference the image by name in the task decorator using flyte's image interpolat
 
 .. warning::
     If a task container needs access to Google Cloud Storage (including Flyte's internal type
-    transformer serialisation), make sure the Google Cloud SDK is installed in that container.
+    transformer serialization), make sure the Google Cloud SDK is installed in that container.

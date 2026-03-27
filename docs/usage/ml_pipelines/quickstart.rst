@@ -36,7 +36,7 @@ See :ref:`flyte-launcher` for details on what happens next.
 Overriding config from the CLI
 -------------------------------
 
-Because the config is registered with hydra, all standard hydra overrides work:
+Because the config is registered with Hydra, all standard Hydra overrides work:
 
 .. code-block:: console
 
@@ -56,7 +56,7 @@ Pattern walkthrough
 
 :code:`builds()` creates a structured config dataclass from a regular class. With
 :code:`populate_full_signature=True` the config inherits the full signature including type hints,
-which hydra uses for validation. :code:`MISSING` marks required fields that have no default.
+which Hydra uses for validation. :code:`MISSING` marks required fields that have no default.
 
 Multiple named variants are registered in a config group using a sub-store:
 

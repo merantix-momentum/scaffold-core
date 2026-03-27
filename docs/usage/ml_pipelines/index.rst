@@ -42,7 +42,7 @@ The combination of hydra-zen and Flyte solves this:
   a UI to monitor executions, inspect outputs, and re-run specific tasks. Pipelines and their
   configuration become versioned, reproducible artifacts that can be delivered to a client or
   research partner, or replayed exactly months later.
-- **Scaffold's Flyte launcher** collapses the five manual steps of building images, serialising,
+- **Scaffold's Flyte launcher** collapses the five manual steps of building images, serializing,
   registering, and executing a workflow into one CLI call — from a developer machine or from a
   CI/CD pipeline.
 

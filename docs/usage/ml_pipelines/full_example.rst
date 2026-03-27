@@ -53,7 +53,7 @@ and :code:`evaluate.model` in the rendered config:
         {"override hydra/launcher": "flyte"},
     ],
 
-The :code:`@` syntax is standard hydra package override notation — it controls *where* in the
+The :code:`@` syntax is standard Hydra package override notation — it controls *where* in the
 config tree the selected group option is placed. Switching both tasks to resnet50 from the CLI:
 
 .. code-block:: console

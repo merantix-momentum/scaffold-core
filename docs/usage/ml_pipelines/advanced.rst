@@ -38,8 +38,8 @@ Note that a static :code:`@workflow` is still required as the entry point — th
 needs a top-level workflow to identify.
 
 
-Cronjobs
---------
+Cron Jobs
+---------
 
 Workflows can run on a cron schedule by setting :code:`cron_schedule` on :code:`FlyteWorkflowConfig`:
 
@@ -58,12 +58,12 @@ Workflows can run on a cron schedule by setting :code:`cron_schedule` on :code:`
     )
 
 The recommended pattern is to leave :code:`cron_schedule` unset in the config file and only apply
-it in CICD for staging/production registrations, so development runs are never accidentally
+it in CI/CD for staging/production registrations, so development runs are never accidentally
 scheduled:
 
 .. code-block:: console
 
-    # In your CICD pipeline (e.g. Cloud Build), targeting the staging domain:
+    # In your CI/CD pipeline (e.g. Cloud Build), targeting the staging domain:
     python workflow.py hydra.launcher.workflow.cron_schedule="0 5 * * *" \
                        hydra.launcher.workflow.domain=staging
 

@@ -37,11 +37,11 @@ Request the secret in the task decorator:
     def train_task(cfg: DictConfig, runtime_cfg: DictConfig, ...) -> ...:
         ...
 
-For local execution and CICD, set the API key via environment variables (add to :code:`.zshrc`):
+For local execution and CI/CD, set the API key via environment variables (add to :code:`.zshrc`):
 
 .. code-block:: bash
 
-    export WANDB_USERNAME=<your Github handle>
+    export WANDB_USERNAME=<your GitHub handle>
     export WANDB_API_KEY=<your WandB api key>
 
 If calling :code:`wandb.init()` directly (rather than via :code:`WandBCallback`), call the
