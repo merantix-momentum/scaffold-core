@@ -1,6 +1,6 @@
 [project]
 name = "mxm-scaffold"
-version = "0.19.1"
+version = "0.20.1"
 description = "Merantix Momentum AI Platform client library"
 authors = [
     {name = "Merantix Momentum GmbH"}

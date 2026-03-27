@@ -80,6 +80,7 @@ class LightningCheckpointer(Callback):
         return self.model_logger.log_state_to_artifact(
             self.target_afid,
             model,
+            "Lightning checkpointer state log",
             optimizers,
             current_epoch=current_epoch,
             **kwargs,
@@ -165,6 +166,7 @@ class LightningCheckpointer(Callback):
             self.artifact_manager.log_files(
                 artifact_name=self.target_afid_best,
                 local_path=self.best_state_dir,
+                description="Scaffold LightningCheckpointer best state dicts",
             )
 
     @rank_zero_only

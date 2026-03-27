@@ -73,7 +73,7 @@ def test_log_file(temp_src_dir, artifact_manager):
     with open(src_file, "w") as f:
         f.write("Test: Foo")
 
-    artifact = manager.log_files(artifact_name, src_file, collection, artifact_path="foo.txt")
+    artifact = manager.log_files(artifact_name, src_file, "sample description", collection, artifact_path="foo.txt")
     assert isinstance(artifact, Artifact)
     assert artifact.name == artifact_name
     assert artifact.collection == collection
@@ -89,7 +89,7 @@ def test_log_file(temp_src_dir, artifact_manager):
     src_file2 = join_path(temp_src_dir, "bar.txt")
     with open(src_file2, "w") as f:
         f.write("Test: Bar")
-    artifact2 = manager.log_files(artifact_name, src_file2, collection, artifact_path="bar.txt")
+    artifact2 = manager.log_files(artifact_name, src_file2, "sample description", collection, artifact_path="bar.txt")
     assert isinstance(artifact2, Artifact)
     assert artifact2.name == artifact_name
     assert artifact2.collection == collection
@@ -109,7 +109,7 @@ def test_exists(temp_src_dir, artifact_manager):
         src_file = join_path(temp_src_dir, filename)
         with open(src_file, "w") as f:
             f.write("Test")
-        manager.log_files(artifact, src_file, collection, artifact_path=filename)
+        manager.log_files(artifact, src_file, "sample description", collection, artifact_path=filename)
     assert manager.exists("foo")
     assert manager.exists("bar")
     assert manager.exists_in_collection("foo", collection)
@@ -130,7 +130,7 @@ def test_get_file(temp_src_dir, artifact_manager):
         src_file = join_path(temp_src_dir, filename)
         with open(src_file, "w") as f:
             f.write(content)
-        manager.log_files(artifact_name, src_file, collection, artifact_path=filename)
+        manager.log_files(artifact_name, src_file, "sample description", collection, artifact_path=filename)
 
     # Download version "v0" (first version)
     download_dir = join_path(temp_src_dir, "downloaded")
@@ -171,7 +171,7 @@ def test_log_folder_and_download(temp_src_dir, artifact_manager):
         ("bar.txt", "Test: Bar"),
         ("baz.txt", "Test: Baz"),
     ]
-    logger = manager.log_folder("my_artifact", collection)
+    logger = manager.log_folder("my_artifact", "sample description", collection)
     with logger as folder:
         for filename, content in test_files:
             file_path = join_path(folder, filename)
@@ -204,7 +204,7 @@ def test_download_tmp(temp_src_dir, artifact_manager):
     manager, store_type = artifact_manager
     collection = "my_artifact_collection"
     test_files = {"foo.txt": "Test: Foo", "bar.txt": "Test: Bar", "baz.txt": "Test: Baz"}
-    with manager.log_folder("my_artifact", collection) as tmp_dir:
+    with manager.log_folder("my_artifact", "sample description", collection) as tmp_dir:
         for filename, content in test_files.items():
             with open(join_path(tmp_dir, filename), "w") as f:
                 f.write(content)
