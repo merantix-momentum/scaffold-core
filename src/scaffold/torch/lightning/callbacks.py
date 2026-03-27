@@ -25,6 +25,7 @@ class LightningCheckpointer(Callback):
     def __init__(
         self,
         artifact_manager: ArtifactManager,
+        artifact_description: str,
         target_afid: Optional[str] = None,
         target_afid_best: Optional[str] = None,
         resume_checkpoint_afid: Optional[str] = None,
@@ -39,6 +40,10 @@ class LightningCheckpointer(Callback):
 
         Args:
             artifact_manager (ArtifactManager): ArtifactManager to use for logging.
+            artifact_description (str):
+                Description of the artifact.
+                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
+                and serves to reduce undocumented artifact clutter.
             target_afid (str): Afid to log the state of the model and optimizers at the end of every epoch.
             target_afid_best (str): If set, will save the best model with this afid name. If None, will create a new
                 random afid with the prefix 'best_model'
@@ -63,9 +68,14 @@ class LightningCheckpointer(Callback):
         self.best_state_path = self.best_state_dir / STATE_FILENAME
 
         self.lowest_avg_val_loss = None
+        self.artifact_description = artifact_description
 
     def _log_state_with_new_afid(
-        self, model: torch.nn.Module, optimizers: List[torch.optim.Optimizer], current_epoch: int, **kwargs
+        self,
+        model: torch.nn.Module,
+        optimizers: List[torch.optim.Optimizer],
+        current_epoch: int,
+        **kwargs,
     ) -> str:
         """Generates a new random state afid and logs it to the artifact store.
 
@@ -79,6 +89,7 @@ class LightningCheckpointer(Callback):
         return self.model_logger.log_state_to_artifact(
             self.target_afid,
             model,
+            self.artifact_description,
             optimizers,
             current_epoch=current_epoch,
             **kwargs,
@@ -164,6 +175,7 @@ class LightningCheckpointer(Callback):
             self.artifact_manager.log_files(
                 artifact_name=self.target_afid_best,
                 local_path=self.best_state_dir,
+                description=self.artifact_description,
             )
 
     @rank_zero_only
