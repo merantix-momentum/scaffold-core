@@ -67,18 +67,27 @@ class DirectoryLogger:
     """
 
     def __init__(
-        self, artifact_manager: "ArtifactManager", artifact_name: str, collection: Optional[str] = None
+        self,
+        artifact_manager: "ArtifactManager",
+        artifact_name: str,
+        artifact_description: str,
+        collection: Optional[str] = None,
     ) -> None:
         """Initialize a DirectoryLogger.
 
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
             artifact_name (str): The artifact name.
+            artifact_description:
+                Description of the artifact.
+                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
+                and serves to reduce undocumented artifact clutter.
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
         self._artifact_name = artifact_name
         self._collection = collection or artifact_manager.active_collection
+        self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
 
     def __enter__(self) -> str:
@@ -94,7 +103,9 @@ class DirectoryLogger:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty and clean up the temporary directory."""
         if os.listdir(self.artifact_dir):
-            self.artifact = self.artifact_manager.log_files(self._artifact_name, self.artifact_dir, self._collection)
+            self.artifact = self.artifact_manager.log_files(
+                self._artifact_name, self.artifact_dir, self._artifact_description, self._collection
+            )
         shutil.rmtree(self.tempdir)
 
 
@@ -148,6 +159,7 @@ class ArtifactManager(ABC):
         self,
         artifact_name: str,
         local_path: Path,
+        description: str,
         collection: Optional[str] = None,
         artifact_path: Optional[Path] = None,
     ) -> Artifact:
@@ -157,9 +169,9 @@ class ArtifactManager(ABC):
         Args:
             artifact_name: Name of artifact to log
             local_path: Local path to the file or folder to log
+            description: Description of the artifact, will be logged to improve documentation.
             collection: Name of collection to log to, defaults to the active collection
             artifact_path: path under which to log the files within the artifact, defaults to "./"
-
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
@@ -197,6 +209,8 @@ class ArtifactManager(ABC):
             [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
         )
 
-    def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:
+    def log_folder(
+        self, artifact_name: str, artifact_description: str, collection: Optional[str] = None
+    ) -> DirectoryLogger:
         """Create a context manager for logging a directory of files as a single artifact."""
-        return DirectoryLogger(self, artifact_name, collection)
+        return DirectoryLogger(self, artifact_name, artifact_description, collection)

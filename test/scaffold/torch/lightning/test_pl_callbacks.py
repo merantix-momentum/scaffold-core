@@ -16,7 +16,11 @@ def test_lightning_checkpointer(tmpdir: LocalPath) -> None:
         artifact_manager = FileSystemArtifactManager(url=str(tmpdir))
 
         checkpointer = LightningCheckpointer(
-            artifact_manager=artifact_manager, target_afid=None, target_afid_best=None, only_log_current_best=False
+            artifact_manager=artifact_manager,
+            artifact_description="sample description",
+            target_afid=None,
+            target_afid_best=None,
+            only_log_current_best=False,
         )
 
         # NOTE It is not ideal to test with a private method, but did not want to go down the route of

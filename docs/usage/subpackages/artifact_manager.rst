@@ -49,8 +49,10 @@ download it back to a local directory.
 
     # Log a file artifact.
     # This call uploads the file located at "/path/to/local/file.txt" as "my_artifact".
+    # It also uploads the description as metadata. The exact location is specified in constants.py. Currently, it is "<artifact_base>/meta/readme.txt".
+    # This (short) description should explain what the artifact is, and for what purpose it was generated.
     # log_files() returns an Artifact object with metadata about the logged artifact.
-    artifact = manager.log_files("my_artifact", "/path/to/local/file.txt")
+    artifact = manager.log_files("my_artifact", "/path/to/local/file.txt", "this is a description that will be logged to a file alongside the artifact")
     print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
@@ -88,7 +90,7 @@ a file artifact and then downloads it.
 
     # Log a file artifact.
     # log_files() returns an Artifact object with metadata about the logged artifact.
-    artifact = manager.log_files("example_artifact", "/path/to/local/file.txt")
+    artifact = manager.log_files("example_artifact", "/path/to/local/file.txt", "this is a sample description")
     print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
@@ -177,7 +179,7 @@ of ``ArtifactManager`` (e.g. WandbArtifactManager) can be used instead.
     model_logger = ModelLogger(artifact_manager=manager)
 
     # Log the model state under the artifact id "my_model_state".
-    afid = model_logger.log_state_to_artifact("my_model_state", model, optimizers=[optimizer])
+    afid = model_logger.log_state_to_artifact("my_model_state", model, "this is a sample description that will be logged", optimizers=[optimizer])
     print(f"Logged model state with artifact id: {afid}")
 
 Usage Example: Retrieving a Model State
