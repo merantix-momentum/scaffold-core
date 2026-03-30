@@ -40,7 +40,7 @@ without requiring a Flyte backend.
 Configuration reference
 -----------------------
 
-The launcher is configured via :code:`LauncherConf` in :code:`launcher_conf.py`. See
+The launcher is configured via :code:`FlyteLauncherConf` in :code:`launcher_conf.py`. See
 :ref:`deployment` for the full setup. The key fields:
 
 .. list-table::
@@ -75,7 +75,7 @@ The launcher is configured via :code:`LauncherConf` in :code:`launcher_conf.py`.
        See :ref:`advanced` for details.
    * - :code:`notifications`
      - :code:`[]`
-     - List of :code:`FlyteNotificationConfig` objects. See :ref:`integrations`.
+     - List of :code:`FlyteNotificationConf` objects. See :ref:`integrations`.
 
 
 Reusing a registered workflow version
@@ -109,7 +109,7 @@ Override domain and project via :code:`workflow` config fields:
 
 .. code-block:: python
 
-    FlyteWorkflowConfig(project="my-project", domain=FlyteDomainEnum.staging, ...)
+    FlyteWorkflowConf(project="my-project", domain=FlyteDomainEnum.staging, ...)
 
 
 Monitoring executions

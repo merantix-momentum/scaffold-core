@@ -3,14 +3,14 @@ from omegaconf import MISSING
 
 from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
     ExecutionEnvironmentEnum,
-    FlyteDockerImageConfig,
+    FlyteDockerImageConf,
     FlyteLauncher,
-    FlyteNotificationConfig,
-    FlyteWorkflowConfig,
+    FlyteNotificationConf,
+    FlyteWorkflowConf,
 )
 from scaffold.conf import scaffold_store
 
-LauncherConf = builds(
+FlyteLauncherConf = builds(
     FlyteLauncher,
     execution_environment=ExecutionEnvironmentEnum.remote,
     endpoint="localhost:30081",
@@ -21,6 +21,6 @@ LauncherConf = builds(
     notifications=[],
 )
 
-scaffold_store(FlyteDockerImageConfig, group="scaffold/flyte_launcher", name="FlyteDockerImageConfig")
-scaffold_store(FlyteWorkflowConfig, group="scaffold/flyte_launcher", name="FlyteWorkflowConfig")
-scaffold_store(FlyteNotificationConfig, group="scaffold/flyte_launcher", name="FlyteNotificationConfig")
+scaffold_store(FlyteDockerImageConf, group="scaffold/flyte_launcher", name="FlyteDockerImageConf")
+scaffold_store(FlyteWorkflowConf, group="scaffold/flyte_launcher", name="FlyteWorkflowConf")
+scaffold_store(FlyteNotificationConf, group="scaffold/flyte_launcher", name="FlyteNotificationConf")

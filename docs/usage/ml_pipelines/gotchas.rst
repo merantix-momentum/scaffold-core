@@ -43,7 +43,7 @@ will be missing at runtime.
 
     python workflow.py hydra.launcher.workflow.default_image.base_image_version=<commit-hash>
 
-See :ref:`deployment` for the full :code:`FlyteDockerImageConfig` reference.
+See :ref:`deployment` for the full :code:`FlyteDockerImageConf` reference.
 
 
 Google Cloud SDK missing in custom task images

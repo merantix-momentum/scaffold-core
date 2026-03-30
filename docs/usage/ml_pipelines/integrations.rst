@@ -62,14 +62,14 @@ Configure them in :code:`launcher_conf.py`:
 .. code-block:: python
 
     from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
-        FlyteNotificationConfig, FlyteNotificationEnum, FlyteWorkflowExecutionPhaseEnum,
+        FlyteNotificationConf, FlyteNotificationEnum, FlyteWorkflowExecutionPhaseEnum,
     )
 
     launcher_store(
-        LauncherConf(
+        FlyteLauncherConf(
             ...,
             notifications=[
-                FlyteNotificationConfig(
+                FlyteNotificationConf(
                     type=FlyteNotificationEnum.email,
                     phases=[
                         FlyteWorkflowExecutionPhaseEnum.SUCCEEDED,
@@ -77,7 +77,7 @@ Configure them in :code:`launcher_conf.py`:
                     ],
                     recipients=["team@example.com"],
                 ),
-                FlyteNotificationConfig(
+                FlyteNotificationConf(
                     type=FlyteNotificationEnum.slack,
                     phases=[FlyteWorkflowExecutionPhaseEnum.FAILED],
                     recipients=["alerts@slack.example.com"],

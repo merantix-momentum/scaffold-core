@@ -41,14 +41,14 @@ needs a top-level workflow to identify.
 Cron Jobs
 ---------
 
-Workflows can run on a cron schedule by setting :code:`cron_schedule` on :code:`FlyteWorkflowConfig`:
+Workflows can run on a cron schedule by setting :code:`cron_schedule` on :code:`FlyteWorkflowConf`:
 
 .. code-block:: python
 
     # launcher_conf.py
     launcher_store(
-        LauncherConf(
-            workflow=FlyteWorkflowConfig(
+        FlyteLauncherConf(
+            workflow=FlyteWorkflowConf(
                 ...,
                 cron_schedule="0 5 * * *",  # every day at 5am
             )

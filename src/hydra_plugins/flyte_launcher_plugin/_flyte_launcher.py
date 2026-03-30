@@ -80,7 +80,7 @@ class ExecutionEnvironmentEnum(str, Enum):
 
 
 @dataclass
-class FlyteDockerImageConfig:
+class FlyteDockerImageConf:
     base_image: str = "${hydra.launcher.workflow.default_image.base_image}"
     base_image_version: Optional[str] = "${hydra.launcher.workflow.default_image.base_image_version}"
     target_image: str = "${hydra.launcher.workflow.default_image.target_image}"
@@ -94,14 +94,14 @@ class FlyteDockerImageConfig:
 
 
 @dataclass
-class FlyteWorkflowConfig:
-    default_image: FlyteDockerImageConfig = field(
-        default_factory=lambda: FlyteDockerImageConfig(
+class FlyteWorkflowConf:
+    default_image: FlyteDockerImageConf = field(
+        default_factory=lambda: FlyteDockerImageConf(
             base_image="${hydra.launcher.workflow.default_image.target_image}",
             base_image_version="latest",
         )
     )
-    extra_images: List[FlyteDockerImageConfig] = field(default_factory=list)
+    extra_images: List[FlyteDockerImageConf] = field(default_factory=list)
     ignore: str = ".flyteignore"
     version: Optional[str] = None
     project: str = "default"
@@ -110,7 +110,7 @@ class FlyteWorkflowConfig:
 
 
 @dataclass
-class FlyteNotificationConfig:
+class FlyteNotificationConf:
     type: FlyteNotificationEnum = FlyteNotificationEnum.email
     phases: List[FlyteWorkflowExecutionPhaseEnum] = field(default_factory=list)
     recipients: List[str] = field(default_factory=list)
@@ -124,8 +124,8 @@ class FlyteLauncher(Launcher):
         build_images: bool,
         fast_serialization: bool,
         run: bool,
-        workflow: FlyteWorkflowConfig,
-        notifications: Optional[List[FlyteNotificationConfig]],
+        workflow: FlyteWorkflowConf,
+        notifications: Optional[List[FlyteNotificationConf]],
     ) -> None:
         """
         Construct Flyte launcher.
@@ -136,9 +136,9 @@ class FlyteLauncher(Launcher):
             build_images (bool): whether the launcher should build the docker images containing the workflow code
             fast_serialization (bool): whether to use fast serialization to inject code into existing containers
             run (bool): whether the workflow is executed after registration
-            workflow (FlyteWorkflowConfig): Configuration for the workflow to be launched,
+            workflow (FlyteWorkflowConf): Configuration for the workflow to be launched,
                 including image details and cron schedule.
-            notifications (Optional[List[FlyteNotificationConfig]]): A list of `FlyteNotificationConfig` objects,
+            notifications (Optional[List[FlyteNotificationConf]]): A list of `FlyteNotificationConf` objects,
                 each specifying the notification settings for the workflow. These configurations define:
                     - **Phases**: Workflow execution phases that will trigger the notification.
                     - **Recipients**: A list of recipient identifiers (e.g., email addresses or Slack email).
@@ -305,13 +305,13 @@ class FlyteLauncher(Launcher):
         return pipeline_version
 
     @staticmethod
-    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConfig) -> Tuple[str]:
+    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConf) -> Tuple[str]:
         """
         Resolve the docker context relative to the root of the `project.
         This enables the user to run the launcher from any subdirectory of the project.
 
         Args:
-            image_config (FlyteDockerImageConfig): Image to build
+            image_config (FlyteDockerImageConf): Image to build
 
         Returns:
             Tuple[str, str] - The relative path to the project root and the relative path to the dockerfile
@@ -453,9 +453,9 @@ class FlyteLauncher(Launcher):
         return default_image_tag, extra_images
 
     @staticmethod
-    def _format_notifications(notifications_config: Optional[List[FlyteNotificationConfig]]) -> List[Notification]:
+    def _format_notifications(notifications_config: Optional[List[FlyteNotificationConf]]) -> List[Notification]:
         """
-        Converts FlyteNotificationConfig to a list of Flyte notification objects.
+        Converts FlyteNotificationConf to a list of Flyte notification objects.
         """
         notifications: List[Notification] = []
 

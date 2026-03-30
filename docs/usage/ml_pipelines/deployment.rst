@@ -17,7 +17,7 @@ your workflow. It is imported by the workflow file and its store is flushed in :
     :caption: launcher_conf.py
     :language: python
 
-The :code:`FlyteDockerImageConfig` fields:
+The :code:`FlyteDockerImageConf` fields:
 
 .. list-table::
    :widths: 25 75
@@ -67,7 +67,7 @@ The container must already exist with all dependencies installed. Useful when yo
 .. code-block:: python
 
     # In launcher_conf.py
-    launcher_store(LauncherConf(fast_serialization=True, ...), ...)
+    launcher_store(FlyteLauncherConf(fast_serialization=True, ...), ...)
 
 Or as an override:
 
@@ -82,25 +82,25 @@ Custom images per task
 Tasks within one workflow can run in different containers — for example, a GPU training task
 alongside a CPU data preprocessing task.
 
-Define the extra image in :code:`FlyteWorkflowConfig.extra_images` and reference it by
+Define the extra image in :code:`FlyteWorkflowConf.extra_images` and reference it by
 :code:`flyte_image_name` in the task decorator:
 
 .. code-block:: python
 
     # launcher_conf.py
-    from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteDockerImageConfig, FlyteWorkflowConfig
+    from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteDockerImageConf, FlyteWorkflowConf
 
     launcher_store(
-        LauncherConf(
-            workflow=FlyteWorkflowConfig(
-                default_image=FlyteDockerImageConfig(
+        FlyteLauncherConf(
+            workflow=FlyteWorkflowConf(
+                default_image=FlyteDockerImageConf(
                     base_image="<registry>/base",
                     target_image="<registry>/workflow",
                     dockerfile_path="Dockerfile.flyte",
                     flyte_image_name="default",
                 ),
                 extra_images=[
-                    FlyteDockerImageConfig(
+                    FlyteDockerImageConf(
                         base_image="pytorch/pytorch",
                         base_image_version="2.3.1-cuda11.8-cudnn8-runtime",
                         target_image="<registry>/workflow-gpu",
