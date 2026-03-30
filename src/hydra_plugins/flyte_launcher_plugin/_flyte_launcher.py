@@ -147,10 +147,7 @@ class FlyteLauncher(Launcher):
         self.config = None
         self.hydra_context = None
 
-        assert execution_environment in (
-            "local",
-            "remote",
-        ), f"Execution environment must be 'local' or 'remote', got '{execution_environment}'."
+        execution_environment = ExecutionEnvironmentEnum(execution_environment)
 
         self.execution_environment = execution_environment
         self.notifications = notifications
