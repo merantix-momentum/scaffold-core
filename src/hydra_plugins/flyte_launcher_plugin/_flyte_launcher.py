@@ -771,7 +771,6 @@ class FlyteLauncher(Launcher):
             an array of return values from run_job with indexes corresponding to the input list indexes.
         """
 
-        # TODO: also allow enum comparison here
         if self.execution_environment == ExecutionEnvironmentEnum.local:
             return self._launch_local(job_overrides, initial_job_idx)
         elif self.execution_environment == ExecutionEnvironmentEnum.remote:
