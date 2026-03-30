@@ -132,10 +132,11 @@ def structured_config(
     .. deprecated::
         Use :func:`hydra_zen.builds` and :func:`hydra_zen.store` instead::
 
-            from hydra_zen import builds, store
+            from hydra_zen import builds
+            from scaffold.conf import scaffold_store
 
             MyConf = builds(MyClass, arg=value)
-            store(MyConf, group="my/group", name="MyConf")
+            scaffold_store(MyConf, group="my/group", name="MyConf")
 
         This decorator will be removed in a future release.
 
@@ -170,7 +171,7 @@ def structured_config(
     def struct_config_decorator(cls: type) -> type:
         warnings.warn(
             f"@structured_config is deprecated and will be removed in a future release. "
-            f"Use hydra_zen.builds() and hydra_zen.store() instead. "
+            f"Use hydra_zen.builds() and instantiate instead. "
             f"Affected class: {cls.__name__}",
             DeprecationWarning,
             stacklevel=2,

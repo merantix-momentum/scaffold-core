@@ -75,7 +75,7 @@ def compose(
     """
     warnings.warn(
         "scaffold.hydra.compose is deprecated and will be removed in a future release. "
-        "Use hydra_zen.builds() and hydra_zen.store() to define configs, "
+        "Use hydra_zen.builds() and instantiate to define configs, "
         "and hydra_zen.instantiate() or OmegaConf directly to work with them.",
         DeprecationWarning,
         stacklevel=2,

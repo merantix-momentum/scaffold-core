@@ -17,7 +17,7 @@ def initialize(
 
     .. deprecated::
         This helper is no longer needed in most cases. Use hydra's own ``hydra.initialize`` directly,
-        or define configs with ``hydra_zen.builds()`` and ``hydra_zen.store()`` which do not require
+        or define configs with ``hydra_zen.builds()`` and ``hydra_zen.ZenStore`` which do not require
         manual initialization. This function will be removed in a future release.
 
     Args:
@@ -27,7 +27,7 @@ def initialize(
     """
     warnings.warn(
         "scaffold.hydra.initialize is deprecated and will be removed in a future release. "
-        "Use hydra's own initialize directly, or define configs with hydra_zen.builds() and hydra_zen.store() "
+        "Use hydra's own initialize directly, or define configs with hydra_zen.builds() and hydra_zen.ZenStore "
         "which do not require manual initialization.",
         DeprecationWarning,
         stacklevel=2,

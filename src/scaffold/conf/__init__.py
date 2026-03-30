@@ -1,6 +1,8 @@
 import importlib.util
 
-from hydra_zen import store
+from hydra_zen import ZenStore
+
+scaffold_store = ZenStore(name="scaffold")
 
 
 def register_all() -> None:
@@ -14,4 +16,4 @@ def register_all() -> None:
     if importlib.util.find_spec("lightning") is not None:
         from scaffold.conf.scaffold.lightning import callbacks  # noqa: F401
 
-    store.add_to_hydra_store(overwrite_ok=True)
+    scaffold_store.add_to_hydra_store(overwrite_ok=True)

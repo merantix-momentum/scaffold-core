@@ -1,5 +1,6 @@
-from hydra_zen import make_config, store
+from hydra_zen import make_config
 
+from scaffold.conf import scaffold_store
 from scaffold.ctx_manager import (  # noqa: F401
     DEFAULT_LOGGING,
     DISABLED_LOGGING,
@@ -18,4 +19,4 @@ EntrypointConf = make_config(
     logging=DEFAULT_LOGGING,  # Same options as hydra.job_logging; override per logging variant
     verbose=False,  # Same as hydra.verbose, but applied to our logging setup
 )
-store(EntrypointConf, group=GROUP, name="EntrypointConf")
+scaffold_store(EntrypointConf, group=GROUP, name="EntrypointConf")

@@ -1,6 +1,7 @@
-from hydra_zen import builds, store
+from hydra_zen import builds
 from omegaconf import MISSING
 
+from scaffold.conf import scaffold_store
 from scaffold.ctx_manager import WandBContext
 
 WandBContextConf = builds(
@@ -18,4 +19,4 @@ WandBContextConf = builds(
     resume=False,
 )
 
-store(WandBContextConf, group="ctx_manager", name="WandBContextConf")
+scaffold_store(WandBContextConf, group="ctx_manager", name="WandBContextConf")

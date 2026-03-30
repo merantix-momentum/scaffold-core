@@ -1,4 +1,4 @@
-from hydra_zen import builds, store
+from hydra_zen import builds
 from omegaconf import MISSING
 
 from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
@@ -8,6 +8,7 @@ from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
     FlyteNotificationConfig,
     FlyteWorkflowConfig,
 )
+from scaffold.conf import scaffold_store
 
 LauncherConf = builds(
     FlyteLauncher,
@@ -20,6 +21,6 @@ LauncherConf = builds(
     notifications=[],
 )
 
-store(FlyteDockerImageConfig, group="scaffold/flyte_launcher", name="FlyteDockerImageConfig")
-store(FlyteWorkflowConfig, group="scaffold/flyte_launcher", name="FlyteWorkflowConfig")
-store(FlyteNotificationConfig, group="scaffold/flyte_launcher", name="FlyteNotificationConfig")
+scaffold_store(FlyteDockerImageConfig, group="scaffold/flyte_launcher", name="FlyteDockerImageConfig")
+scaffold_store(FlyteWorkflowConfig, group="scaffold/flyte_launcher", name="FlyteWorkflowConfig")
+scaffold_store(FlyteNotificationConfig, group="scaffold/flyte_launcher", name="FlyteNotificationConfig")

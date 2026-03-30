@@ -43,7 +43,7 @@ class Entrypoint(ABC, Generic[ENTRYPOINT_CONFIG_TYPE]):
         # specifying bounds for the generic type is not supported by vscode yet.
         warnings.warn(
             "Entrypoint is deprecated and will be removed in a future release. "
-            "Use hydra_zen.builds() and hydra_zen.store() directly instead.",
+            "Use hydra_zen.builds() and instantiate directly instead.",
             DeprecationWarning,
             stacklevel=2,
         )

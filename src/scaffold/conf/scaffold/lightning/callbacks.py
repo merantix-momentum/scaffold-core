@@ -1,6 +1,7 @@
-from hydra_zen import builds, store
+from hydra_zen import builds
 from omegaconf import MISSING
 
+from scaffold.conf import scaffold_store
 from scaffold.torch.lightning.callbacks import LightningCheckpointer
 
 GROUP = "scaffold/lightning/checkpointer"
@@ -15,4 +16,4 @@ LightningCheckpointerConf = builds(
     only_log_current_best=False,
 )
 
-store(LightningCheckpointerConf, group=GROUP, name="LightningCheckpointerConf")
+scaffold_store(LightningCheckpointerConf, group=GROUP, name="LightningCheckpointerConf")
