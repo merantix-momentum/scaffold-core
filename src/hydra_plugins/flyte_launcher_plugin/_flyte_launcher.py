@@ -517,11 +517,11 @@ class FlyteLauncher(Launcher):
 
         from scaffold.flyte.core import build_workflow_inputs
 
-        user_cfg = copy.deepcopy(cfg)
-        with open_dict(user_cfg):
-            del user_cfg["hydra"]
+        job_cfg = copy.deepcopy(cfg)
+        with open_dict(job_cfg):
+            del job_cfg["hydra"]
 
-        inputs = build_workflow_inputs(workflow, user_cfg, cfg.hydra, runtime_cfg_key)
+        inputs = build_workflow_inputs(workflow, job_cfg, cfg.hydra, runtime_cfg_key)
 
         kwargs = {}
         if (cron_exp := cfg.hydra.launcher.workflow.cron_schedule) is not None:

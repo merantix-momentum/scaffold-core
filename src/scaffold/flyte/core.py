@@ -226,7 +226,7 @@ def build_runtime_cfg(hydra_cfg: Any) -> DictConfig:
 
 def build_workflow_inputs(
     workflow: Any,
-    user_cfg: DictConfig,
+    job_cfg: DictConfig,
     hydra_cfg: Any,
     runtime_cfg_key: str = RUNTIME_CFG_KEY,
 ) -> dict[str, Any]:
@@ -236,12 +236,12 @@ def build_workflow_inputs(
 
     - If the name matches *runtime_cfg_key*: injects a RuntimeConf DictConfig
       built from Hydra's logging configuration.
-    - Otherwise: looks up the value as ``user_cfg.<name>``.  Emits a warning
+    - Otherwise: looks up the value as ``job_cfg.<name>``.  Emits a warning
       when no matching key exists (the workflow default is used in that case).
 
     Args:
         workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
-        user_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
+        job_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
         hydra_cfg (Any): Hydra internal config (``cfg.hydra`` or ``HydraConfig.get()``).
         runtime_cfg_key (str): Name of the runtime config parameter.
 
@@ -253,7 +253,7 @@ def build_workflow_inputs(
         if name == runtime_cfg_key:
             inputs[name] = build_runtime_cfg(hydra_cfg)
         else:
-            val = OmegaConf.select(user_cfg, name)
+            val = OmegaConf.select(job_cfg, name)
             if val is None:
                 logger.warning(
                     f"Workflow input {name} has no matching key in the config. "
