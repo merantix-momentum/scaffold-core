@@ -1,8 +1,6 @@
 import logging
 import typing as t
 
-import wandb
-
 from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url
 
@@ -32,28 +30,31 @@ class WandbArtifactManager(ArtifactManager):
         Raises:
             ValueError: If neither a project nor an active project can be identified.
         """
+        import wandb
+
+        self._wandb = wandb
         super().__init__(collection=collection)
         if project is not None:
             self.project = project
-        elif wandb.run is not None:
-            self.project = wandb.run.project
+        elif self._wandb.run is not None:
+            self.project = self._wandb.run.project
             logger.info(f"Using project {self.project} from active wandb run.")
-        elif wandb.Api().settings["project"] is not None:
-            self.project = wandb.Api().settings["project"]
+        elif self._wandb.Api().settings["project"] is not None:
+            self.project = self._wandb.Api().settings["project"]
             logger.info(f"Using project {self.project} from wandb settings.")
         else:
             raise ValueError("No project name was provided and no active project could be identified.")
 
         if entity is not None:
             self.entity = entity
-        elif wandb.run is not None and wandb.run.entity is not None:
-            self.entity = wandb.run.entity
+        elif self._wandb.run is not None and self._wandb.run.entity is not None:
+            self.entity = self._wandb.run.entity
             logger.info(f"Using entity {self.entity} from active wandb run.")
-        elif wandb.Api().settings["entity"] is not None:
-            self.entity = wandb.Api().settings["entity"]
+        elif self._wandb.Api().settings["entity"] is not None:
+            self.entity = self._wandb.Api().settings["entity"]
             logger.info(f"Using entity {self.entity} from wandb settings.")
         else:
-            self.entity = wandb.Api().project(self.project).entity
+            self.entity = self._wandb.Api().project(self.project).entity
             logger.info(f"Using entity {self.entity} from wandb project.")
 
     def list_collection_names(self) -> t.Iterable[str]:
@@ -62,7 +63,7 @@ class WandbArtifactManager(ArtifactManager):
         Returns:
             Iterable[str]: A list of collection names corresponding to WandB artifact types.
         """
-        return [collection.name for collection in wandb.Api().artifact_types(project=self.project)]
+        return [collection.name for collection in self._wandb.Api().artifact_types(project=self.project)]
 
     def exists_in_collection(self, artifact_name: str, collection: t.Optional[str] = None) -> bool:
         """Check if an artifact exists in the specified collection.
@@ -82,7 +83,8 @@ class WandbArtifactManager(ArtifactManager):
         if collection not in self.list_collection_names():
             return False
         return artifact_name in [
-            art.name for art in wandb.Api().artifact_type(type_name=collection, project=self.project).collections()
+            art.name
+            for art in self._wandb.Api().artifact_type(type_name=collection, project=self.project).collections()
         ]
 
     def log_files(
@@ -108,7 +110,7 @@ class WandbArtifactManager(ArtifactManager):
                 For WandB, the version is typically "latest" as WandB manages versions internally.
         """
         collection = collection or self.active_collection
-        artifact = wandb.Artifact(artifact_name, type=collection)
+        artifact = self._wandb.Artifact(artifact_name, type=collection)
         fs = get_fs_from_url(local_path)
         if fs.isdir(local_path):
             artifact.add_dir(local_path, name=artifact_path)
@@ -145,10 +147,12 @@ class WandbArtifactManager(ArtifactManager):
         collection = collection or self.active_collection
         if version is None:
             version = "latest"
-        if wandb.run is None:
-            art = wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
+        if self._wandb.run is None:
+            art = self._wandb.Api().artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
         else:
-            art = wandb.run.use_artifact(f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection)
+            art = self._wandb.run.use_artifact(
+                f"{self.entity}/{self.project}/{artifact_name}:{version}", type=collection
+            )
 
         if to is not None:
             art.download(to)

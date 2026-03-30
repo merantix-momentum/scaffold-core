@@ -2,7 +2,6 @@ import logging
 import random
 from typing import MutableMapping, Optional, Union
 
-import random_name
 from fsspec.spec import AbstractFileSystem
 
 from scaffold.data.artifact_manager.base import ArtifactManager
@@ -59,6 +58,8 @@ def get_new_afid(artifact_manager: ArtifactManager, prefix: str = None) -> str:
         String in form of prefix__new_id__timestamp
     """
     import time
+
+    import random_name
 
     random.seed()  # Overwrite the seed set by torch_lightning.utilities.seed.seed_everything during training.
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")

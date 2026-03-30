@@ -1,14 +1,14 @@
 from hydra_zen import builds
 from omegaconf import MISSING
 
-from hydra_plugins.flyte_launcher_plugin._flyte_launcher import (
+from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteLauncher
+from scaffold.conf import scaffold_store
+from scaffold.flyte.launcher_conf import (
     ExecutionEnvironmentEnum,
     FlyteDockerImageConf,
-    FlyteLauncher,
     FlyteNotificationConf,
     FlyteWorkflowConf,
 )
-from scaffold.conf import scaffold_store
 
 FlyteLauncherConf = builds(
     FlyteLauncher,
