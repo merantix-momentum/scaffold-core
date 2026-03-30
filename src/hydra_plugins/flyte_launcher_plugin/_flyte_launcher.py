@@ -125,7 +125,7 @@ class FlyteLauncher(Launcher):
         fast_serialization: bool,
         run: bool,
         workflow: FlyteWorkflowConfig,
-        notifications: Optional[List[DictConfig]],
+        notifications: Optional[List[FlyteNotificationConfig]],
     ) -> None:
         """
         Construct Flyte launcher.
