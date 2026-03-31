@@ -59,7 +59,7 @@ class FlyteDockerImageConf:
     base_image: str
     base_image_version: Optional[str]
     target_image: str
-    target_image_version: Optional[str]
+    target_image_version: Optional[str] = "latest"
     dockerfile_path: str = "infrastructure/docker/Dockerfile"
     docker_context: str = "."
     buildargs: dict = field(default_factory=dict)
