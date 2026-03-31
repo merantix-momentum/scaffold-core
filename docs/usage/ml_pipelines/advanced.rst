@@ -105,6 +105,40 @@ this naturally:
         ...
 
 :code:`run_local_workflow` maps config keys to workflow inputs by name. Any workflow parameter
-not found in the config is left to the workflow's default value (a warning is logged). For remote
-execution with non-config inputs, use :ref:`FlyteRemote <flyte-launcher>` instead of the launcher,
-since the launcher cannot inject values for parameters that aren't in the Hydra config.
+not found in the config is left to the workflow's default value (a warning is logged) and can be passed when
+calling the workflow function. For local execution, pass the extra arguments directly to :code:`run_local_workflow`:
+
+.. code-block:: python
+
+    run_local_workflow(pipeline, cfg, data_string="my data")
+
+For remote execution, we need to configure the launcher to not run the workflow directly after registration (as there we want to provide the extra arguments at execution time):
+
+.. code-block:: python
+
+    # launcher_conf.py
+    launcher_store(
+        FlyteLauncherConf(
+            ...,
+            run=False,  # Don't execute immediately after registration
+        ),
+        name="flyte",
+        group="hydra/launcher",
+    )
+
+Then we can execute the workflow with the extra arguments using :code:`FlyteRemote`:
+
+.. code-block:: python
+
+    from scaffold.flyte.flyte_utils import FlyteRemoteHelper
+
+    LAUNCHPLAN = "hydra_workflow_cfg_workflow_with_extra_inputs_default_0"
+    ADMIN_ENDPOINT = "localhost:30081"
+    DOMAIN = "development"
+
+    dummy_string = "my data"
+
+    # execute the workflow that was registered by flyte launcher before
+    FlyteRemoteHelper(domain=DOMAIN, admin_endpoint=ADMIN_ENDPOINT).execute_flyte_launchplan(
+        LAUNCHPLAN, {"data_string": dummy_string}
+)
