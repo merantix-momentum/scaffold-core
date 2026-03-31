@@ -73,6 +73,13 @@ def compose(
     Returns:
         Rendered DictConfig.
     """
+    warnings.warn(
+        "scaffold.hydra.compose is deprecated and will be removed in a future release. "
+        "Use hydra_zen.builds() and instantiate to define configs, "
+        "and hydra_zen.instantiate() or OmegaConf directly to work with them.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     _config = deepcopy(config_name_or_class)
     compose_args = dict(config_dir=config_dir, overrides=overrides or [], return_hydra_config=return_hydra_config)
 

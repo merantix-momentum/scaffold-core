@@ -76,8 +76,8 @@ Items in `IterableSource` can be composed by providing a Composable in the `comp
     for item in it:
         print(item)
 
-To see how you can chain custom Composables with `compose()`, see the advanced section for
-:ref:`IterStream <advanced/iterstream:IterStream>`.
+To see how you can chain custom Composables with `compose()`, see the
+:py:class:`~scaffold.data.iterstream.base.Composable` API documentation.
 
 .. note::
 

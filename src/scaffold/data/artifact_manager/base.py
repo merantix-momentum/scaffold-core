@@ -15,13 +15,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Artifact:
-    """Immutable dataclass representing an artifact with its metadata.
-
-    Attributes:
-        name: The artifact name.
-        collection: The collection name.
-        version: The artifact version (e.g., "v0", "v1", "latest").
-    """
+    """Immutable dataclass representing an artifact with its metadata."""
 
     name: str
     collection: str

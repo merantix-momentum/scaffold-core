@@ -14,34 +14,24 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
-import pyprojroot
-from flytekit import Email, Slack
-from flytekit.core.notification import Notification
-from flytekit.exceptions.user import FlyteEntityNotExistException, FlyteInvalidInputException
-
-try:
-    # not available in older flyte versions
-    from flytekit.exceptions.system import FlyteSystemUnavailableException
-
-    imported_unavailable_exceptions = True
-except ImportError:
-    imported_unavailable_exceptions = False
 from hydra.core.utils import configure_log, filter_overrides, JobReturn, run_job, setup_globals
 from hydra.plugins.launcher import Launcher
 from hydra.types import HydraContext, TaskFunction
 from omegaconf import DictConfig, OmegaConf, open_dict
 
-from scaffold.conf.scaffold.flyte_launcher import (
+from scaffold.constants import RUNTIME_CFG_KEY
+from scaffold.flyte.launcher_conf import (
     ExecutionEnvironmentEnum,
-    FlyteDockerImageConfig,
-    FlyteNotificationConfig,
+    FlyteDockerImageConf,
+    FlyteNotificationConf,
     FlyteNotificationEnum,
-    FlyteWorkflowConfig,
+    FlyteWorkflowConf,
 )
 
 if TYPE_CHECKING:
-    from flytekit import LaunchPlan, Workflow
+    from flytekit import LaunchPlan
     from flytekit.core.base_task import PythonTask
+    from flytekit.core.notification import Notification
     from flytekit.core.workflow import WorkflowBase
     from flytekit.remote.entities import FlyteLaunchPlan
     from flytekit.remote.remote import FlyteRemote
@@ -52,38 +42,36 @@ logger = logging.getLogger(__name__)
 class FlyteLauncher(Launcher):
     def __init__(
         self,
-        execution_environment: str,
+        execution_environment: str | ExecutionEnvironmentEnum,
         endpoint: str,
         build_images: bool,
         fast_serialization: bool,
         run: bool,
-        workflow: FlyteWorkflowConfig,
-        notifications: Optional[List[FlyteNotificationConfig]],
+        workflow: FlyteWorkflowConf,
+        notifications: Optional[List[FlyteNotificationConf]],
     ) -> None:
         """
         Construct Flyte launcher.
 
         Args:
-            execution_environment (str): Can be either 'local' or 'remote'
+            execution_environment (str | ExecutionEnvironmentEnum): Can be either 'local' or 'remote'
             endpoint (str): The Flyte platform endpoint to connect to
             build_images (bool): whether the launcher should build the docker images containing the workflow code
             fast_serialization (bool): whether to use fast serialization to inject code into existing containers
             run (bool): whether the workflow is executed after registration
-            workflow: (FlyteWorkflowConfig): the config related to workflow execution/registration
-            notifications (Optional[List[FlyteNotificationConfig]]): A list of `FlyteNotificationConfig` objects,
+            workflow (FlyteWorkflowConf): Configuration for the workflow to be launched,
+                including image details and cron schedule.
+            notifications (Optional[List[FlyteNotificationConf]]): A list of `FlyteNotificationConf` objects,
                 each specifying the notification settings for the workflow. These configurations define:
                     - **Phases**: Workflow execution phases that will trigger the notification.
                     - **Recipients**: A list of recipient identifiers (e.g., email addresses or Slack email).
                     - **Type**: The communication method for the notification, such as email or Slack.
         """
-        self.config: Optional[DictConfig] = None
-        self.hydra_context: Optional[HydraContext] = None
-        self.workflow_config: FlyteWorkflowConfig = workflow
+        self.config = None
+        self.hydra_context = None
 
-        assert execution_environment in [
-            "local",
-            "remote",
-        ], f"Execution environment must be either 'local' or 'remote', but was '{execution_environment}'."
+        execution_environment = ExecutionEnvironmentEnum(execution_environment)
+
         self.execution_environment = execution_environment
         self.notifications = notifications
         self.endpoint = endpoint
@@ -240,19 +228,21 @@ class FlyteLauncher(Launcher):
         return pipeline_version
 
     @staticmethod
-    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConfig) -> Tuple[str]:
+    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConf) -> Tuple[str]:
         """
         Resolve the docker context relative to the root of the `project.
         This enables the user to run the launcher from any subdirectory of the project.
 
         Args:
-            image_config (FlyteDockerImageConfig): Image to build
+            image_config (FlyteDockerImageConf): Image to build
 
         Returns:
             Tuple[str, str] - The relative path to the project root and the relative path to the dockerfile
 
         """
         # https://github.com/chendaniely/pyprojroot/blob/main/src/pyprojroot/here.py
+        import pyprojroot
+
         project_root = pyprojroot.here()
         logger.info(f"Identified project root as: {project_root}")
 
@@ -388,10 +378,12 @@ class FlyteLauncher(Launcher):
         return default_image_tag, extra_images
 
     @staticmethod
-    def _format_notifications(notifications_config: Optional[List[FlyteNotificationConfig]]) -> List[Notification]:
+    def _format_notifications(notifications_config: Optional[List[FlyteNotificationConf]]) -> List[Notification]:
         """
-        Converts FlyteNotificationConfig to a list of Flyte notification objects.
+        Converts FlyteNotificationConf to a list of Flyte notification objects.
         """
+        from flytekit import Email, Slack
+
         notifications: List[Notification] = []
 
         for notification in notifications_config:
@@ -414,14 +406,15 @@ class FlyteLauncher(Launcher):
 
     @staticmethod
     def _create_launchplan(
-        workflow: Workflow,
+        workflow: "WorkflowBase",
         cfg: DictConfig,
         module_name: str,
         idx: int,
         config_name: str,
-        notifications: List[Notification],
-    ) -> LaunchPlan:
-        """Create a launch plan with the given config.
+        notifications: List["Notification"],
+        runtime_cfg_key: str = RUNTIME_CFG_KEY,
+    ) -> "LaunchPlan":
+        """Create a LaunchPlan with all workflow inputs baked in as defaults.
 
         This is created to make the workflows executable from the UI. With the templated launch plans, the
         user can execute the workflows from the UI without the need of explicitly typing/giving any config.
@@ -429,61 +422,51 @@ class FlyteLauncher(Launcher):
 
         If `cfg` contains cronjob configuration, it is applied to the LaunchPlan.
 
+        Supports multiple ``DictConfig`` workflow inputs and injects
+        ``runtime_cfg`` (built from Hydra's logging config) so that remote
+        tasks receive the same logging setup as local execution.
+
         Args:
-            cfg (DictConfig): hydra configuration of the workflow.
-            workflow (Workflow): workflow to be executed with the prepared LaunchPlan.
-            module_name (str): The name of the python module containing the workflow.
-            idx (int): idx of the respective hydra override belonging to this `cfg` object.
-            config_name (str): Name of the base hydra configuration file used to launch the workflow.
-            notifications (List[Notification]): A list of `Notification` objects, where each object defines:
-                - **Phases**: The workflow execution phases that will trigger the notification.
-                - **Recipients**: A list of recipient identifiers to be notified.
-                - **Type**: The notification channel, such as email or Slack.
-
-        Returns:
-            A LaunchPlan object
-
+            workflow (WorkflowBase): The flytekit ``@workflow`` function to wrap in a launch plan.
+            cfg (DictConfig): Full Hydra config (including the ``hydra`` sub-tree).
+            module_name (str): Dotted module name extracted from the task function, used to
+                produce a unique launch-plan name.
+            idx (int): Index of the current override in a multi-run sweep.
+            config_name (str): Hydra config name (e.g. ``"default"``).
+            notifications (List[Notification]): Flyte notification objects attached to the launch plan.
+            runtime_cfg_key (str): Name of the runtime config parameter in the workflow signature.
         """
         from croniter import croniter
         from flytekit import CronSchedule, LaunchPlan
 
-        cfg_arg_name = "cfg"
-        kickoff_time_arg_name = "kickoff_time"
+        from scaffold.flyte.core import build_workflow_inputs
+
+        job_cfg = copy.deepcopy(cfg)
+        with open_dict(job_cfg):
+            del job_cfg["hydra"]
+
+        inputs = build_workflow_inputs(workflow, job_cfg, cfg.hydra, runtime_cfg_key)
+
         kwargs = {}
-
-        if cfg_arg_name not in workflow.interface.inputs.keys():
-            raise ValueError(f"The arguments of the main workflow must contain '{cfg_arg_name}'")
-
         if (cron_exp := cfg.hydra.launcher.workflow.cron_schedule) is not None:
-            assert idx == 0, "Cronjobs can't be registered with multiple overrides!"
-            assert croniter.is_valid(cron_exp), f"Invalid cron expression {cron_exp}."
-
+            assert idx == 0, "Cron schedules cannot be registered with multiple sweep overrides."
+            assert croniter.is_valid(cron_exp), f"Invalid cron expression: {cron_exp}"
             kwargs["schedule"] = CronSchedule(
                 schedule=cron_exp,
-                kickoff_time_input_arg=kickoff_time_arg_name,
+                kickoff_time_input_arg="kickoff_time",
             )
 
-        # Remove the hydra section that is passed to the Flyte workflow.
-        # WARNING: If the hydra section is passed, set "config.hydra.job.id" and "config.hydra.job.num".
-        # The hydra section can contain interpolation entries, which expect these values to exist.
-        cfg = copy.deepcopy(cfg)
-        with open_dict(cfg):
-            del cfg["hydra"]
-
-        templated_lp = LaunchPlan.create(
+        lp = LaunchPlan.create(
             f"hydra_workflow_cfg_{module_name}_{config_name}_{idx}",
             workflow=workflow,
             notifications=notifications,
-            default_inputs={
-                cfg_arg_name: cfg,
-            },
+            default_inputs=inputs,
             **kwargs,
         )
-        if not hasattr(templated_lp, "__name__"):
-            # necessary for flyte version 1.14.0, see https://github.com/flyteorg/flyte/issues/6062
-            templated_lp.__name__ = templated_lp.name
-
-        return templated_lp
+        if not hasattr(lp, "__name__"):
+            # Workaround for flytekit 1.14.0, see flyteorg/flyte#6062
+            lp.__name__ = lp.name
+        return lp
 
     @staticmethod
     def _activate_launch_plan(remote: FlyteRemote, launchplan: FlyteLaunchPlan) -> None:
@@ -546,9 +529,20 @@ class FlyteLauncher(Launcher):
         # but want to use hydra without flyte, will get a user warning for not being able to import flytekit.
 
         from flytekit.configuration import FastSerializationSettings
-        from flytekit.exceptions.user import FlyteEntityAlreadyExistsException
+        from flytekit.exceptions.user import (
+            FlyteEntityAlreadyExistsException,
+            FlyteEntityNotExistException,
+            FlyteInvalidInputException,
+        )
         from flytekit.tools.fast_registration import compute_digest
         from flytekit.tools.script_mode import tar_strip_file_attributes
+
+        try:
+            from flytekit.exceptions.system import FlyteSystemUnavailableException
+
+            _has_unavailable_exc = True
+        except ImportError:
+            _has_unavailable_exc = False
 
         from hydra_plugins.flyte_launcher_plugin._flyte_ignore import FlyteIgnore
         from scaffold.flyte.core import get_serialization_settings, temp_flyte_remote
@@ -643,7 +637,7 @@ class FlyteLauncher(Launcher):
             except (FlyteInvalidInputException, FlyteEntityAlreadyExistsException):
                 logger.info(f"Workflow already registered with version {pipeline_version}.")
             except Exception as e:
-                if imported_unavailable_exceptions and isinstance(e, FlyteSystemUnavailableException):
+                if _has_unavailable_exc and isinstance(e, FlyteSystemUnavailableException):
                     raise FlyteSystemUnavailableException(
                         "Couldnt reach flyte! Check if you have port forwarded flyteadmin service, "
                         "see https://docs.scaffold.merantix-momentum.cloud/usage/hydra_flyte_launcher/full_example.html"
@@ -718,5 +712,6 @@ class FlyteLauncher(Launcher):
             return self._launch_remote(job_overrides, initial_job_idx)
         else:
             raise ValueError(
-                f"Execution environment must be either 'local' or 'remote', but was '{self.execution_environment}'."
+                f"Execution environment must be either 'local' or 'remote', but was '{self.execution_environment}"
+                f"({type(self.execution_environment)})'."
             )

@@ -3,30 +3,68 @@ import os
 import typing as t
 from contextlib import AbstractContextManager, contextmanager, ExitStack
 
-from omegaconf import DictConfig
-
-from scaffold.hydra import compose
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"}},
+    "root": {"level": "INFO", "handlers": ["console"]},
+    "disable_existing_loggers": False,
+}
+
+STDOUT_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "%(message)s"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"}},
+    "root": {"level": "INFO", "handlers": ["console"]},
+    "disable_existing_loggers": False,
+}
+
+DISABLED_LOGGING: dict = {
+    "version": 1,
+    "root": {"level": "ERROR"},
+    "disable_existing_loggers": True,
+}
+
+NONE_LOGGING: dict = {
+    "version": 1,
+    "root": {},
+    "disable_existing_loggers": False,
+}
+
+STDOUT_AND_LOGFILE_LOGGING: dict = {
+    "version": 1,
+    "formatters": {"simple": {"format": "[%(asctime)s][%(name)s][%(levelname)s] - %(message)s"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "simple", "stream": "ext://sys.stdout"},
+        "file": {"class": "logging.FileHandler", "formatter": "simple", "filename": None},
+    },
+    "root": {"level": "INFO", "handlers": ["console", "file"]},
+    "disable_existing_loggers": False,
+}
 
 
 class LoggingContext(AbstractContextManager):
     """
     Context manager for configuring the logging system.
     It wraps the hydra's logging configuration and allows to specify verbosity level per module,
-        see hydra documentation for more details: https://hydra.cc/docs/tutorials/basic/running_your_app/logging/
+    see hydra documentation for more details: https://hydra.cc/docs/tutorials/basic/running_your_app/logging/
 
     Example usage:
-    ```
+
+    .. code-block:: python
+
         cfg = LoggingContext.DEFAULT_CONFIGURATION
         with LoggingContext(cfg) as log_context:
             logging.info("This message should be logged with the specified configuration.")
         logging.info("This error should be logged with default configuration.")
-    ```
     """
 
-    DEFAULT_CONFIGURATION = compose("scaffold/entrypoint/logging/default.yaml")
-    SILENT_CONFIGURATION = compose("scaffold/entrypoint/logging/disabled.yaml")
+    DEFAULT_CONFIGURATION: DictConfig = OmegaConf.create(DEFAULT_LOGGING)
+    SILENT_CONFIGURATION: DictConfig = OmegaConf.create(DISABLED_LOGGING)
 
     def __init__(
         self,
@@ -106,11 +144,12 @@ class WandBContext(AbstractContextManager):
     Context manager for configuring wandb, starting and exiting a wandb run.
 
     Example usage:
-    ```
+
+    .. code-block:: python
+
         with WandBContext(project="chameleon", entity="mg515") as wandb_ctx:
             # Do something with the WandB context
             wandb.log({"metric": 0.5})
-    ```
     """
 
     def __init__(
@@ -193,10 +232,10 @@ def combined_context(*contexts: t.List[AbstractContextManager]):
 
     Example use case:
 
-    ```
-    with combined_context(LoggingContext(), WandBContext()) as (logger, wandb):
-        ...
-    ```
+    .. code-block:: python
+
+        with combined_context(LoggingContext(), WandBContext()) as (logger, wandb):
+            ...
     """
     with ExitStack() as stack:
         yield [stack.enter_context(cls) for cls in contexts]

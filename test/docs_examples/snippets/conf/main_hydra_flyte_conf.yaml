@@ -1,3 +1,0 @@
-experiment_name: training
-model:
-  learning_rate: 0.001

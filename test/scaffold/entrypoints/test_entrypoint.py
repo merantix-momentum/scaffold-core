@@ -1,70 +1,104 @@
-import hydra
-from hydra.core.global_hydra import GlobalHydra
+"""Tests for the deprecated Entrypoint class.
 
-from scaffold.hydra.constants import VERSION_BASE
-from scaffold.integration_test.helpers import ExampleEntrypointConf, MinimalExampleEntrypoint, MyContext
+These tests verify backward compatibility for projects that still use Entrypoint/EntrypointConf
+while emitting DeprecationWarnings to encourage migration to hydra-zen.
+"""
 
-REL_CONFIG_PATH = "../conf/"
-ENTRYPOINT_CONFIG = "test_entrypoint_config"
-ENTRYPOINT_CONFIG_CONTEXTS = "test_entrypoint_config_with_contexts"
+from contextlib import AbstractContextManager
+from typing import Any
 
+import pytest
+from hydra_zen import make_config
+from omegaconf import OmegaConf
 
-def test_entrypoint_with_hydra_yaml() -> None:
-    """User uses hydra main for constructing the config."""
-    with hydra.initialize(config_path=REL_CONFIG_PATH):
-        config: ExampleEntrypointConf = hydra.compose(config_name=ENTRYPOINT_CONFIG)
-        entrypoint = MinimalExampleEntrypoint(config)
-        out = entrypoint("you")
-        assert out == "Hey from yaml you"
+from scaffold.conf.scaffold.entrypoint import EntrypointConf
+from scaffold.ctx_manager import DISABLED_LOGGING
+from scaffold.entrypoints import Entrypoint
 
-
-def test_entrypoint_with_hydra_yaml_and_python_context() -> None:
-    """User uses hydra main for constructing the config, and pass ctx from python."""
-    with hydra.initialize(config_path=REL_CONFIG_PATH, version_base=VERSION_BASE):
-        config: ExampleEntrypointConf = hydra.compose(config_name=ENTRYPOINT_CONFIG)
-        entrypoint = MinimalExampleEntrypoint(config, contexts=[MyContext()])
-        out = entrypoint("you")
-        assert out == "Hey from yaml you"
-        mycontext = entrypoint.contexts[-1]
-        assert not mycontext.ctx_active
+# All tests in this file exercise deprecated APIs — suppress warnings globally
+# except where we explicitly test that the warning fires.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
-def test_entrypoint_with_hydra_yaml_and_yaml_context() -> None:
-    """User uses hydra main for constructing the config, including a context yaml config."""
-    with hydra.initialize(config_path=REL_CONFIG_PATH, version_base=VERSION_BASE):
-        config: ExampleEntrypointConf = hydra.compose(config_name=ENTRYPOINT_CONFIG_CONTEXTS)
-        entrypoint = MinimalExampleEntrypoint(config)
-        out = entrypoint("you")
-        assert out == "Hey from yaml and with specified context you"
-        mycontext = entrypoint.contexts[-1]
-        assert not mycontext.ctx_active
+# Helpers that simulate an "old project" using the deprecated Entrypoint API
 
 
-def test_entrypoint_from_config_name_or_class(absolute_test_config_dir: str) -> None:
-    """Constructing the configs from dataclasses"""
-    entrypoint = MinimalExampleEntrypoint.from_config_name_or_class(ExampleEntrypointConf)
+ExampleEntrypointConf = make_config(bases=(EntrypointConf,), greeting="Hey")
+
+
+class MyContext(AbstractContextManager):
+    def __init__(self) -> None:
+        self.ctx_active = False
+
+    def __enter__(self) -> "MyContext":
+        self.ctx_active = True
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.ctx_active = False
+
+
+class MinimalExampleEntrypoint(Entrypoint[Any]):
+    def run(self, name: str) -> str:  # type: ignore[override]
+        return f"{self.config.greeting} {name}"
+
+
+def _make_cfg(**overrides: Any) -> Any:
+    """Build a structured DictConfig from ExampleEntrypointConf with logging disabled."""
+    return OmegaConf.structured(ExampleEntrypointConf(logging=DISABLED_LOGGING, **overrides))
+
+
+# Tests
+
+
+def test_entrypoint_basic() -> None:
+    """Entrypoint runs and returns the expected value."""
+    entrypoint = MinimalExampleEntrypoint(_make_cfg())
     assert entrypoint("you") == "Hey you"
-    assert not GlobalHydra.instance().is_initialized()
 
-    # The absolute path is only needed if the config name can't be found in existing dirs,
-    # e.g. added through search path plugins
-    entrypoint = MinimalExampleEntrypoint.from_config_name_or_class(
-        ENTRYPOINT_CONFIG, config_dir=absolute_test_config_dir
-    )
-    assert entrypoint("you") == "Hey from yaml you"
-    assert not GlobalHydra.instance().is_initialized()
 
-    # If hydra is already initialized, .from_config_name composes the config using this global hydra instance.
-    with hydra.initialize(config_path=REL_CONFIG_PATH, version_base=VERSION_BASE):
-        entrypoint = MinimalExampleEntrypoint.from_config_name_or_class(ExampleEntrypointConf)
-        assert entrypoint("you") == "Hey you"
+def test_entrypoint_with_custom_greeting() -> None:
+    """Config fields can be overridden."""
+    entrypoint = MinimalExampleEntrypoint(_make_cfg(greeting="Hello"))
+    assert entrypoint("you") == "Hello you"
 
-        entrypoint = MinimalExampleEntrypoint.from_config_name_or_class(ENTRYPOINT_CONFIG)
-        assert entrypoint("you") == "Hey from yaml you"
+
+def test_entrypoint_with_python_context() -> None:
+    """Contexts passed as python arguments are entered and exited correctly."""
+    ctx = MyContext()
+    entrypoint = MinimalExampleEntrypoint(_make_cfg(), contexts=[ctx])
+    entrypoint("you")
+    assert ctx in entrypoint.contexts
+    assert not ctx.ctx_active  # context was properly exited after __call__
+
+
+def test_entrypoint_config_type_check_passes_for_subclass() -> None:
+    """Config subclasses of EntrypointConf are accepted."""
+    SubConf = make_config(bases=(EntrypointConf,), greeting="Sub", extra=42)
+    entrypoint = MinimalExampleEntrypoint(OmegaConf.structured(SubConf(logging=DISABLED_LOGGING)))
+    assert entrypoint("you") == "Sub you"
+
+
+def test_entrypoint_config_type_check_passes_for_plain_dict() -> None:
+    """Plain DictConfigs (e.g. from scaffold.hydra.compose) are accepted without type errors."""
+
+    class PlainEntrypoint(Entrypoint[Any]):
+        def run(self, *_: Any) -> str:
+            return "ok"
+
+    plain_cfg = OmegaConf.create({"greeting": "Hi", "logging": DISABLED_LOGGING, "verbose": False, "contexts": {}})
+    assert PlainEntrypoint(plain_cfg)() == "ok"
+
+
+def test_entrypoint_emits_deprecation_warning() -> None:
+    """Instantiating Entrypoint emits a DeprecationWarning."""
+    cfg = _make_cfg()
+    with pytest.warns(DeprecationWarning, match="Entrypoint is deprecated"):
+        MinimalExampleEntrypoint(cfg)
 
 
 def test_time_str_generation() -> None:
-    """Test if we display the time delta correctly with TimerContext"""
+    """TimerContext formats durations correctly."""
     from scaffold.ctx_manager import TimerContext
 
     assert "10.00 sec" == TimerContext._get_time_str(0, 10)
