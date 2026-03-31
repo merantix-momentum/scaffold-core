@@ -109,7 +109,7 @@ def zen_call(fn: t.Callable[..., t.Any], cfg: t.Dict, **kwargs: t.Any) -> t.Any:
     return zen(wrapped)(cfg)
 
 
-def run_local_workflow(workflow_fn: t.Any, cfg: t.Dict) -> None:
+def run_local_workflow(workflow_fn: t.Any, cfg: t.Dict, **kwargs: t.Any) -> None:
     """Execute a Flyte workflow from Hydra's ``main()`` function.
 
     Builds ``runtime_cfg`` from the active ``HydraConfig`` and maps all other
@@ -118,6 +118,8 @@ def run_local_workflow(workflow_fn: t.Any, cfg: t.Dict) -> None:
     Args:
         workflow_fn (WorkflowBase): A flytekit ``@workflow``-decorated function.
         cfg (DictConfig): The ``DictConfig`` received by the Hydra ``main()`` function.
+        **kwargs (Any): Additional keyword arguments to pass to the workflow function. This is useful for
+            passing in runtime values that are not part of the config
 
     Example
     -------
@@ -129,7 +131,7 @@ def run_local_workflow(workflow_fn: t.Any, cfg: t.Dict) -> None:
     from hydra.core.hydra_config import HydraConfig
 
     inputs = build_workflow_inputs(workflow_fn, cfg, HydraConfig.get())
-    workflow_fn(**inputs)
+    workflow_fn(**inputs, **kwargs)
 
 
 class FlyteRemoteHelper:
