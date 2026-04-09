@@ -47,8 +47,8 @@ class ArtifactDataset(Dataset, Mapping):
         self.version = self.sorted_versions()[-1]
         return self
 
-    def push(self, path: str) -> ArtifactDataset:
-        self.manager().log_files(self.artifact_name, path)
+    def push(self, path: str, description: str) -> ArtifactDataset:
+        self.manager().log_files(self.artifact_name, path, description=description)
         self.version = self.sorted_versions()[-1]
         return self
 

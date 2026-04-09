@@ -82,6 +82,7 @@ class ModelLogger:
         self,
         afid: str,
         model: torch.nn.Module,
+        artifact_description: str,
         optimizers: List[torch.optim.Optimizer] = None,
         collection: Optional[str] = None,
         **kwargs,
@@ -91,11 +92,16 @@ class ModelLogger:
         Args:
             afid (str): Artifact id to log under on the given artifact store or None to generate a new one.
             model (torch.nn.Module): Model to save the state dict off.
+            artifact_description (str):
+                Description of the artifact.
+                Will be logged and serves to reduce undocumented artifact clutter.
             optimizers (List[torch.optim.Optimizer]): All optimizers to save the state dicts off.
             collection (Optional[str]): Collection to log the artifact to.
             kwargs: Additional key value pairs to save to the state dict
         """
-        with DirectoryLogger(self.artifact_manager, afid, collection=collection) as dp:
+        with DirectoryLogger(
+            self.artifact_manager, afid, collection=collection, artifact_description=artifact_description
+        ) as dp:
             self.save_state(Path(dp), model, optimizers, **kwargs)
 
         return afid
