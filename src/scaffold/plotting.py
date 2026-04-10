@@ -12,6 +12,8 @@ MXM_THEME = {
 
 
 class MXM_STYLE(Enum):
+    """Plotting style options."""
+
     LIGHT = 1
     DARK = 2
 

@@ -1,11 +1,22 @@
 import importlib.util
 
+from hydra_zen import ZenStore
+
+scaffold_store = ZenStore(name="scaffold")
+
 
 def register_all() -> None:
-    """All @structured_config classes register themselves when imported / defined"""
-    from scaffold.conf.scaffold import artifact_manager  # noqa:F401
-    from scaffold.conf.scaffold import entrypoint  # noqa:F401
+    """Import all scaffold conf modules (triggering store() calls) then flush to hydra's ConfigStore."""
+    from scaffold.conf.scaffold import artifact_manager  # noqa: F401
+    from scaffold.conf.scaffold import ctx_manager  # noqa: F401
+    from scaffold.conf.scaffold import (  # noqa E501 NOTE: This module is deprecated and will be removed in a future release!; noqa: F401
+        entrypoint,
+    )
 
     if importlib.util.find_spec("flytekit") is not None:
-        # only import in case we installed flyte extra package
-        from scaffold.conf.scaffold import flyte_launcher  # noqa:F401
+        from scaffold.conf.scaffold import flyte_launcher  # noqa: F401
+
+    if importlib.util.find_spec("lightning") is not None:
+        from scaffold.conf.scaffold.lightning import callbacks  # noqa: F401
+
+    scaffold_store.add_to_hydra_store(overwrite_ok=True)

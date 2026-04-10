@@ -1,7 +1,7 @@
 .. _aim_utils:
 
 Aim Utils
-=======
+=========
 
 This package contains a patch that allows :code:`aim` to use :code:`fsspec` to read and write artifacts.
 Use it by calling the :code:`register_fsspec_to_aim` function before using aim functionality:

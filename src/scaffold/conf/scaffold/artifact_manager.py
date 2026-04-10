@@ -1,28 +1,25 @@
-import typing as t
-from dataclasses import field
-
+from hydra_zen import builds
 from omegaconf import MISSING
 
-from scaffold.hydra.config_helpers import structured_config
+from scaffold.conf import scaffold_store
+from scaffold.data.artifact_manager.filesystem import FileSystemArtifactManager
+from scaffold.data.artifact_manager.wandb import WandbArtifactManager
 
 GROUP = "scaffold/artifact_manager"
 
+WandbArtifactManagerConf = builds(
+    WandbArtifactManager,
+    collection="default",
+    entity="mxm",
+    project=MISSING,
+)
 
-@structured_config(group=GROUP)
-class ArtifactManagerConf:
-    _target_: str = MISSING
-    collection: str = "default"
+FileSystemArtifactManagerConf = builds(
+    FileSystemArtifactManager,
+    collection="default",
+    url=MISSING,
+    fs_kwargs={},
+)
 
-
-@structured_config(group=GROUP)
-class WandbArtifactManagerConf(ArtifactManagerConf):
-    _target_: str = "scaffold.data.artifact_manager.wandb.WandbArtifactManager"
-    entity: str = "mxm"
-    project: str = MISSING
-
-
-@structured_config(group=GROUP)
-class FileSystemArtifactManagerConf(ArtifactManagerConf):
-    _target_: str = "scaffold.data.artifact_manager.filesystem.FileSystemArtifactManager"
-    url: str = MISSING
-    fs_kwargs: t.Dict = field(default_factory=dict)
+scaffold_store(WandbArtifactManagerConf, group=GROUP, name="WandbArtifactManagerConf")
+scaffold_store(FileSystemArtifactManagerConf, group=GROUP, name="FileSystemArtifactManagerConf")

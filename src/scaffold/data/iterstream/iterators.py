@@ -6,7 +6,6 @@ from itertools import islice
 from typing import Any, Callable, Iterable, Iterator, List, Optional
 
 import numpy as np
-from tqdm import tqdm
 
 from scaffold.data.constants import SeedType
 
@@ -133,6 +132,8 @@ def flatten_(iterables: Iterable[Iterable]) -> Iterator:
 
 def tqdm_(iterable: Iterable, **kwargs) -> Iterator:
     """Iterate while using tqdm."""
+    from tqdm import tqdm
+
     yield from tqdm(iterable, **kwargs)
 
 

@@ -13,7 +13,6 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities import rank_zero_info, rank_zero_only
 
-from scaffold.conf.scaffold.lightning.callbacks import LightningCheckpointerConf
 from scaffold.data.artifact_manager.artifact_id_manager import validate_or_generate_target_afid
 from scaffold.data.artifact_manager.artifact_logger import ModelLogger, STATE_FILENAME
 from scaffold.data.artifact_manager.base import ArtifactManager
@@ -175,22 +174,3 @@ class LightningCheckpointer(Callback):
             # This is the case when torch.load() is not called on all ranks.
             # That is why we make sure to only save non distributed model objects.
             return torch.load(self.best_state_path, weights_only=False)
-
-    @classmethod
-    def from_config(cls, cfg: LightningCheckpointerConf) -> "LightningCheckpointer":
-        """Instantiate a LightningCheckpointer from a configuration.
-
-        Args:
-            cfg: Configuration for the LightningCheckpointer.
-        """
-        from hydra.utils import instantiate
-
-        artifact_manager = instantiate(cfg.artifact_manager)
-        return cls(
-            artifact_manager=artifact_manager,
-            target_afid=cfg.target_afid,
-            target_afid_best=cfg.target_afid_best,
-            resume_checkpoint_afid=cfg.resume_checkpoint_afid,
-            resume_checkpoint_version=cfg.resume_checkpoint_version,
-            only_log_current_best=cfg.only_log_current_best,
-        )

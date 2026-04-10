@@ -3,16 +3,32 @@
 Hydra
 =======
 
+Scaffold's ``hydra`` subpackage provides utilities to ease the usage of Hydra in projects.
+
+.. warning::
+    The helpers described in this page (``structured_config``, ``compose``, ``initialize``) are
+    **deprecated** and will be removed in a future release. New projects should use
+    `hydra-zen <https://mit-ll-responsible-ai.github.io/hydra-zen/>`_ instead —
+    see the :ref:`hydra-zen section below <hydra-zen-section>`.
+
+
+
+Deprecated: @structured_config
+--------------------------------
+
+.. deprecated::
+    Use :func:`hydra_zen.builds` and :func:`hydra_zen.store` instead.
+
 Scaffolds ``hydra`` subpackage provides some utility to ease the usage of hydra in projects.
 Some highlights:
 
 - The ``structured_config`` decorator, that can be used instead of a ``dataclass`` decorator for a schema definition,
   which already takes care of registering the schema with hydra.
-- An alternative to hydra's ``compose`` function with extra functionality
+  - An alternative to hydra's ``compose`` function with extra functionality
 - An alternative to hydra's ``initialize`` which does not fail if there is an existing hydra instance.
 
 
-Also see :ref:`example1`.
+Also see :ref:`quickstart`.
 
 Registering schemas with @structured_config
 --------------------------------------------
@@ -44,8 +60,12 @@ When specifying your config, you can then use this schema by finding it with the
     - /your_package/schemas/MyConfig@_here_  # You can also apply it to other subkeys than @_here_
 
 
-Initialize and compose
-------------------------
+Deprecated: Initialize and compose
+-------------------------------------
+
+.. deprecated::
+    These helpers are no longer needed. Use hydra's own ``hydra.initialize`` directly,
+    or define configs with :func:`hydra_zen.builds` and :func:`hydra_zen.store`.
 
 Hydra provides the :code:`hydra.initialize` and :code:`hydra.compose` with the `compose API <https://hydra.cc/docs/advanced/compose_api/>`_.
 Scaffold extends this API slightly, while staying compatible with the original hydra usage.
@@ -53,8 +73,8 @@ Scaffold extends this API slightly, while staying compatible with the original h
 initialize
 """"""""""""
 
-:code:`scaffold.hydra.initialize` mainly add a minor feature: Not breaking if a hydra instance exists, but using the existing one.
-It also provides easier access to the global hydra instance, and enables :code:`scaffold.hydra.compose` to be more robust.
+:code:`scaffold.hydra.initialize` adds one feature: it does not fail if a hydra instance already exists, but
+uses the existing one instead.
 
 .. code-block:: python
 
@@ -112,3 +132,11 @@ Lets start with the same schema from before:
    Setting return_leaf=True (Default), scaffold.hydra.compose will automatically return the result of config["my"]["group"]
    instead of adding all group keys.
 
+.. _hydra-zen-section:
+
+hydra-zen
+---------
+
+New projects should use `hydra-zen <https://mit-ll-responsible-ai.github.io/hydra-zen/>`_ for
+configuration instead of the deprecated helpers above.
+See :ref:`ml-pipelines` for end-to-end examples using hydra-zen with Scaffold.

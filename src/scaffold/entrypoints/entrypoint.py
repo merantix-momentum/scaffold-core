@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import logging
+import warnings
 from abc import ABC
 from contextlib import AbstractContextManager
 from copy import deepcopy
@@ -40,6 +41,12 @@ class Entrypoint(ABC, Generic[ENTRYPOINT_CONFIG_TYPE]):
         """
         # We check for correct type explicitly, because
         # specifying bounds for the generic type is not supported by vscode yet.
+        warnings.warn(
+            "Entrypoint is deprecated and will be removed in a future release. "
+            "Use hydra_zen.builds() and instantiate directly instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         assert (
             issubclass(OmegaConf.get_type(config), EntrypointConf)
             or OmegaConf.get_type(config) == EntrypointConf

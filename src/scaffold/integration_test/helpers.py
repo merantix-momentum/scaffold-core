@@ -9,17 +9,11 @@ This means we only use conftest.py to define fixtures which will automatically b
 """
 import os
 from collections import namedtuple
-from contextlib import AbstractContextManager
-from dataclasses import field
 from types import TracebackType
-from typing import Any, List, Optional, Type
+from typing import Any, Optional, Type
 
 import pynvml
 from mockito import when
-
-from scaffold.conf.scaffold.entrypoint import EntrypointConf
-from scaffold.entrypoints.entrypoint import Entrypoint
-from scaffold.hydra.config_helpers import structured_config
 
 MB = 1024 * 1024
 
@@ -43,45 +37,6 @@ class TmpCwd(object):
     ) -> None:
         """Restores stored cwd"""
         os.chdir(self._cwd_stack)
-
-
-@structured_config(group="my_project/schemas")
-class ExampleEntrypointConf(EntrypointConf):
-    defaults: List[Any] = field(
-        default_factory=lambda: [
-            "/scaffold/entrypoint/hydra_defaults@_global_",
-            {"/scaffold/entrypoint/logging@logging": "default"},
-        ]
-    )
-    greeting: str = "Hey"
-
-
-class MyContext(AbstractContextManager):
-    """Helper context manager for testing. It sets a flag True when active and False when it exits."""
-
-    def __init__(self) -> None:
-        """Context init"""
-        self.ctx_active = None
-
-    def __enter__(self) -> "MyContext":
-        """Context enter"""
-        self.ctx_active = True
-        return self
-
-    def __exit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        """Context exit"""
-        self.ctx_active = False
-
-
-class MinimalExampleEntrypoint(Entrypoint[ExampleEntrypointConf]):
-    def run(self, name: str) -> str:
-        """Compile and return greeting."""
-        return self.config.greeting + " " + name
 
 
 def configure_mock(N: object = pynvml, scenario_nonexistent_pid: bool = False) -> None:

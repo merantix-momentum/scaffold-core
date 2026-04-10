@@ -2,8 +2,6 @@ import json
 import logging
 import os
 
-import wandb
-
 WANDB_SECRET = "wandb-access-secret"
 WANDB_KEY = "key_map"
 
@@ -20,6 +18,8 @@ def wandb_environment_setup(username: str) -> None:
     Args:
         username (str): WandB user handle for look up of API key
     """
+    import wandb
+
     # locally authentication should already be setup
     if wandb.api.api_key is None and "WANDB_API_KEY" not in os.environ.keys():
         # in a cloud context the secret containing the mapping usernames <> API-key should be accessible

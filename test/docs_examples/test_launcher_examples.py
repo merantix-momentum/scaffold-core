@@ -1,25 +1,46 @@
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-CONFIG_OUTPUT = "Doing things with cfg.experiment_name='training' and cfg.model.learning_rate=0.001!\n"
-CONFIG_OUTPUT_2 = CONFIG_OUTPUT + "Let me tell you about cfg.another_key='yet_another_value'!\n"
+SNIPPETS_DIR = Path(__file__).parent / "snippets"
+
+
+# ── Subprocess integration tests ──────────────────────────────────────────────
 
 
 @pytest.mark.parametrize(
-    "filename,output",
+    "filename,expected_fragments",
     [
-        ("main.py", "Doing things!\n"),
-        ("main_hydra.py", CONFIG_OUTPUT),
-        ("main_hydra_group.py", CONFIG_OUTPUT),
-        ("main_hydra_from_package.py", CONFIG_OUTPUT),
-        ("main_hydra_flyte.py", CONFIG_OUTPUT),
-        ("main_hydra_flyte_two_tasks.py", CONFIG_OUTPUT_2),
+        (
+            "full_example.py",
+            [
+                "Loading train data from gs://example/data",
+                "Training resnet18 on 3 samples",
+                "gs://example/models",
+                "Evaluating resnet18 from gs://example/models on 3 samples",
+            ],
+        ),
+        (
+            "quickstart.py",
+            [
+                "Training resnet18 on gs://example/data, saving to gs://example/models",
+            ],
+        ),
     ],
 )
-def test_base_hydra(filename: str, output: str) -> None:
-    """Testing the base example script"""
-    filepath = (Path(__file__).parent / "snippets" / filename).resolve()
-    _output = subprocess.check_output(["python3", filepath], text=True)
-    assert _output == output
+def test_local_execution(filename: str, expected_fragments: list[str]) -> None:
+    """Run example scripts with execution_environment=local and verify log output."""
+    filepath = (SNIPPETS_DIR / filename).resolve()
+    result = subprocess.run(
+        [sys.executable, str(filepath), "hydra.launcher.execution_environment=local"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=30,
+        cwd=SNIPPETS_DIR,
+    )
+    assert result.returncode == 0, f"Script failed:\n{result.stdout}"
+    for frag in expected_fragments:
+        assert frag in result.stdout, f"Missing expected output fragment: {frag!r}"

@@ -16,12 +16,11 @@ Current technologies and features
 
 Scaffold currently offers support for the current aspects of machine learning projects:
 
-* Configuration management (Hydra)
+* Configuration management (`Hydra <https://hydra.cc/>`_ + `hydra-zen <https://mit-ll-responsible-ai.github.io/hydra-zen/>`_)
 * CLI execution and support (Hydra)
-* Model training (Pytorch Lightning)
+* Model training (PyTorch Lightning)
 * Workflow orchestration/execution (Flyte)
-* Code organisation (Entrypoints)
-* Experiment tracking (Wandb)
+* Experiment tracking (W&B)
 * Plotting (Matplotlib)
 
 .. toctree::
@@ -31,6 +30,5 @@ Scaffold currently offers support for the current aspects of machine learning pr
    usage/installation
    usage/contribute
    usage/subpackages
-   usage/hydra_flyte_launcher/hydra_flyte_launcher
+   usage/ml_pipelines/index
    usage/examples
-   usage/document

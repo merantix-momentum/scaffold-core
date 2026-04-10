@@ -5,3 +5,5 @@ import scaffold
 
 MODULE_PATH = os.path.dirname(scaffold.__file__)
 MANIFEST_DIR = Path(os.path.join(MODULE_PATH, "manifests"))
+
+RUNTIME_CFG_KEY: str = "runtime_cfg"

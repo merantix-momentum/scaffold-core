@@ -1,7 +1,7 @@
 import importlib
 import logging
 from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List, Set, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 from flytekit.configuration import (
     Config,
@@ -16,6 +16,9 @@ from flytekit.core.condition import BranchNode
 from flytekit.core.node import Node
 from flytekit.core.workflow import WorkflowBase
 from flytekit.remote.remote import FlyteRemote
+from omegaconf import DictConfig, OmegaConf
+
+from scaffold.constants import RUNTIME_CFG_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -146,14 +149,10 @@ def temp_flyte_remote(
     Args:
         project (str): the flyte project
         domain (str): one of `development`, `staging` or `production`
-        service (str): kubernetes service name to port-forward.
-        port (int): port of the service in the cluster to port-forward
-        namespace (str): namespace of the service in the cluster that is being port-forwarded
-        local_port (int): the desired local port to forward to, will use a random port if the desired port is in use
-        venv_root (str): python virtual environment root for the flyte image, flyte default is used when not specified.
+        endpoint (str): the Flyte platform endpoint to connect to
 
     Yields:
-        Generator[FlyteRemote, None, None]:
+        Generator[Tuple[FlyteRemote, SerializationSettings], None, None]:
             FlyteRemote: flyte remote object to make register calls.
     """
     remote = FlyteRemote(
@@ -183,7 +182,7 @@ def get_serialization_settings(
             `container_image="{{.images.spark.fqn}}:{{.images.default.version}}"`.
         fast_serialization_settings (FastSerializationSettings): Details of image injections in fast serialisation mode
         project (str): the flyte project
-        domain (str): domain, normally one of `development`, `staging` or `production
+        domain (str): domain, normally one of ``development``, ``staging`` or ``production``
     Returns:
         Flyte SerializationSettings for registering flyte entities.
     """
@@ -205,3 +204,61 @@ def get_serialization_settings(
     )
 
     return default_serialization_settings
+
+
+def build_runtime_cfg(hydra_cfg: Any) -> DictConfig:
+    """Build a RuntimeConf DictConfig from Hydra's internal config.
+
+    Args:
+        hydra_cfg (Any): The object returned by ``HydraConfig.get()`` (or the ``cfg.hydra``
+            sub-tree available inside the launcher).
+
+    Returns:
+        DictConfig: A config with ``logging_cfg`` and ``verbose`` keys.
+    """
+    return OmegaConf.create(
+        {
+            "logging_cfg": OmegaConf.to_container(hydra_cfg.hydra_logging, resolve=True),
+            "verbose": hydra_cfg.verbose,
+        }
+    )
+
+
+def build_workflow_inputs(
+    workflow: Any,
+    job_cfg: DictConfig,
+    hydra_cfg: Any,
+    runtime_cfg_key: str = RUNTIME_CFG_KEY,
+) -> dict[str, Any]:
+    """Map a Hydra config to Flyte workflow inputs by parameter name.
+
+    For each parameter in the workflow interface:
+
+    - If the name matches *runtime_cfg_key*: injects a RuntimeConf DictConfig
+      built from Hydra's logging configuration.
+    - Otherwise: looks up the value as ``job_cfg.<name>``.  Emits a warning
+      when no matching key exists (the workflow default is used in that case).
+
+    Args:
+        workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
+        job_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
+        hydra_cfg (Any): Hydra internal config (``cfg.hydra`` or ``HydraConfig.get()``).
+        runtime_cfg_key (str): Name of the runtime config parameter.
+
+    Returns:
+        dict[str, Any]: Mapping of workflow parameter names to their resolved values.
+    """
+    inputs: dict[str, Any] = {}
+    for name in workflow.interface.inputs:
+        if name == runtime_cfg_key:
+            inputs[name] = build_runtime_cfg(hydra_cfg)
+        else:
+            val = OmegaConf.select(job_cfg, name)
+            if val is None:
+                logger.warning(
+                    f"Workflow input {name} has no matching key in the config. "
+                    f"It will fall back to the workflow's default value if one exists."
+                )
+            else:
+                inputs[name] = val
+    return inputs
