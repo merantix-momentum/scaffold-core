@@ -133,10 +133,8 @@ def structured_config(
         Use :func:`hydra_zen.builds` and :func:`hydra_zen.store` instead::
 
             from hydra_zen import builds
-            from scaffold.conf import scaffold_store
 
             MyConf = builds(MyClass, arg=value)
-            scaffold_store(MyConf, group="my/group", name="MyConf")
 
         This decorator will be removed in a future release.
 

@@ -2,13 +2,10 @@ from hydra_zen import builds
 from omegaconf import MISSING
 
 from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteLauncher
-from scaffold.conf import scaffold_store
-from scaffold.flyte.launcher_conf import (
-    ExecutionEnvironmentEnum,
-    FlyteDockerImageConf,
-    FlyteNotificationConf,
-    FlyteWorkflowConf,
-)
+from scaffold.flyte.launcher_conf import FlyteDockerImageConf  # noqa: F401
+from scaffold.flyte.launcher_conf import FlyteNotificationConf  # noqa: F401
+from scaffold.flyte.launcher_conf import FlyteWorkflowConf  # noqa: F401
+from scaffold.flyte.launcher_conf import ExecutionEnvironmentEnum
 
 FlyteLauncherConf = builds(
     FlyteLauncher,
@@ -20,7 +17,3 @@ FlyteLauncherConf = builds(
     workflow=MISSING,
     notifications=[],
 )
-
-scaffold_store(FlyteDockerImageConf, group="scaffold/flyte_launcher", name="FlyteDockerImageConf")
-scaffold_store(FlyteWorkflowConf, group="scaffold/flyte_launcher", name="FlyteWorkflowConf")
-scaffold_store(FlyteNotificationConf, group="scaffold/flyte_launcher", name="FlyteNotificationConf")
