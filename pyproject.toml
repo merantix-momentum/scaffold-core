@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT License"}
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: Apache Software License",
@@ -33,7 +33,7 @@ data = [
     "docarray",
     "fsspec>=2024.12.0",  # Experience shows best keep it updated
     "gcsfs>=2024.12.0",   # Experience shows best keep it updated
-    "numpy>=1.0.0; python_version>='3.10'",
+    "numpy>=1.0.0; python_version>='3.12'",
     "numpy<2.0.0; python_version<'3.10'", # issue with pyarrow if we dont explicitly downgrade in this case
 ]
 
