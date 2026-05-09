@@ -228,7 +228,7 @@ class FlyteLauncher(Launcher):
         return pipeline_version
 
     @staticmethod
-    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConf) -> Tuple[str]:
+    def _resolve_docker_context_to_root_project_dir(image_config: FlyteDockerImageConf) -> Tuple[str, str]:
         """
         Resolve the docker context relative to the root of the `project.
         This enables the user to run the launcher from any subdirectory of the project.
@@ -252,7 +252,7 @@ class FlyteLauncher(Launcher):
             project_root_rel,
             image_config.docker_context,
         )
-        dockerfile_path = os.path.join(docker_context, image_config.dockerfile_path)
+        dockerfile_path = os.path.join(project_root_rel, image_config.dockerfile_path)
         return docker_context, dockerfile_path
 
     def _run_image_build(self) -> Tuple[str, Dict[str, str]]:
