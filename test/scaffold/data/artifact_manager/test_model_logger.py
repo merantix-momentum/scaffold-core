@@ -20,7 +20,11 @@ def test_model_logger_state() -> None:
         additional_key_value_pairs = {"epoch": 1, "loss": 0.1}
         # Log with new randomly generated afid
         afid = model_logger.log_state_to_artifact(
-            afid="example_afid", model=model, optimizers=[optim], **additional_key_value_pairs
+            afid="example_afid",
+            model=model,
+            artifact_description="test_desc",
+            optimizers=[optim],
+            **additional_key_value_pairs,
         )
         state = model_logger.retrieve_state_from_artifact(afid)
 

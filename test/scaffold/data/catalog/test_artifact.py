@@ -71,9 +71,10 @@ class TestArtifact:
         return manager_ds, mock_manager
 
     def test_init(self, mock_manager_dataset):
-        manager_ds, _ = mock_manager_dataset
-        artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
-        assert artifact.artifact_name == "my-artifact"
+        manager_ds, manager = mock_manager_dataset
+        name = "my-artifact"
+        artifact = ArtifactDataset(artifact_name=name, manager=manager_ds)
+        assert artifact.artifact_name == name
         assert artifact.manager == manager_ds
         assert artifact.version is None
 
@@ -111,10 +112,12 @@ class TestArtifact:
         manager.list_versions.return_value = ["v1", "v2"]
 
         artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
-        res = artifact.push("/path/to/files")
+
+        artifact_description = "This is a test artifact"
+        res = artifact.push("/path/to/files", description=artifact_description)
 
         assert res == artifact
-        manager.log_files.assert_called_once_with("my-artifact", "/path/to/files")
+        manager.log_files.assert_called_once_with("my-artifact", "/path/to/files", description=artifact_description)
         # Should update version to latest after push
         assert artifact.version == "v2"
 
