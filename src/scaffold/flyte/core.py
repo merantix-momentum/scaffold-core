@@ -256,6 +256,9 @@ def build_workflow_inputs(
 
     # backwards compatible: legacy flyte workflows expect a single top level "cfg" or "config", non-exploded
     if len(wf_inputs.keys()) == 1 and ("cfg" in wf_inputs or "config" in wf_inputs):
+        logger.warning(
+            "Building workflow inputs in legacy mode. Assuming that the workflow handles config-splitting on its own."
+        )
         inputs[list(wf_inputs.keys())[0]] = job_cfg
 
     else:
