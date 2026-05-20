@@ -238,7 +238,7 @@ def build_workflow_inputs(
       built from Hydra's logging configuration.
     - Otherwise: looks up the value as ``job_cfg.<name>``.  Emits a warning
       when no matching key exists (the workflow default is used in that case).
-
+    - For legacy compatibility, if the workflow only expects "cfg" or "config", do not explode the config
     Args:
         workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
         job_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
@@ -249,10 +249,20 @@ def build_workflow_inputs(
         dict[str, Any]: Mapping of workflow parameter names to their resolved values.
     """
     inputs: dict[str, Any] = {}
-    for name in workflow.interface.inputs:
-        if name == runtime_cfg_key:
-            inputs[name] = build_runtime_cfg(hydra_cfg)
-        else:
+    wf_inputs = workflow.interface.inputs
+
+    if runtime_cfg_key in wf_inputs:
+        inputs[runtime_cfg_key] = build_runtime_cfg(hydra_cfg)
+
+    # backwards compatible: legacy flyte workflows expect a single top level "cfg" or "config", non-exploded
+    if len(wf_inputs.keys()) == 1 and ("cfg" in wf_inputs or "config" in wf_inputs):
+        logger.warning(
+            "Building workflow inputs in legacy mode. Assuming that the workflow handles config-splitting on its own."
+        )
+        inputs[list(wf_inputs.keys())[0]] = job_cfg
+
+    else:
+        for name in wf_inputs:
             val = OmegaConf.select(job_cfg, name)
             if val is None:
                 logger.warning(
