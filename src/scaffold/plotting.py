@@ -170,7 +170,7 @@ def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> Abs
 
 
 def add_logo(
-    fig: plt.Figure,
+    fig: "plt.Figure",
     style: MXM_STYLE = MXM_STYLE.LIGHT,
     variant: int = 0,
     logo_path: str | Path | None = None,
