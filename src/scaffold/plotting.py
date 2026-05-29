@@ -191,16 +191,26 @@ def add_logo(
     """
     import io
 
-    import fsspec
     import matplotlib.image as mpimg
     from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
     if logo_path is None:
-        logo_path = str(LOGO_MAP[(style, variant)])
+        try:
+            logo_path = str(LOGO_MAP[(style, variant)])
+        except KeyError as e:
+            raise ValueError(f"Invalid style/variant combination: {(style, variant)}") from e
 
-    with fsspec.open(str(logo_path), "rb") as f:
-        data = f.read()
-
+    try:
+        import fsspec
+    except ImportError as e:
+        if "://" in str(logo_path):
+            raise ImportError(
+                "plotting.add_logo requires fsspec for non-local logo paths. Install mxm-scaffold[data] and the relevant filesystem implementation (e.g. gcsfs/s3fs)."
+            ) from e
+        data = Path(str(logo_path)).read_bytes()
+    else:
+        with fsspec.open(str(logo_path), "rb") as f:
+            data = f.read()
     img = mpimg.imread(io.BytesIO(data), format=Path(str(logo_path)).suffix.lstrip("."))
 
     positions = {
