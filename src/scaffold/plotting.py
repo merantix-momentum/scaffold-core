@@ -205,7 +205,8 @@ def add_logo(
     except ImportError as e:
         if "://" in str(logo_path):
             raise ImportError(
-                "plotting.add_logo requires fsspec for non-local logo paths. Install mxm-scaffold[data] and the relevant filesystem implementation (e.g. gcsfs/s3fs)."
+                "plotting.add_logo requires fsspec for non-local logo paths. "
+                "Install mxm-scaffold[data] and the relevant filesystem implementation (e.g. gcsfs/s3fs)."
             ) from e
         data = Path(str(logo_path)).read_bytes()
     else:
