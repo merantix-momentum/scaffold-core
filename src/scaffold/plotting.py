@@ -2,13 +2,34 @@ from contextlib import AbstractContextManager
 from enum import Enum
 from typing import List
 
+# Primary
+BLACK = "#000000"
+WHITE = "#FFFFFF"
+BLUEBERRY = "#381D59"
+OFFWHITE = "#FFFAF4"
+
+# Secondary
+LAVENDER = "#ABABF9"
+CARIBBEAN = "#11D8C1"
+CORAL = "#FF5665"
+ELECTRIC = "#9E36FF"
+
+# Tertiary
+VANILLA = "#FFFFAE"
+ADMIRAL = "#1D0693"
+VERMILLION = "#CE3D4A"
+PINE = "#007D85"
+
 MXM_THEME = {
     "title_font": "Space Grotesk",
     "text_font": "Inter",
-    "primary": ["#000000", "#FFFFFF", "#381D59", "#FFFAF4"],
-    "secondary": ["#ABABF9", "#FF5665", "#11D8C1", "#9E36FF"],
-    "tertiary": ["#FF5665", "#9E36FF", "#CE3D4A", "#007D85"],
+    "primary": [BLACK, WHITE, BLUEBERRY, OFFWHITE],
+    "secondary": [LAVENDER, CARIBBEAN, CORAL, ELECTRIC],
+    "tertiary": [VANILLA, ADMIRAL, VERMILLION, PINE],
 }
+
+# Can be applied using fig.suptitle("title", **TITLE_FONT)
+TITLE_FONT = {"fontfamily": MXM_THEME["title_font"]}
 
 
 class MXM_STYLE(Enum):
@@ -29,23 +50,25 @@ def get_color_cycle(style: MXM_STYLE = MXM_STYLE.LIGHT) -> List[str]:
     """
     if style == MXM_STYLE.LIGHT:
         return [
-            MXM_THEME["tertiary"][1],
-            MXM_THEME["secondary"][1],
-            MXM_THEME["tertiary"][2],
-            MXM_THEME["secondary"][3],
-            MXM_THEME["tertiary"][3],
+            ELECTRIC,
+            CARIBBEAN,
+            VERMILLION,
+            ADMIRAL,
+            PINE,
+        ]
+    elif style == MXM_STYLE.DARK:
+        return [
+            VANILLA,
+            CARIBBEAN,
+            CORAL,
+            OFFWHITE,
+            LAVENDER,
         ]
     else:
-        return [
-            MXM_THEME["secondary"][2],
-            MXM_THEME["secondary"][1],
-            MXM_THEME["tertiary"][0],
-            MXM_THEME["primary"][3],
-            MXM_THEME["secondary"][0],
-        ]
+        raise ValueError(f"Invalid style: {style}")
 
 
-def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
+def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> dict:
     """Get rc (runtime configuration) parameters for the chosen style.
     Used for customizing the properties and default styles of Matplotlib.
 
@@ -53,18 +76,44 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
 
     Args:
         style (MXM_STYLE, optional): The style used for plotting. Defaults to MXM_STYLE.LIGHT.
-
+        variant (int, optional): The variant of the style to use. Defaults to 0.
     Returns:
         dict: Dictionary with rc parameters.
     """
     import matplotlib.pyplot as plt
 
     if style == MXM_STYLE.LIGHT:
-        fg = MXM_THEME["primary"][0]
-        bg = MXM_THEME["primary"][1]
+        # white background
+        if variant == 0:
+            fg = BLACK
+            bg = WHITE
+
+        # offwhite background
+        elif variant == 1:
+            fg = BLACK
+            bg = OFFWHITE
+        else:
+            raise ValueError(f"Invalid variant: {variant}")
+    elif style == MXM_STYLE.DARK:
+        # blueberry background
+        if variant == 0:
+            fg = OFFWHITE
+            bg = BLUEBERRY
+
+        # black background
+        elif variant == 1:
+            fg = OFFWHITE
+            bg = BLACK
+
+        # admiral background
+        elif variant == 2:
+            fg = OFFWHITE
+            bg = ADMIRAL
+        else:
+            raise ValueError(f"Invalid variant: {variant}")
     else:
-        fg = MXM_THEME["primary"][3]
-        bg = MXM_THEME["primary"][2]
+        raise ValueError(f"Invalid style: {style}")
+
     rc = {
         "axes.grid.axis": "y",
         "font.family": MXM_THEME["text_font"],
@@ -74,6 +123,8 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
         "axes.spines.right": False,
         "axes.spines.top": False,
         "axes.spines.bottom": False,
+        "axes.grid": True,
+        "axes.axisbelow": True,
         "figure.facecolor": bg,
         "axes.facecolor": bg,
         "grid.color": fg,
@@ -81,21 +132,23 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
         "axes.labelcolor": fg,
         "xtick.color": fg,
         "ytick.color": fg,
+        "legend.frameon": False,
     }
     return rc
 
 
-def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT) -> AbstractContextManager[None]:
+def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> AbstractContextManager[None]:
     """Get Matplotlib context manager for the chosen style.
 
     Args:
         style (MXM_STYLE, optional): The style used for plotting. Defaults to MXM_STYLE.LIGHT.
+        variant (int, optional): The variant of the style to use. Defaults to 0.
 
     Returns:
         AbstractContextManager[None]: Context manager for Matplotlib.
     """
     import matplotlib.pyplot as plt
 
-    rc = get_rc_params(style)
+    rc = get_rc_params(style, variant)
 
     return plt.rc_context(rc=rc)
