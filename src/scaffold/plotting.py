@@ -209,7 +209,9 @@ def add_logo(
         "upper right": (0.95, 0.95),
         "upper left": (0.05, 0.95),
     }
-    xy = positions[position]
+    xy = positions.get(position)
+    if xy is None:
+        raise ValueError(f"Invalid position: {position}. Expected one of {sorted(positions)}")
 
     fig_height_px = fig.get_size_inches()[1] * fig.dpi
     logo_height_px = size * fig_height_px
