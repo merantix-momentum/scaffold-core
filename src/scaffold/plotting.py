@@ -1,6 +1,12 @@
 from contextlib import AbstractContextManager
 from enum import Enum
-from typing import List
+from pathlib import Path
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
+
+ASSETS_DIR = Path(__file__).parent / "assets"
 
 # Primary
 BLACK = "#000000"
@@ -37,6 +43,15 @@ class MXM_STYLE(Enum):
 
     LIGHT = 1
     DARK = 2
+
+
+LOGO_MAP = {
+    (MXM_STYLE.LIGHT, 0): ASSETS_DIR / "logo_black.png",
+    (MXM_STYLE.LIGHT, 1): ASSETS_DIR / "logo_black.png",
+    (MXM_STYLE.DARK, 0): ASSETS_DIR / "logo_offwhite.png",
+    (MXM_STYLE.DARK, 1): ASSETS_DIR / "logo_offwhite.png",
+    (MXM_STYLE.DARK, 2): ASSETS_DIR / "logo_offwhite.png",
+}
 
 
 def get_color_cycle(style: MXM_STYLE = MXM_STYLE.LIGHT) -> List[str]:
@@ -152,3 +167,54 @@ def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> Abs
     rc = get_rc_params(style, variant)
 
     return plt.rc_context(rc=rc)
+
+
+def add_logo(
+    fig: plt.Figure,
+    style: MXM_STYLE = MXM_STYLE.LIGHT,
+    variant: int = 0,
+    logo_path: str | Path | None = None,
+    position: str = "upper right",
+    size: float = 0.08,
+    alpha: float = 0.8,
+) -> None:
+    """Add a small logo to the corner of a matplotlib figure.
+
+    Args:
+        fig: The matplotlib figure to add the logo to.
+        style: The style, used to pick an appropriate default logo. Defaults to MXM_STYLE.LIGHT.
+        variant: The variant of the style. Used to select a contrasting logo. Defaults to 0.
+        logo_path: Path or URI to a custom logo image. If None, uses the default logo for the style/variant.
+        position: Corner placement. One of "lower right", "lower left", "upper right", "upper left".
+        size: Size of the logo as a fraction of figure height. Defaults to 0.08.
+        alpha: Opacity of the logo. Defaults to 0.8.
+    """
+    import io
+
+    import fsspec
+    import matplotlib.image as mpimg
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+    if logo_path is None:
+        logo_path = str(LOGO_MAP[(style, variant)])
+
+    with fsspec.open(str(logo_path), "rb") as f:
+        data = f.read()
+
+    img = mpimg.imread(io.BytesIO(data), format=Path(str(logo_path)).suffix.lstrip("."))
+
+    positions = {
+        "lower right": (0.95, 0.05),
+        "lower left": (0.05, 0.05),
+        "upper right": (0.95, 0.95),
+        "upper left": (0.05, 0.95),
+    }
+    xy = positions[position]
+
+    fig_height_px = fig.get_size_inches()[1] * fig.dpi
+    logo_height_px = size * fig_height_px
+    zoom = logo_height_px / img.shape[0]
+
+    imagebox = OffsetImage(img, zoom=zoom, alpha=alpha)
+    ab = AnnotationBbox(imagebox, xy, xycoords="figure fraction", frameon=False)
+    fig.add_artist(ab)
