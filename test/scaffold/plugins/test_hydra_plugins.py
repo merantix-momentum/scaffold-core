@@ -20,20 +20,11 @@ def test_discovery() -> None:
     assert flyte_launcher.FlyteLauncher.__name__ in [x.__name__ for x in Plugins.instance().discover(Launcher)]
 
 
-def test_config_installed() -> None:
-    """Tests if the scaffold configs are correctly added to the config store."""
-    with initialize(config_path=None):
-        config_loader = GlobalHydra.instance().config_loader()
-        assert "WandbArtifactManagerConf" in config_loader.get_group_options("scaffold/artifact_manager")
-        assert "FlyteWorkflowConf" in config_loader.get_group_options("scaffold/flyte_launcher")
-
-
 def test_flyte_config_installed() -> None:
     """Tests if the flyte related configs are correctly added to the config store."""
     with initialize(config_path=None):
         config_loader = GlobalHydra.instance().config_loader()
-        assert "FlyteDockerImageConf" in config_loader.get_group_options("scaffold/flyte_launcher")
-        assert "FlyteWorkflowConf" in config_loader.get_group_options("scaffold/flyte_launcher")
+        assert "FlyteWorkflowConfig" in config_loader.get_group_options("scaffold/flyte_launcher")
 
 
 def test_hydra_plugin_available() -> None:
@@ -47,8 +38,7 @@ def test_hydra_plugin_available() -> None:
 @pytest.mark.parametrize(
     "config_name",
     [
-        "scaffold/flyte_launcher/FlyteDockerImageConf",
-        "scaffold/flyte_launcher/FlyteWorkflowConf",
+        "scaffold/flyte_launcher/FlyteWorkflowConfig",
     ],
 )
 def test_config_store_available_through_plugin(config_name: str) -> None:
