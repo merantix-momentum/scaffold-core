@@ -3,84 +3,98 @@
 Plotting
 ========
 
-The plotting subpackage provides a set of functions to create plots that follow the Merantix Momentum style guide.
-The style is based on the [default Matplotlib style](https://github.com/matplotlib/matplotlib/blob/main/lib/matplotlib/mpl-data/stylelib/classic.mplstyle).
+The plotting subpackage provides functions to create plots following the Merantix Momentum style guide.
 
-Download the fonts from Google Fonts::
+Fonts
+-----
 
-    !wget 'https://github.com/google/fonts/raw/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf'
-    !wget 'https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf'
+Download and install the required fonts from Google Fonts::
 
-Add the fonts to the font manager::
+    wget 'https://github.com/google/fonts/raw/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf'
+    wget 'https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf'
 
-    from matplotlib import font_manager as fm, pyplot as plt
-    font_files = fm.findSystemFonts('.')
-    for font_file in font_files:
+Install them to your system (e.g., Font Book on macOS), then register with matplotlib::
+
+    from matplotlib import font_manager as fm
+    for font_file in fm.findSystemFonts():
         fm.fontManager.addfont(font_file)
 
-Alternatively, install the fonts to the system after downloading (e.g., adding them to Font Book on macOS) and add them to the font manager (otherwise they are not in the font cache)::
+Styles and Variants
+-------------------
 
-    from matplotlib import font_manager as fm, pyplot as plt
-    font_files = fm.findSystemFonts()
-    for font_file in font_files:
-        fm.fontManager.addfont(font_file)
+Two styles are available via ``MXM_STYLE``:
 
-Examples
---------
+- ``MXM_STYLE.LIGHT`` — light backgrounds (variant 0: white, variant 1: offwhite)
+- ``MXM_STYLE.DARK`` — dark backgrounds (variant 0: blueberry, variant 1: black, variant 2: admiral)
 
-Example Usage 1::
+Use ``get_mpl_context(style, variant)`` to apply the theme as a context manager.
 
+Title Font
+----------
+
+Matplotlib has no rcParam for title font family, so titles use the body font by default.
+Apply the title font explicitly using the ``TITLE_FONT`` dict::
+
+    fig.suptitle("My Title", **plotting.TITLE_FONT)
+    ax.set_title("Axes Title", **plotting.TITLE_FONT)
+
+Colors
+------
+
+Individual colors can be imported directly::
+
+    from scaffold.plotting import ELECTRIC, CARIBBEAN, CORAL, ADMIRAL, PINE
+
+Or get the full color cycle for a style::
+
+    from scaffold.plotting import get_color_cycle, MXM_STYLE
+    colors = get_color_cycle(style=MXM_STYLE.LIGHT)
+
+Example
+-------
+
+::
+
+    from scaffold import plotting
     import matplotlib.pyplot as plt
-
-    style = MXM_STYLE.LIGHT
-    with get_mpl_context(style) as ctx:
-      plt.figure(figsize=(10,5))
-      N = 10
-      plt.bar((range(N)), (range(1, N+1, 1)), label='series 1', color=get_color_cycle(style=style))
-      plt.title("Amazing title")
-      plt.xlabel('Awesome Label')
-      plt.ylabel('Awesome Label')
-
-      plt.legend()
-
-Example Usage 2::
-
-    import matplotlib.pyplot as plt
-
-    style = MXM_STYLE.DARK
-    with get_mpl_context(style) as ctx:
-      plt.figure(figsize=(10,5))
-      N = 20
-      for c in get_color_cycle(style=style):
-          plt.plot(np.random.random(N), label=f'series {c}', color=c)
-      plt.title("Amazing title")
-      plt.xlabel('Awesome Label')
-      plt.ylabel('Awesome Label')
-
-    plt.legend()
-
-Example Usage 3::
-
-    import seaborn as sns
     import numpy as np
 
-    # demo data set
-    N = 10
-    data = {
-        'idx': range(N),
-        'x': np.random.random(N),
-        'y': np.random.random(N),
-        'size': np.random.random(N)
-    }
-    with get_mpl_context():
-      sns.scatterplot(data=data, x="x", y="y",
-                      size="size", hue='idx', legend=False,
-                      sizes=(100, 500)).set(title='Awesome Title')
+    style = plotting.MXM_STYLE.LIGHT
+    variant = 0
 
-Applying the rc params to all plots::
+    with plotting.get_mpl_context(style, variant):
+        fig, ax = plt.subplots(figsize=(10, 5))
+        fig.suptitle("Example plot", **plotting.TITLE_FONT)
+
+        N = 5
+        x = np.arange(N)
+        for i in range(3):
+            ax.bar(x + i * 0.25, np.random.randint(3, 15, N), width=0.2)
+
+        ax.set_xlabel("Category")
+        ax.set_ylabel("Value")
+        ax.legend(["A", "B", "C"], loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=3)
+
+    plt.tight_layout()
+    plt.show()
+
+Logo Helper
+-----------
+
+Use ``plotting.add_logo()`` to place a logo in the corner of a figure::
+
+    plotting.add_logo(fig, style=style, variant=variant, position="upper right")
+
+Custom logos can be passed via the ``logo_path`` argument (supports any fsspec-compatible path)::
+
+    plotting.add_logo(fig, logo_path="gs://my-bucket/logo.png")
+
+Applying Globally
+-----------------
+
+To apply the style to all plots without a context manager::
 
     import matplotlib.pyplot as plt
+    from scaffold.plotting import get_rc_params, MXM_STYLE
 
-    style = MXM_STYLE.LIGHT
-    rc = get_rc_params(style)
-    plt.rcParams.update(rc)
+    plt.rcParams.update(get_rc_params(MXM_STYLE.LIGHT, variant=0))
