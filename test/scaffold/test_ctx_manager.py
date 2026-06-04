@@ -2,7 +2,9 @@ import typing as t
 from test.conftest import MockContextManager
 
 import pytest
+from omegaconf import OmegaConf
 
+from scaffold.config_masking import MASKED_VALUE
 from scaffold.ctx_manager import combined_context, TimerContext, WandBContext
 
 WandB = WandBContext(base_url="wand.com", project="mock_project")
@@ -28,6 +30,32 @@ def test_wandbctx_exit_with_exception(mock_wandb: t.Any) -> None:
             raise Exception("This is a test exception")
 
     assert mock_wandb.finish.call_args.kwargs["exit_code"] == 1
+
+
+def test_wandbctx_masks_sensitive_run_config(mock_wandb: t.Any) -> None:
+    """Test that sensitive values are masked before config is passed to wandb.init."""
+    ctx = WandBContext(
+        base_url="wand.com",
+        project="mock_project",
+        run_config=OmegaConf.create(
+            {
+                "service": {"password": "super-secret", "host": "localhost"},
+                "api_key": "abc123",
+                "resolver_value": "${aws_secret:my_secret}",
+                "normal_value": "safe",
+            }
+        ),
+    )
+
+    with ctx as _:
+        pass
+
+    init_config = mock_wandb.init.call_args.kwargs["config"]
+    assert init_config["service.password"] == MASKED_VALUE
+    assert init_config["api_key"] == MASKED_VALUE
+    assert init_config["resolver_value"] == MASKED_VALUE
+    assert init_config["service.host"] == "localhost"
+    assert init_config["normal_value"] == "safe"
 
 
 def test_timer_ctx_manager(mock_logger) -> None:
