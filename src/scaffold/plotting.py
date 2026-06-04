@@ -1,14 +1,41 @@
 from contextlib import AbstractContextManager
 from enum import Enum
-from typing import List
+from pathlib import Path
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
+
+ASSETS_DIR = Path(__file__).parent / "assets"
+
+# Primary
+BLACK = "#000000"
+WHITE = "#FFFFFF"
+BLUEBERRY = "#381D59"
+OFFWHITE = "#FFFAF4"
+
+# Secondary
+LAVENDER = "#ABABF9"
+CARIBBEAN = "#11D8C1"
+CORAL = "#FF5665"
+ELECTRIC = "#9E36FF"
+
+# Tertiary
+VANILLA = "#FFFFAE"
+ADMIRAL = "#1D0693"
+VERMILLION = "#CE3D4A"
+PINE = "#007D85"
 
 MXM_THEME = {
     "title_font": "Space Grotesk",
     "text_font": "Inter",
-    "primary": ["#000000", "#FFFFFF", "#381D59", "#FFFAF4"],
-    "secondary": ["#ABABF9", "#FF5665", "#11D8C1", "#9E36FF"],
-    "tertiary": ["#FF5665", "#9E36FF", "#CE3D4A", "#007D85"],
+    "primary": [BLACK, WHITE, BLUEBERRY, OFFWHITE],
+    "secondary": [LAVENDER, CARIBBEAN, CORAL, ELECTRIC],
+    "tertiary": [VANILLA, ADMIRAL, VERMILLION, PINE],
 }
+
+# Can be applied using fig.suptitle("title", **TITLE_FONT)
+TITLE_FONT = {"fontfamily": MXM_THEME["title_font"]}
 
 
 class MXM_STYLE(Enum):
@@ -16,6 +43,15 @@ class MXM_STYLE(Enum):
 
     LIGHT = 1
     DARK = 2
+
+
+LOGO_MAP = {
+    (MXM_STYLE.LIGHT, 0): ASSETS_DIR / "logo_black.png",
+    (MXM_STYLE.LIGHT, 1): ASSETS_DIR / "logo_black.png",
+    (MXM_STYLE.DARK, 0): ASSETS_DIR / "logo_offwhite.png",
+    (MXM_STYLE.DARK, 1): ASSETS_DIR / "logo_offwhite.png",
+    (MXM_STYLE.DARK, 2): ASSETS_DIR / "logo_offwhite.png",
+}
 
 
 def get_color_cycle(style: MXM_STYLE = MXM_STYLE.LIGHT) -> List[str]:
@@ -29,23 +65,25 @@ def get_color_cycle(style: MXM_STYLE = MXM_STYLE.LIGHT) -> List[str]:
     """
     if style == MXM_STYLE.LIGHT:
         return [
-            MXM_THEME["tertiary"][1],
-            MXM_THEME["secondary"][1],
-            MXM_THEME["tertiary"][2],
-            MXM_THEME["secondary"][3],
-            MXM_THEME["tertiary"][3],
+            ELECTRIC,
+            CARIBBEAN,
+            VERMILLION,
+            ADMIRAL,
+            PINE,
+        ]
+    elif style == MXM_STYLE.DARK:
+        return [
+            VANILLA,
+            CARIBBEAN,
+            CORAL,
+            OFFWHITE,
+            LAVENDER,
         ]
     else:
-        return [
-            MXM_THEME["secondary"][2],
-            MXM_THEME["secondary"][1],
-            MXM_THEME["tertiary"][0],
-            MXM_THEME["primary"][3],
-            MXM_THEME["secondary"][0],
-        ]
+        raise ValueError(f"Invalid style: {style}")
 
 
-def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
+def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> dict:
     """Get rc (runtime configuration) parameters for the chosen style.
     Used for customizing the properties and default styles of Matplotlib.
 
@@ -53,18 +91,44 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
 
     Args:
         style (MXM_STYLE, optional): The style used for plotting. Defaults to MXM_STYLE.LIGHT.
-
+        variant (int, optional): The variant of the style to use. Defaults to 0.
     Returns:
         dict: Dictionary with rc parameters.
     """
     import matplotlib.pyplot as plt
 
     if style == MXM_STYLE.LIGHT:
-        fg = MXM_THEME["primary"][0]
-        bg = MXM_THEME["primary"][1]
+        # white background
+        if variant == 0:
+            fg = BLACK
+            bg = WHITE
+
+        # offwhite background
+        elif variant == 1:
+            fg = BLACK
+            bg = OFFWHITE
+        else:
+            raise ValueError(f"Invalid variant: {variant}")
+    elif style == MXM_STYLE.DARK:
+        # blueberry background
+        if variant == 0:
+            fg = OFFWHITE
+            bg = BLUEBERRY
+
+        # black background
+        elif variant == 1:
+            fg = OFFWHITE
+            bg = BLACK
+
+        # admiral background
+        elif variant == 2:
+            fg = OFFWHITE
+            bg = ADMIRAL
+        else:
+            raise ValueError(f"Invalid variant: {variant}")
     else:
-        fg = MXM_THEME["primary"][3]
-        bg = MXM_THEME["primary"][2]
+        raise ValueError(f"Invalid style: {style}")
+
     rc = {
         "axes.grid.axis": "y",
         "font.family": MXM_THEME["text_font"],
@@ -74,6 +138,8 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
         "axes.spines.right": False,
         "axes.spines.top": False,
         "axes.spines.bottom": False,
+        "axes.grid": True,
+        "axes.axisbelow": True,
         "figure.facecolor": bg,
         "axes.facecolor": bg,
         "grid.color": fg,
@@ -81,21 +147,87 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT) -> dict:
         "axes.labelcolor": fg,
         "xtick.color": fg,
         "ytick.color": fg,
+        "legend.frameon": False,
     }
     return rc
 
 
-def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT) -> AbstractContextManager[None]:
+def get_mpl_context(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> AbstractContextManager[None]:
     """Get Matplotlib context manager for the chosen style.
 
     Args:
         style (MXM_STYLE, optional): The style used for plotting. Defaults to MXM_STYLE.LIGHT.
+        variant (int, optional): The variant of the style to use. Defaults to 0.
 
     Returns:
         AbstractContextManager[None]: Context manager for Matplotlib.
     """
     import matplotlib.pyplot as plt
 
-    rc = get_rc_params(style)
+    rc = get_rc_params(style, variant)
 
     return plt.rc_context(rc=rc)
+
+
+def add_logo(
+    fig: "plt.Figure",
+    style: MXM_STYLE = MXM_STYLE.LIGHT,
+    variant: int = 0,
+    logo_path: str | Path | None = None,
+    position: str = "upper right",
+    size: float = 0.08,
+    alpha: float = 0.8,
+) -> None:
+    """Add a small logo to the corner of a matplotlib figure.
+
+    Args:
+        fig: The matplotlib figure to add the logo to.
+        style: The style, used to pick an appropriate default logo. Defaults to MXM_STYLE.LIGHT.
+        variant: The variant of the style. Used to select a contrasting logo. Defaults to 0.
+        logo_path: Path or URI to a custom logo image. If None, uses the default logo for the style/variant.
+        position: Corner placement. One of "lower right", "lower left", "upper right", "upper left".
+        size: Size of the logo as a fraction of figure height. Defaults to 0.08.
+        alpha: Opacity of the logo. Defaults to 0.8.
+    """
+    import io
+
+    import matplotlib.image as mpimg
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+    if logo_path is None:
+        try:
+            logo_path = str(LOGO_MAP[(style, variant)])
+        except KeyError as e:
+            raise ValueError(f"Invalid style/variant combination: {(style, variant)}") from e
+
+    try:
+        import fsspec
+    except ImportError as e:
+        if "://" in str(logo_path):
+            raise ImportError(
+                "plotting.add_logo requires fsspec for non-local logo paths. "
+                "Install mxm-scaffold[data] and the relevant filesystem implementation (e.g. gcsfs/s3fs)."
+            ) from e
+        data = Path(str(logo_path)).read_bytes()
+    else:
+        with fsspec.open(str(logo_path), "rb") as f:
+            data = f.read()
+    img = mpimg.imread(io.BytesIO(data), format=Path(str(logo_path)).suffix.lstrip("."))
+
+    positions = {
+        "lower right": (0.95, 0.05),
+        "lower left": (0.05, 0.05),
+        "upper right": (0.95, 0.95),
+        "upper left": (0.05, 0.95),
+    }
+    xy = positions.get(position)
+    if xy is None:
+        raise ValueError(f"Invalid position: {position}. Expected one of {sorted(positions)}")
+
+    fig_height_px = fig.get_size_inches()[1] * fig.dpi
+    logo_height_px = size * fig_height_px
+    zoom = logo_height_px / img.shape[0]
+
+    imagebox = OffsetImage(img, zoom=zoom, alpha=alpha)
+    ab = AnnotationBbox(imagebox, xy, xycoords="figure fraction", frameon=False)
+    fig.add_artist(ab)
