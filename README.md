@@ -46,6 +46,7 @@ Install the extras you need for your project. For example, to install the Flyte 
 * *monitoring:* Utilities for monitoring training jobs
 * *wandb:* Utilities for logging to Weights and Biases
 * *dev:* Dependencies required for development and running tests
+* *langfuse:* A script that setup langfuse tracing.
 
 ## 📖 Documentation
 
