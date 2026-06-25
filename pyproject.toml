@@ -80,7 +80,7 @@ langfuse = [
     "opentelemetry-api",
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp-proto-http",
-    # Per-framework OTEL instrumentors (all optional at runtime via try/except)
+    # Per-framework OTEL instrumentors (imported only for the selected framework)
     "openinference-instrumentation-openai",
     "openinference-instrumentation-openai-agents",
     "openinference-instrumentation-langchain",
