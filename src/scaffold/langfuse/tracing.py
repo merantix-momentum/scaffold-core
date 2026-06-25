@@ -5,13 +5,13 @@ Usage:
 ```python
 from scaffold.langfuse.tracing import init_langfuse
 init_langfuse(
-    secret_key=os.environ["LANGFUSE_SECRET_KEY"],
-    public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
-    host=os.environ["LANGFUSE_BASE_URL"],
-    framework=os.environ["TRACING_FRAMEWORK"],
+    secret_key=LANGFUSE_SECRET_KEY,
+    public_key=LANGFUSE_PUBLIC_KEY,
+    host=LANGFUSE_BASE_URL,
+    framework=TRACING_FRAMEWORK,
 )
 ```
-Note: You need to call init_langfuse() at the top of your application entrypoint even before importing any LLM frameworks.
+Note: You need to call init_langfuse() before importing any LLM frameworks.
 Supported frameworks:
   openai          — OpenAI SDK direct (chat.completions), default
   openai_agents   — OpenAI Agents SDK
@@ -55,8 +55,8 @@ def init_langfuse(
     Example:
         >>> from tracing import init_langfuse
         >>> init_langfuse(
-        ...     secret_key=os.environ["LANGFUSE_SECRET_KEY"],
-        ...     public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
+        ...     secret_key=LANGFUSE_SECRET_KEY,
+        ...     public_key=LANGFUSE_PUBLIC_KEY,
         ...     framework="openai_agents",
         ... )
     """
