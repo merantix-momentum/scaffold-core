@@ -1,5 +1,5 @@
 """
-Drop-in Langfuse tracing script — call init_langfuse() to setup bascis langfuse tracing for your application.
+Drop-in Langfuse tracing script — call init_langfuse() to set up basic Langfuse tracing for your application.
 Usage:
 
 ```python
