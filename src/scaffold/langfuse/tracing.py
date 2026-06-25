@@ -47,7 +47,7 @@ def init_langfuse(
         public_key: Langfuse project public key (pk-...).
         host: Langfuse host URL. Defaults to https://cloud.langfuse.com.
         framework: Framework to instrument. One of: "openai", "openai_agents",
-            "langchain", "gemini", "smolagents". Defaults to "openai".
+            "gemini". Defaults to "openai".
 
     Raises:
         ValueError: If `framework` is not one of the supported values.
