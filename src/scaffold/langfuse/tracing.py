@@ -68,13 +68,11 @@ def init_langfuse(
             f"Valid options: {', '.join(sorted(_VALID_FRAMEWORKS))}"
         )
 
-    # os.environ["LANGFUSE_SECRET_KEY"] = secret_key
-    # os.environ["LANGFUSE_PUBLIC_KEY"] = public_key
-    # os.environ["LANGFUSE_HOST"] = host
-    # langfuse = get_client()
-    langfuse = Langfuse(public_key=public_key,
-                        secret_key=secret_key,
-                        host=host)
+    langfuse = Langfuse(
+        public_key=public_key,
+        secret_key=secret_key,
+        host=host,
+    )
     logger.info(
         "Langfuse tracing initialised | host=%s framework=%s public_key=%s...",
         host,
