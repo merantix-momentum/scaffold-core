@@ -80,6 +80,21 @@ def init_langfuse(
         public_key[:6],
     )
 
+    prev_framework = getattr(init_langfuse, "_patched_framework", None)
+    if prev_framework is None:
+        setattr(init_langfuse, "_patched_framework", framework)
+    elif prev_framework != framework:
+        raise RuntimeError(
+            f"init_langfuse() was already called for framework={prev_framework!r}; "
+            f"cannot re-initialize with framework={framework!r}"
+        )
+    else:
+        logger.debug(
+            "Langfuse tracing already patched for framework=%s; skipping patching.",
+            framework,
+        )
+        return
+
     if framework == "openai_agents":
         from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
         OpenAIAgentsInstrumentor().instrument()
