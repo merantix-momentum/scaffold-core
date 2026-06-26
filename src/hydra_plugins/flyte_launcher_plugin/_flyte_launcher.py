@@ -439,6 +439,7 @@ class FlyteLauncher(Launcher):
         from croniter import croniter
         from flytekit import CronSchedule, LaunchPlan
 
+        from scaffold.constants import KICKOFF_TIME_KEY
         from scaffold.flyte.core import build_workflow_inputs
 
         job_cfg = copy.deepcopy(cfg)
@@ -453,7 +454,7 @@ class FlyteLauncher(Launcher):
             assert croniter.is_valid(cron_exp), f"Invalid cron expression: {cron_exp}"
             kwargs["schedule"] = CronSchedule(
                 schedule=cron_exp,
-                kickoff_time_input_arg="kickoff_time",
+                kickoff_time_input_arg=KICKOFF_TIME_KEY,
             )
 
         lp = LaunchPlan.create(
