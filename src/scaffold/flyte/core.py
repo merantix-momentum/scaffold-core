@@ -18,7 +18,7 @@ from flytekit.core.workflow import WorkflowBase
 from flytekit.remote.remote import FlyteRemote
 from omegaconf import DictConfig, OmegaConf
 
-from scaffold.constants import RUNTIME_CFG_KEY
+from scaffold.constants import KICKOFF_TIME_KEY, RUNTIME_CFG_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -254,15 +254,21 @@ def build_workflow_inputs(
     if runtime_cfg_key in wf_inputs:
         inputs[runtime_cfg_key] = build_runtime_cfg(hydra_cfg)
 
+    # Inputs that are injected by the framework rather than supplied from the user config:
+    #   runs rely on the workflow's Python default. Either way it must not appear in
+    #   default_inputs, and it must not count towards legacy-mode detection.
+    injected_inputs = {runtime_cfg_key, KICKOFF_TIME_KEY}
+    config_supplied_inputs = [name for name in wf_inputs if name not in injected_inputs]
+
     # backwards compatible: legacy flyte workflows expect a single top level "cfg" or "config", non-exploded
-    if len(wf_inputs.keys()) == 1 and ("cfg" in wf_inputs or "config" in wf_inputs):
+    if len(config_supplied_inputs) == 1 and config_supplied_inputs[0] in ("cfg", "config"):
         logger.warning(
             "Building workflow inputs in legacy mode. Assuming that the workflow handles config-splitting on its own."
         )
-        inputs[list(wf_inputs.keys())[0]] = job_cfg
+        inputs[config_supplied_inputs[0]] = job_cfg
 
     else:
-        for name in wf_inputs:
+        for name in config_supplied_inputs:
             val = OmegaConf.select(job_cfg, name)
             if val is None:
                 logger.warning(

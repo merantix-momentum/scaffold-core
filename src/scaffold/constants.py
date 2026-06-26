@@ -10,3 +10,6 @@ ARTIFACT_META_DIR = "meta"
 ARTIFACT_DESCRIPTION_FILE = "readme.txt"
 
 RUNTIME_CFG_KEY: str = "runtime_cfg"
+
+# Name of the cron kickoff-time argument that Flyte injects for chron jobs at fire time.
+KICKOFF_TIME_KEY = "kickoff_time"
