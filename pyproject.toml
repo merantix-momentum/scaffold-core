@@ -74,8 +74,8 @@ aim = [
     "gcsfs>=2024.12.0",
 ]
 
-#langfuse
-langfuse = [
+#langfuse-utils
+langfuse-utils = [
     "langfuse",
     "opentelemetry-api",
     "opentelemetry-sdk",
@@ -85,16 +85,6 @@ langfuse = [
     "openinference-instrumentation-openai-agents",
     "openinference-instrumentation-langchain",
     "openinference-instrumentation-google-genai>=1.1.0",
-    # ---------- Google ADK ----------
-    "google-adk",
-    # ---------- OpenAI Agents SDK ----------
-    "openai-agents",
-    "openai",
-    # ---------- LangGraph ----------
-    "langgraph",
-    "langchain-openai",
-    "langchain-community",
-
 ]
 
 [dependency-groups]
