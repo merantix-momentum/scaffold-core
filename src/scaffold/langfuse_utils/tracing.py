@@ -64,8 +64,7 @@ def init_langfuse(
 
     if framework not in _VALID_FRAMEWORKS:
         raise ValueError(
-            f"framework={framework!r} is not recognised. "
-            f"Valid options: {', '.join(sorted(_VALID_FRAMEWORKS))}"
+            f"framework={framework!r} is not recognised. " f"Valid options: {', '.join(sorted(_VALID_FRAMEWORKS))}"
         )
 
     langfuse = Langfuse(
@@ -97,9 +96,11 @@ def init_langfuse(
 
     if framework == "openai_agents":
         from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
+
         OpenAIAgentsInstrumentor().instrument()
 
         from agents import Runner as _Runner
+
         _orig_runner_run = _Runner.run
 
         async def _patched_runner_run(*args, **kwargs):
@@ -115,6 +116,7 @@ def init_langfuse(
 
     elif framework == "langgraph":
         from openinference.instrumentation.langchain import LangChainInstrumentor
+
         LangChainInstrumentor().instrument()
 
         from langgraph.pregel import Pregel as _Pregel
@@ -158,9 +160,11 @@ def init_langfuse(
 
     elif framework == "gemini":
         from openinference.instrumentation.google_genai import GoogleGenAIInstrumentor
+
         GoogleGenAIInstrumentor().instrument()
 
         from google.adk.runners import Runner as _Runner
+
         _orig_run_async = _Runner.run_async
 
         async def _patched_run_async(self, *, user_id, session_id, new_message, **kwargs):
@@ -188,11 +192,7 @@ def init_langfuse(
                     **kwargs,
                 ):
                     events.append(event)
-                    if (
-                        event.is_final_response()
-                        and event.content
-                        and event.content.parts
-                    ):
+                    if event.is_final_response() and event.content and event.content.parts:
                         for part in event.content.parts:
                             if hasattr(part, "text") and part.text:
                                 response_parts.append(part.text)
@@ -206,6 +206,7 @@ def init_langfuse(
 
     else:  # openai — OpenAI SDK direct, chat.completions
         from openinference.instrumentation.openai import OpenAIInstrumentor
+
         OpenAIInstrumentor().instrument()
 
         import openai as _openai
