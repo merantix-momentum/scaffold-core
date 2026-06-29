@@ -94,6 +94,7 @@ def test_reinit_different_framework_raises():
         ("openai_agents", "agents"),
         ("langgraph", "langgraph"),
         ("gemini", "google"),
+        ("smolagents", "smolagents"),
     ],
 )
 def test_missing_dependency_raises(framework, missing_module):
@@ -102,6 +103,7 @@ def test_missing_dependency_raises(framework, missing_module):
         "openinference.instrumentation.openai_agents": MagicMock(OpenAIAgentsInstrumentor=MagicMock()),
         "openinference.instrumentation.langchain": MagicMock(LangChainInstrumentor=MagicMock()),
         "openinference.instrumentation.google_genai": MagicMock(GoogleGenAIInstrumentor=MagicMock()),
+        "openinference.instrumentation.smolagents": MagicMock(SmolagentsInstrumentor=MagicMock()),
     }
 
     with patch.dict(sys.modules, {**instrumentor_mocks, missing_module: None}):
@@ -195,6 +197,25 @@ def test_openai_agents_runner_is_patched():
         init_langfuse(**FAKE_KEYS, framework="openai_agents")
 
     assert agents_mod.Runner.run is not original_run
+
+
+def test_smolagents_multistepagent_is_patched():
+    smolagents_mod = MagicMock()
+    original_run = MagicMock()
+    smolagents_mod.MultiStepAgent.run = original_run
+
+    with patch.dict(
+        sys.modules,
+        {
+            "openinference.instrumentation.smolagents": MagicMock(SmolagentsInstrumentor=MagicMock()),
+            "smolagents": smolagents_mod,
+        },
+    ):
+        from scaffold.langfuse_utils.tracing import init_langfuse
+
+        init_langfuse(**FAKE_KEYS, framework="smolagents")
+
+    assert smolagents_mod.MultiStepAgent.run is not original_run
 
 
 def test_langgraph_pregel_is_patched():

@@ -17,6 +17,7 @@ Supported frameworks:
   openai_agents   — OpenAI Agents SDK
   langgraph       — LangChain / LangGraph
   gemini          — Google Gemini (ADK)
+  smolagents      — HuggingFace SmolAgents (CodeAgent / ToolCallingAgent)
 """
 
 import atexit
@@ -26,7 +27,7 @@ from langfuse import Langfuse
 
 logger = logging.getLogger(__name__)
 
-_VALID_FRAMEWORKS = {"openai", "openai_agents", "langgraph", "gemini"}
+_VALID_FRAMEWORKS = {"openai", "openai_agents", "langgraph", "gemini", "smolagents"}
 
 
 def init_langfuse(
@@ -221,6 +222,55 @@ def init_langfuse(
 
         _Runner.run_async = _patched_run_async
         atexit.register(langfuse.flush)
+
+    elif framework == "smolagents":
+        try:
+            from smolagents import MultiStepAgent as _MultiStepAgent
+        except ImportError as exc:
+            delattr(init_langfuse, "_patched_framework")
+            raise ImportError(
+                "You need to install 'smolagents' locally to use Langfuse tracing with framework='smolagents'."
+            ) from exc
+
+        import contextvars as _cv
+
+        _smolagents_in_trace = _cv.ContextVar("smolagents_in_trace", default=False)
+
+        # Instrument FIRST so _orig_run is the OI FunctionWrapper.
+        # We then replace the class attribute with _patched_run — making our
+        # function the outermost call and the OTEL root for the trace.
+        from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+
+        SmolagentsInstrumentor().instrument()
+
+        _orig_run = _MultiStepAgent.run  # OI FunctionWrapper
+
+        def _patched_run(self, task, *args, **kwargs):
+            # Use __get__ so wrapt's _RunWrapper sees a proper bound instance
+            # instead of None, which fixes argument binding for nested spans.
+            _bound = _orig_run.__get__(self, type(self))
+            if _smolagents_in_trace.get():
+                # Managed sub-agent call — skip trace-root, only OI spans.
+                return _bound(task, *args, **kwargs)
+            raw = task if isinstance(task, str) else str(task)
+            # When the task is a multi-turn conversation string, extract only
+            # the latest user message for the trace input (last "User: " line).
+            input_text = raw
+            for line in reversed(raw.splitlines()):
+                if line.strip().startswith("User: "):
+                    input_text = line.strip()[len("User: "):]
+                    break
+            tok = _smolagents_in_trace.set(True)
+            try:
+                with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
+                    obs.update(input=input_text)
+                    result = _bound(task, *args, **kwargs)
+                    obs.update(output=str(result))
+                return result
+            finally:
+                _smolagents_in_trace.reset(tok)
+
+        _MultiStepAgent.run = _patched_run
 
     else:  # openai — OpenAI SDK direct, chat.completions
         from openinference.instrumentation.openai import OpenAIInstrumentor

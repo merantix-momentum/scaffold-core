@@ -34,6 +34,8 @@ Supported frameworks
 +-------------------+------------------------------------------------+
 | ``gemini``        | Google Gemini ADK — ``Runner.run_async``       |
 +-------------------+------------------------------------------------+
+| ``smolagents``    | HuggingFace SmolAgents — ``MultiStepAgent.run``|
++-------------------+------------------------------------------------+
 
 .. note::
     Each framework's dependencies are imported lazily, so only the package for
