@@ -99,7 +99,13 @@ def init_langfuse(
 
         OpenAIAgentsInstrumentor().instrument()
 
-        from agents import Runner as _Runner
+        try:
+            from agents import Runner as _Runner
+        except ImportError as exc:
+            delattr(init_langfuse, "_patched_framework")
+            raise ImportError(
+                "You need to install 'openai-agents' locally to use Langfuse tracing with framework='openai_agents'."
+            ) from exc
 
         _orig_runner_run = _Runner.run
 
@@ -119,7 +125,13 @@ def init_langfuse(
 
         LangChainInstrumentor().instrument()
 
-        from langgraph.pregel import Pregel as _Pregel
+        try:
+            from langgraph.pregel import Pregel as _Pregel
+        except ImportError as exc:
+            delattr(init_langfuse, "_patched_framework")
+            raise ImportError(
+                "You need to install 'langgraph' locally to use Langfuse tracing with framework='langgraph'."
+            ) from exc
 
         def _graph_input_text(input_data) -> str:
             if isinstance(input_data, dict):
@@ -163,7 +175,13 @@ def init_langfuse(
 
         GoogleGenAIInstrumentor().instrument()
 
-        from google.adk.runners import Runner as _Runner
+        try:
+            from google.adk.runners import Runner as _Runner
+        except ImportError as exc:
+            delattr(init_langfuse, "_patched_framework")
+            raise ImportError(
+                "You need to install 'google-adk' locally to use Langfuse tracing with framework='gemini'."
+            ) from exc
 
         _orig_run_async = _Runner.run_async
 
@@ -209,7 +227,13 @@ def init_langfuse(
 
         OpenAIInstrumentor().instrument()
 
-        import openai as _openai
+        try:
+            import openai as _openai
+        except ImportError as exc:
+            delattr(init_langfuse, "_patched_framework")
+            raise ImportError(
+                "You need to install 'openai' locally to use Langfuse tracing with framework='openai'."
+            ) from exc
 
         def _get_last_user_message(messages: list) -> str:
             for msg in reversed(messages):

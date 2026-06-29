@@ -38,3 +38,14 @@ Supported frameworks
 .. note::
     Each framework's dependencies are imported lazily, so only the package for
     the framework you select needs to be installed locally in your project.
+
+Running the tests
+-----------------
+
+The tests for this module are located in ``test/scaffold/langfuse_utils/``.
+Run them with the ``--noconftest`` flag to avoid loading the root ``conftest.py``,
+which requires ``pynvml`` (a GPU monitoring library not needed by these tests):
+
+.. code-block:: bash
+
+    uv run pytest test/scaffold/langfuse_utils/ -v --noconftest
