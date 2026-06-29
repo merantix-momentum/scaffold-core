@@ -258,7 +258,7 @@ def init_langfuse(
             input_text = raw
             for line in reversed(raw.splitlines()):
                 if line.strip().startswith("User: "):
-                    input_text = line.strip()[len("User: "):]
+                    input_text = line.strip()[len("User: ") :]
                     break
             tok = _smolagents_in_trace.set(True)
             try:
