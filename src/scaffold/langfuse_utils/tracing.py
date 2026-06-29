@@ -105,7 +105,7 @@ def init_langfuse(
         async def _patched_runner_run(*args, **kwargs):
             input_val = kwargs.get("input", "")
             input_text = input_val if isinstance(input_val, str) else str(input_val)
-            with langfuse.start_as_current_observation(name="trace-top", as_type="span") as obs:
+            with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
                 obs.update(input=input_text)
                 result = await _orig_runner_run(*args, **kwargs)
                 obs.update(output=result.final_output)
@@ -140,14 +140,14 @@ def init_langfuse(
         _orig_ainvoke = _Pregel.ainvoke
 
         def _patched_invoke(self, input, config=None, **kwargs):
-            with langfuse.start_as_current_observation(name="trace-top", as_type="span") as obs:
+            with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
                 obs.update(input=_graph_input_text(input))
                 result = _orig_invoke(self, input, config, **kwargs)
                 obs.update(output=_graph_output_text(result))
             return result
 
         async def _patched_ainvoke(self, input, config=None, **kwargs):
-            with langfuse.start_as_current_observation(name="trace-top", as_type="span") as obs:
+            with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
                 obs.update(input=_graph_input_text(input))
                 result = await _orig_ainvoke(self, input, config, **kwargs)
                 obs.update(output=_graph_output_text(result))
@@ -178,7 +178,7 @@ def init_langfuse(
             # the contextvar to the caller's context.
             events = []
             response_parts = []
-            with langfuse.start_as_current_observation(name="trace-top", as_type="span") as obs:
+            with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
                 obs.update(input=input_text)
                 async for event in _orig_run_async(
                     self,
@@ -232,7 +232,7 @@ def init_langfuse(
 
         def _patched_create(self, *args, **kwargs):
             input_text = _get_last_user_message(kwargs.get("messages", []))
-            with langfuse.start_as_current_observation(name="trace-top", as_type="span") as obs:
+            with langfuse.start_as_current_observation(name="trace-root", as_type="span") as obs:
                 obs.update(input=input_text)
                 result = _orig_create(self, *args, **kwargs)
                 obs.update(output=_get_assistant_output(result))
