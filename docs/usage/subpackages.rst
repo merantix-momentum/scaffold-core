@@ -14,3 +14,4 @@ Scaffold has several loosely coupled subpackages, which are motivated and their 
    subpackages/entrypoints
    subpackages/plotting
    subpackages/aim_utils
+   subpackages/langfuse_utils
