@@ -74,6 +74,20 @@ aim = [
     "gcsfs>=2024.12.0",
 ]
 
+#langfuse-utils
+langfuse-utils = [
+    "langfuse",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp-proto-http",
+    # Per-framework OTEL instrumentors (imported only for the selected framework)
+    "openinference-instrumentation-openai",
+    "openinference-instrumentation-openai-agents",
+    "openinference-instrumentation-langchain",
+    "openinference-instrumentation-google-genai>=1.1.0",
+    "openinference-instrumentation-smolagents"
+]
+
 [dependency-groups]
 # development dependencies
 dev = [
