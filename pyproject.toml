@@ -85,6 +85,7 @@ langfuse-utils = [
     "openinference-instrumentation-openai-agents",
     "openinference-instrumentation-langchain",
     "openinference-instrumentation-google-genai>=1.1.0",
+    "openinference-instrumentation-smolagents"
 ]
 
 [dependency-groups]
