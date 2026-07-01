@@ -1,4 +1,4 @@
-"""Tests for register_metric and _score_trace in scaffold.langfuse_utils.scoring."""
+"""Tests for Metric, register_metric, and _score_trace in scaffold.langfuse_utils.scoring."""
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -45,10 +45,11 @@ def isolate_scoring_module():
 
 
 def test_register_metric_appends_entry():
-    from scaffold.langfuse_utils.scoring import register_metric, _metric_registry
+    from scaffold.langfuse_utils.scoring import register_metric, _metric_registry, Metric
 
     scorer = MagicMock(return_value=0.5)
-    register_metric("quality", scorer)
+    metric = Metric(name="quality", scorer=scorer)
+    register_metric(metric)
 
     assert len(_metric_registry) == 1
     m = _metric_registry[0]
@@ -59,10 +60,10 @@ def test_register_metric_appends_entry():
 
 
 def test_register_metric_multiple_accumulate():
-    from scaffold.langfuse_utils.scoring import register_metric, _metric_registry
+    from scaffold.langfuse_utils.scoring import register_metric, _metric_registry, Metric
 
-    register_metric(name="a", scorer=MagicMock(return_value=1.0))
-    register_metric(name="b", scorer=MagicMock(return_value=0.0))
+    register_metric(Metric(name="a", scorer=MagicMock(return_value=1.0)))
+    register_metric(Metric(name="b", scorer=MagicMock(return_value=0.0)))
 
     assert len(_metric_registry) == 2
     assert _metric_registry[0].name == "a"
@@ -75,14 +76,14 @@ def test_register_metric_multiple_accumulate():
 
 
 def test_score_trace_calls_scorer_and_create_score():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
     scorer = MagicMock(return_value=0.9)
 
-    register_metric(name="quality", scorer=scorer)
+    register_metric(Metric(name="quality", scorer=scorer))
     _score_trace(langfuse_mock, obs, "in", "out", metadata={"k": "v"})
 
     scorer.assert_called_once_with("in", "out", {"k": "v"})
@@ -92,16 +93,18 @@ def test_score_trace_calls_scorer_and_create_score():
 
 
 def test_score_trace_includes_data_type_when_set():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
 
     register_metric(
-        name="flag",
-        scorer=MagicMock(return_value=1.0),
-        data_type="BOOLEAN",
+        Metric(
+            name="flag",
+            scorer=MagicMock(return_value=1.0),
+            data_type="BOOLEAN",
+        )
     )
     _score_trace(langfuse_mock, obs, "in", "out")
 
@@ -110,13 +113,13 @@ def test_score_trace_includes_data_type_when_set():
 
 
 def test_score_trace_omits_data_type_when_none():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
 
-    register_metric(name="q", scorer=MagicMock(return_value=0.5))
+    register_metric(Metric(name="q", scorer=MagicMock(return_value=0.5)))
     _score_trace(langfuse_mock, obs, "in", "out")
 
     kwargs = langfuse_mock.create_score.call_args.kwargs
@@ -124,15 +127,17 @@ def test_score_trace_omits_data_type_when_none():
 
 
 def test_score_trace_scorer_exception_does_not_propagate():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
 
     register_metric(
-        name="bad",
-        scorer=MagicMock(side_effect=RuntimeError("scorer blew up")),
+        Metric(
+            name="bad",
+            scorer=MagicMock(side_effect=RuntimeError("scorer blew up")),
+        )
     )
     _score_trace(langfuse_mock, obs, "in", "out")  # must not raise
 
@@ -140,14 +145,14 @@ def test_score_trace_scorer_exception_does_not_propagate():
 
 
 def test_score_trace_multiple_metrics_all_scored():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
 
-    register_metric(name="m1", scorer=MagicMock(return_value=0.1))
-    register_metric(name="m2", scorer=MagicMock(return_value=0.2))
+    register_metric(Metric(name="m1", scorer=MagicMock(return_value=0.1)))
+    register_metric(Metric(name="m2", scorer=MagicMock(return_value=0.2)))
     _score_trace(langfuse_mock, obs, "in", "out")
 
     assert langfuse_mock.create_score.call_count == 2
@@ -156,14 +161,14 @@ def test_score_trace_multiple_metrics_all_scored():
 
 
 def test_score_trace_one_bad_scorer_does_not_block_others():
-    from scaffold.langfuse_utils.scoring import register_metric, _score_trace
+    from scaffold.langfuse_utils.scoring import register_metric, _score_trace, Metric
 
     langfuse_mock = _make_langfuse_mock()
     obs = MagicMock()
     obs.trace_id = "t1"
 
-    register_metric("bad", scorer=MagicMock(side_effect=ValueError("wrong")))
-    register_metric("good", scorer=MagicMock(return_value=0.7))
+    register_metric(Metric(name="bad", scorer=MagicMock(side_effect=ValueError("wrong"))))
+    register_metric(Metric(name="good", scorer=MagicMock(return_value=0.7)))
     _score_trace(langfuse_mock, obs, "in", "out")
 
     langfuse_mock.create_score.assert_called_once()
