@@ -8,13 +8,13 @@ Example:
     Define your metrics in a metrics.py file in your app:
 
     ```python
-    from scaffold.langfuse_utils.scoring import register_metric
+    from langfuse_utils.scoring import Metric
 
     def score_response_quality(input_text: str, output_text: str, metadata: dict | None) -> float:
         # Your scoring logic here
         return 0.8
 
-    register_metric(
+    RESPONSE_QUALITY = Metric(
         name="response_quality",
         scorer=score_response_quality,
         data_type="NUMERIC",
@@ -25,14 +25,16 @@ Example:
     Then in your app startup (same place as init_langfuse):
 
     ```python
-    from scaffold.langfuse_utils.tracing import init_langfuse
-    from myapp.metrics import score_response_quality  # Import to trigger register_metric calls
+    from langfuse_utils.tracing import init_langfuse
+    from myapp.metrics import RESPONSE_QUALITY
+    from langfuse_utils.scoring import register_metric
 
     init_langfuse(
         secret_key=LANGFUSE_SECRET_KEY,
         public_key=LANGFUSE_PUBLIC_KEY,
         framework="openai",
     )
+    register_metric(RESPONSE_QUALITY)
     ```
 """
 
@@ -44,41 +46,25 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class _Metric:
+class Metric:
+    """A scoring metric to be computed and submitted to Langfuse after each trace."""
     name: str
     scorer: Callable[[str, str, dict | None], float | str]
     data_type: Literal["NUMERIC", "BOOLEAN", "CATEGORICAL", "TEXT"] | None = None
     comment: str | None = None
 
 
-_metric_registry: list[_Metric] = []
+_metric_registry: list[Metric] = []
 
 
-def register_metric(
-    name: str,
-    scorer: Callable[[str, str, dict | None], float | str],
-    data_type: Literal["NUMERIC", "BOOLEAN", "CATEGORICAL", "TEXT"] | None = None,
-    comment: str | None = None,
-) -> None:
-    """Register a project-specific scoring metric.
-
-    The scorer is called with (input_text, output_text, metadata) after each
-    trace completes, and the returned value is submitted to Langfuse via
-    create_score().
+def register_metric(metric: Metric) -> None:
+    """Register a metric to be computed on every trace.
 
     Args:
-        name: Score name visible in Langfuse (e.g. "response_quality").
-        scorer: Callable(input_text, output_text, metadata) -> float | str.
-            Return a float for NUMERIC/BOOLEAN scores, str for CATEGORICAL/TEXT.
-        data_type: Langfuse data type. Auto-detected from value type when None.
-            Use "BOOLEAN" explicitly (values 0.0 / 1.0) since booleans would
-            otherwise be inferred as NUMERIC.
-        comment: Optional static comment attached to every score entry.
+        metric: A Metric object containing name, scorer, data_type, and comment.
     """
-    _metric_registry.append(
-        _Metric(name=name, scorer=scorer, data_type=data_type, comment=comment)
-    )
-    logger.info("Metric registered: %s", name)
+    _metric_registry.append(metric)
+    logger.info("Metric registered: %s", metric.name)
 
 
 def _score_trace(
