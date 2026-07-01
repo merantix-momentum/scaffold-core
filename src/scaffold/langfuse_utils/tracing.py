@@ -3,7 +3,7 @@ Drop-in Langfuse tracing script — call init_langfuse() to set up basic Langfus
 Usage:
 
 ```python
-from scaffold.langfuse.tracing import init_langfuse
+from scaffold.langfuse_utils.tracing import init_langfuse
 init_langfuse(
     secret_key=LANGFUSE_SECRET_KEY,
     public_key=LANGFUSE_PUBLIC_KEY,
@@ -21,78 +21,20 @@ Supported frameworks:
 
 Project-specific Langfuse Metrics:
 
-Call register_metric() after init_langfuse() to attach custom metric to
-every trace. Metrics appear in the Langfuse evaluator board automatically.
-Note: Use the skill /mx-nlp-langfuse to add custom metrics.
+Define and register metrics in your app's metrics module, then import
+the module alongside init_langfuse() to register metrics. See scoring.py for details.
+Note: Use the skill /mx-nlp-langfuse to automate this process.
 """
 
 import atexit
 import logging
-from dataclasses import dataclass
-from typing import Callable, Literal
 
 from langfuse import Langfuse
+from .scoring import _score_trace
 
 logger = logging.getLogger(__name__)
 
 _VALID_FRAMEWORKS = {"openai", "openai_agents", "langgraph", "gemini", "smolagents"}
-
-
-@dataclass
-class _Metric:
-    name: str
-    scorer: Callable[[str, str, dict | None], float | str]
-    data_type: Literal["NUMERIC", "BOOLEAN", "CATEGORICAL", "TEXT"] | None = None
-    comment: str | None = None
-
-_metric_registry: list[_Metric] = []
-
-
-def register_metric(
-    name: str,
-    scorer: Callable[[str, str, dict | None], float | str],
-    data_type: Literal["NUMERIC", "BOOLEAN", "CATEGORICAL", "TEXT"] | None = None,
-    comment: str | None = None,
-) -> None:
-    """Register a project-specific scoring metric.
-
-    The scorer is called with (input_text, output_text, metadata) after each
-    trace completes, and the returned value is submitted to Langfuse via
-    create_score().
-
-    Args:
-        name: Score name visible in Langfuse (e.g. "response_quality").
-        scorer: Callable(input_text, output_text, metadata) -> float | str.
-            Return a float for NUMERIC/BOOLEAN scores, str for CATEGORICAL/TEXT.
-        data_type: Langfuse data type. Auto-detected from value type when None.
-            Use "BOOLEAN" explicitly (values 0.0 / 1.0) since booleans would
-            otherwise be inferred as NUMERIC.
-        comment: Optional static comment attached to every score entry.
-    """
-    _metric_registry.append(
-        _Metric(name=name, scorer=scorer, data_type=data_type, comment=comment)
-    )
-    logger.info("Metric registered: %s", name)
-
-
-def _score_trace(
-        obs,
-        input_text: str,
-        output_text: str,
-        metadata: dict | None = None,
-) -> None:
-    """Submit all registered metrics for the current trace."""
-    for metric in _metric_registry:
-        try:
-            value = metric.scorer(input_text, output_text, metadata)
-            kwargs: dict = {"trace_id": obs.trace_id, "name": metric.name, "value": value}
-            if metric.data_type is not None:
-                kwargs["data_type"] = metric.data_type
-            if metric.comment is not None:
-                kwargs["comment"] = metric.comment
-            langfuse.create_score(**kwargs)
-        except Exception:
-            logger.exception("Metric scorer %r raised an error", metric.name)
 
 
 def init_langfuse(
@@ -183,7 +125,7 @@ def init_langfuse(
                 result = await _orig_runner_run(*args, **kwargs)
                 out_text = result.final_output
                 obs.update(output=out_text)
-                _score_trace(obs, input_text, out_text, metadata={"raw": result.new_items})
+                _score_trace(langfuse, obs, input_text, out_text, metadata={"raw": result.new_items})
             return result
 
         _Runner.run = _patched_runner_run
@@ -228,7 +170,7 @@ def init_langfuse(
                 result = _orig_invoke(self, input, config, **kwargs)
                 out_text = _graph_output_text(result)
                 obs.update(output=out_text)
-                _score_trace(obs, in_text, out_text, metadata={"raw": {"input": input, "result": result}})
+                _score_trace(langfuse, obs, in_text, out_text, metadata={"raw": {"input": input, "result": result}})
             return result
 
         async def _patched_ainvoke(self, input, config=None, **kwargs):
@@ -238,7 +180,7 @@ def init_langfuse(
                 result = await _orig_ainvoke(self, input, config, **kwargs)
                 out_text = _graph_output_text(result)
                 obs.update(output=out_text)
-                _score_trace(obs, in_text, out_text, metadata={"raw": {"input": input, "result": result}})
+                _score_trace(langfuse, obs, in_text, out_text, metadata={"raw": {"input": input, "result": result}})
             return result
 
         _Pregel.invoke = _patched_invoke
@@ -290,7 +232,7 @@ def init_langfuse(
                                 response_parts.append(part.text)
                 out_text = "\n".join(response_parts)
                 obs.update(output=out_text)
-                _score_trace(obs, input_text, out_text, metadata={"raw": {"new_message": new_message, "events": events}})
+                _score_trace(langfuse, obs, input_text, out_text, metadata={"raw": {"new_message": new_message, "events": events}})
 
             for event in events:
                 yield event
@@ -342,7 +284,7 @@ def init_langfuse(
                     result = _bound(task, *args, **kwargs)
                     out_text = str(result)
                     obs.update(output=out_text)
-                    _score_trace(obs, input_text, out_text, metadata={"raw": task})
+                    _score_trace(langfuse, obs, input_text, out_text, metadata={"raw": task})
                 return result
             finally:
                 _smolagents_in_trace.reset(tok)
@@ -391,7 +333,7 @@ def init_langfuse(
                 out_text = _get_assistant_output(result)
                 obs.update(output=out_text)
                 if result.choices[0].finish_reason != "tool_calls":
-                    _score_trace(obs, input_text, out_text, metadata={"raw": messages})
+                    _score_trace(langfuse, obs, input_text, out_text, metadata={"raw": messages})
             return result
 
         _openai.resources.chat.completions.Completions.create = _patched_create
