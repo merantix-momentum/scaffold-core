@@ -20,6 +20,7 @@ from hydra.types import HydraContext, TaskFunction
 from omegaconf import DictConfig, OmegaConf, open_dict
 
 from scaffold.constants import RUNTIME_CFG_KEY
+from scaffold.config_masking import mask_sensitive_config
 from scaffold.flyte.launcher_conf import (
     ExecutionEnvironmentEnum,
     FlyteDockerImageConf,
@@ -446,7 +447,7 @@ class FlyteLauncher(Launcher):
         with open_dict(job_cfg):
             del job_cfg["hydra"]
 
-        inputs = build_workflow_inputs(workflow, job_cfg, cfg.hydra, runtime_cfg_key)
+        inputs = mask_sensitive_config(build_workflow_inputs(workflow, job_cfg, cfg.hydra, runtime_cfg_key))
 
         kwargs = {}
         if (cron_exp := cfg.hydra.launcher.workflow.cron_schedule) is not None:

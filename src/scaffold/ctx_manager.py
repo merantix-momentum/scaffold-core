@@ -5,6 +5,8 @@ from contextlib import AbstractContextManager, contextmanager, ExitStack
 
 from omegaconf import DictConfig, OmegaConf
 
+from scaffold.config_masking import mask_sensitive_config
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_LOGGING: dict = {
@@ -204,7 +206,7 @@ class WandBContext(AbstractContextManager):
         else:
             import flatten_dict
 
-            config = flatten_dict.flatten(dict(self.run_config), reducer="dot")
+            config = flatten_dict.flatten(mask_sensitive_config(self.run_config), reducer="dot")
             self.run = wandb.init(
                 entity=self.entity,
                 id=self.run_id,
