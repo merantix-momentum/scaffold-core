@@ -1,8 +1,11 @@
+import logging
 import typing as t
 
 from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
 from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
+
+logger = logging.getLogger(__name__)
 
 
 class FileSystemArtifactManager(ArtifactManager):
@@ -107,11 +110,15 @@ class FileSystemArtifactManager(ArtifactManager):
             parent_dir = fs._parent(target_file)
             self.fs.mkdirs(parent_dir, exist_ok=True)
             self.fs.put(local_path, target_file, recursive=False)
+            logged_location = target_file
         else:
             # Upload an entire folder.
             if not self.fs.exists(target_dir):
                 self.fs.mkdirs(target_dir, exist_ok=True)
             self.fs.put(local_path, target_dir, recursive=True)
+            logged_location = target_dir
+
+        logger.info(f"Logged artifact '{artifact_name}' to {logged_location}")
 
         return Artifact(name=artifact_name, collection=collection, version=new_version)
 
