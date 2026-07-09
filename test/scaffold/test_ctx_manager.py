@@ -34,6 +34,7 @@ def test_wandbctx_exit_with_exception(mock_wandb: t.Any) -> None:
 
 def test_wandbctx_masks_sensitive_run_config(mock_wandb: t.Any) -> None:
     """Test that sensitive values are masked before config is passed to wandb.init."""
+    mock_wandb.run = None  # Simulate that there's no existing run
     ctx = WandBContext(
         base_url="wand.com",
         project="mock_project",
