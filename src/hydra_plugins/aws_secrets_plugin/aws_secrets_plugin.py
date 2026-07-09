@@ -30,9 +30,7 @@ def get_aws_secret(secret_id: str, key: Optional[str] = None) -> str:
     try:
         import boto3
     except ImportError:
-        raise ImportError(
-            "boto3 is not installed. Install it with: pip install boto3"
-        )
+        raise ImportError("boto3 is not installed. Install it with: pip install boto3")
 
     client = boto3.client("secretsmanager")
     response = client.get_secret_value(SecretId=secret_id)
@@ -44,10 +42,7 @@ def get_aws_secret(secret_id: str, key: Optional[str] = None) -> str:
             secret_dict = json.loads(secret_str)
             return secret_dict.get(key, "")
         except json.JSONDecodeError:
-            raise ValueError(
-                f"Secret '{secret_id}' is not valid JSON. "
-                f"Cannot extract key '{key}'."
-            )
+            raise ValueError(f"Secret '{secret_id}' is not valid JSON. " f"Cannot extract key '{key}'.")
 
     return secret_str
 

@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 
-from scaffold.config_masking import MASKED_VALUE, mask_sensitive_config
+from scaffold.config_masking import mask_sensitive_config, MASKED_VALUE
 
 
 def test_mask_sensitive_config_masks_sensitive_keys_and_resolvers() -> None:

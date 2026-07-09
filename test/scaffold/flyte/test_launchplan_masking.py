@@ -3,10 +3,10 @@ from types import SimpleNamespace
 import pytest
 from omegaconf import OmegaConf
 
+from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteLauncher
 from scaffold.config_masking import MASKED_VALUE
 
 pytest.importorskip("flytekit")
-from hydra_plugins.flyte_launcher_plugin._flyte_launcher import FlyteLauncher
 
 
 class _DummyWorkflow:
