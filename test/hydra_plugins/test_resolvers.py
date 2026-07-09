@@ -6,10 +6,8 @@ They don't test the actual cloud API calls since those SDKs aren't installed.
 from omegaconf import OmegaConf
 
 from hydra_plugins.aws_secrets_plugin.aws_secrets_plugin import register_aws_resolver
+from hydra_plugins.azure_secrets_plugin.azure_secrets_plugin import register_azure_resolver
 from hydra_plugins.gcp_secrets_plugin.gcp_secrets_plugin import register_gcp_resolver
-from hydra_plugins.azure_secrets_plugin.azure_secrets_plugin import (
-    register_azure_resolver,
-)
 
 
 class TestResolverRegistration:

@@ -19,8 +19,8 @@ from hydra.plugins.launcher import Launcher
 from hydra.types import HydraContext, TaskFunction
 from omegaconf import DictConfig, OmegaConf, open_dict
 
-from scaffold.constants import RUNTIME_CFG_KEY
 from scaffold.config_masking import mask_sensitive_config
+from scaffold.constants import RUNTIME_CFG_KEY
 from scaffold.flyte.launcher_conf import (
     ExecutionEnvironmentEnum,
     FlyteDockerImageConf,
