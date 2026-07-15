@@ -18,7 +18,7 @@ from flytekit.core.workflow import WorkflowBase
 from flytekit.remote.remote import FlyteRemote
 from omegaconf import DictConfig, OmegaConf
 
-from scaffold.constants import KICKOFF_TIME_KEY, RUNTIME_CFG_KEY
+from scaffold.constants import RUNTIME_CFG_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -236,9 +236,9 @@ def build_workflow_inputs(
 
     - If the name matches *runtime_cfg_key*: injects a RuntimeConf DictConfig
       built from Hydra's logging configuration.
-    - Otherwise: looks up the value as ``job_cfg.<name>``.  Emits a warning
-      when no matching key exists (the workflow default is used in that case).
-    - For legacy compatibility, if the workflow only expects "cfg" or "config", do not explode the config
+    - Otherwise: looks up the value as ``job_cfg.<name>``.
+      Note that flyte's execution-time value always wins, meaning it may overwrite this if set via e.g. the UI.
+
     Args:
         workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
         job_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
@@ -248,33 +248,19 @@ def build_workflow_inputs(
     Returns:
         dict[str, Any]: Mapping of workflow parameter names to their resolved values.
     """
-    inputs: dict[str, Any] = {}
+    inputs = {}
     wf_inputs = workflow.interface.inputs
 
     if runtime_cfg_key in wf_inputs:
         inputs[runtime_cfg_key] = build_runtime_cfg(hydra_cfg)
 
-    # Inputs that are injected by the framework rather than supplied from the user config:
-    #   runs rely on the workflow's Python default. Either way it must not appear in
-    #   default_inputs, and it must not count towards legacy-mode detection.
-    injected_inputs = {runtime_cfg_key, KICKOFF_TIME_KEY}
-    config_supplied_inputs = [name for name in wf_inputs if name not in injected_inputs]
-
-    # backwards compatible: legacy flyte workflows expect a single top level "cfg" or "config", non-exploded
-    if len(config_supplied_inputs) == 1 and config_supplied_inputs[0] in ("cfg", "config"):
-        logger.warning(
-            "Building workflow inputs in legacy mode. Assuming that the workflow handles config-splitting on its own."
-        )
-        inputs[config_supplied_inputs[0]] = job_cfg
-
-    else:
-        for name in config_supplied_inputs:
+    for name in wf_inputs:
+        if name in inputs:  # already set (runtime_cfg) -> don't overwrite
+            continue
+        if name in ("cfg", "config"):
+            inputs[name] = job_cfg
+        else:
             val = OmegaConf.select(job_cfg, name)
-            if val is None:
-                logger.warning(
-                    f"Workflow input {name} has no matching key in the config. "
-                    f"It will fall back to the workflow's default value if one exists."
-                )
-            else:
+            if val is not None:
                 inputs[name] = val
     return inputs
