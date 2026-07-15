@@ -1,11 +1,11 @@
 [project]
 name = "mxm-scaffold"
-version = "0.21.2"
+version = "0.21.3"
 description = "Merantix Momentum AI Platform client library"
 authors = [
-    {name = "Merantix Momentum GmbH"}
+    { name = "Merantix Momentum GmbH" }
 ]
-license = {text = "MIT License"}
+license = { text = "MIT License" }
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 classifiers = [
@@ -31,22 +31,22 @@ data = [
     "tqdm",
     "random-name",
     "docarray",
-    "fsspec>=2024.12.0",  # Experience shows best keep it updated
-    "gcsfs>=2024.12.0",   # Experience shows best keep it updated
+    "fsspec>=2024.12.0", # Experience shows best keep it updated
+    "gcsfs>=2024.12.0", # Experience shows best keep it updated
     "numpy>=1.0.0; python_version>='3.10'",
     "numpy<2.0.0; python_version<'3.10'", # issue with pyarrow if we dont explicitly downgrade in this case
 ]
 
 # flyte
 flyte = [
-    "cookiecutter>=2.1.1",  # Required by flyte, see https://github.com/advisories/GHSA-f4q6-9qm4-h8j4
-    "docker>=7.1.0",  # This version resolves the need for pinning requests https://github.com/docker/docker-py/releases/tag/7.1.0
-    "flytekit>=1.14.3,<2.0.0",  # lower bound due to flytelauncher usage of flytekit api
+    "cookiecutter>=2.1.1", # Required by flyte, see https://github.com/advisories/GHSA-f4q6-9qm4-h8j4
+    "docker>=7.1.0", # This version resolves the need for pinning requests https://github.com/docker/docker-py/releases/tag/7.1.0
+    "flytekit>=1.14.3,<2.0.0", # lower bound due to flytelauncher usage of flytekit api
     "flytekitplugins-omegaconf",
     "flytekitplugins-pod",
     "GitPython>=3.1.50",
     "jsonpickle",
-    "marshmallow-enum>=1.5.1",  # flytekit dependency that isn't resolved properly
+    "marshmallow-enum>=1.5.1", # flytekit dependency that isn't resolved properly
     "pyprojroot>=0.3.0",
 ]
 
