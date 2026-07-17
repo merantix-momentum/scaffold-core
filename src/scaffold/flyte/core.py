@@ -236,8 +236,12 @@ def build_workflow_inputs(
 
     - If the name matches *runtime_cfg_key*: injects a RuntimeConf DictConfig
       built from Hydra's logging configuration.
+    - If the name matches 'cfg' or 'config', injects the entire config
+      (to maintain compatibility with legacy workflows that do not require exploded parameters).
+      This means that "config" or "cfg" cant ever be anything else but the top level config.
     - Otherwise: looks up the value as ``job_cfg.<name>``.
-      Note that flyte's execution-time value always wins, meaning it may overwrite this if set via e.g. the UI.
+      Note that flyte's execution-time value always wins,
+      meaning flyte may overwrite the value after this function runs if it was set via e.g. the UI
 
     Args:
         workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
@@ -254,12 +258,14 @@ def build_workflow_inputs(
     if runtime_cfg_key in wf_inputs:
         inputs[runtime_cfg_key] = build_runtime_cfg(hydra_cfg)
 
+    # For each workflow input, set its value if needed
     for name in wf_inputs:
         if name in inputs:  # already set (runtime_cfg) -> don't overwrite
             continue
         if name in ("cfg", "config"):
-            inputs[name] = job_cfg
+            inputs[name] = job_cfg  # if it's called cfg or config, set its value to the top level cfg
         else:
+            # else, check if the value is set inside the config and set if present
             val = OmegaConf.select(job_cfg, name)
             if val is not None:
                 inputs[name] = val

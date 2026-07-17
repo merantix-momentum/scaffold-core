@@ -2156,7 +2156,7 @@ wheels = [
 
 [[package]]
 name = "mxm-scaffold"
-version = "0.21.3"
+version = "0.21.4"
 source = { editable = "." }
 dependencies = [
     { name = "hydra-zen" },
