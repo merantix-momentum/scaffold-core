@@ -26,6 +26,9 @@ ADMIRAL = "#1D0693"
 VERMILLION = "#CE3D4A"
 PINE = "#007D85"
 
+# Neutral (not part of the brand palette): readable on both light and dark backgrounds
+GRAY = "#7F7F7F"
+
 MXM_THEME = {
     "title_font": "Space Grotesk",
     "text_font": "Inter",
@@ -43,6 +46,7 @@ class MXM_STYLE(Enum):
 
     LIGHT = 1
     DARK = 2
+    UNIVERSAL = 3
 
 
 LOGO_MAP = {
@@ -51,6 +55,7 @@ LOGO_MAP = {
     (MXM_STYLE.DARK, 0): ASSETS_DIR / "logo_offwhite.png",
     (MXM_STYLE.DARK, 1): ASSETS_DIR / "logo_offwhite.png",
     (MXM_STYLE.DARK, 2): ASSETS_DIR / "logo_offwhite.png",
+    (MXM_STYLE.UNIVERSAL, 0): ASSETS_DIR / "logo_blueberry.png",
 }
 
 
@@ -77,6 +82,13 @@ def get_color_cycle(style: MXM_STYLE = MXM_STYLE.LIGHT) -> List[str]:
             CARIBBEAN,
             CORAL,
             OFFWHITE,
+            LAVENDER,
+        ]
+    elif style == MXM_STYLE.UNIVERSAL:
+        return [
+            ELECTRIC,
+            CARIBBEAN,
+            CORAL,
             LAVENDER,
         ]
     else:
@@ -124,6 +136,14 @@ def get_rc_params(style: MXM_STYLE = MXM_STYLE.LIGHT, variant: int = 0) -> dict:
         elif variant == 2:
             fg = OFFWHITE
             bg = ADMIRAL
+        else:
+            raise ValueError(f"Invalid variant: {variant}")
+    elif style == MXM_STYLE.UNIVERSAL:
+        # transparent background, readable on both light and dark destinations;
+        # the variant only selects the default logo in add_logo (0: light, 1: dark)
+        if variant == 0:
+            fg = GRAY
+            bg = "none"
         else:
             raise ValueError(f"Invalid variant: {variant}")
     else:
