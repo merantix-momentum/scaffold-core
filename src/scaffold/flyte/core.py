@@ -230,31 +230,91 @@ def build_workflow_inputs(
     hydra_cfg: Any,
     runtime_cfg_key: str = RUNTIME_CFG_KEY,
 ) -> dict[str, Any]:
-    """Map a Hydra config to Flyte workflow inputs by parameter name.
+    """Map a Hydra configuration dictionary to Flyte workflow inputs by parameter name.
 
-    For each parameter in the workflow interface:
+    For each input argument of the signature of the workflow function, this function resolves
+    and populates its value using the following rules:
 
-    - If the name matches *runtime_cfg_key*: injects a RuntimeConf DictConfig
-      built from Hydra's logging configuration.
-    - If the name matches 'cfg' or 'config', injects the entire config
-      (to maintain compatibility with legacy workflows that do not require exploded parameters).
-      This means that "config" or "cfg" cant ever be anything else but the top level config.
-    - Otherwise: looks up the value as ``job_cfg.<name>``.
-      Note that flyte's execution-time value always wins,
-      meaning flyte may overwrite the value after this function runs if it was set via e.g. the UI
+    1. Logging Runtime Configuration: If the parameter name matches ``runtime_cfg_key``,
+       it injects a ``RuntimeConf`` configuration built dynamically from Hydra's internal
+       logging configuration.
+    2. Top-Level Configuration: If the parameter name is precisely ``"cfg"`` or ``"config"``,
+       the entire top-level configuration is injected. This preserves backward compatibility with
+       legacy workflows that accept the full configuration object rather than exploded parameters.
+       Consequently, parameters named ``"cfg"`` or ``"config"`` cannot represent sub-keys and will
+       always resolve to the top-level configuration.
+    3. Exploded Parameters: For all other parameter names, the function attempts to resolve
+       the value from the top level config using the parameter name as a path key (via ``OmegaConf.select``).
+       If a match is found, the value is populated.
+
+    .. note::
+        This function runs once, locally, when the Hydra launcher plugin registers a
+        ``LaunchPlan`` with Flyte. Its return value becomes that launch plan's
+        ``default_inputs``.
+
+        The actual values used for a given execution are decided afterwards, by whichever
+        actor triggers that execution. This will be the flyte launcher plugin for executions
+        started via Hydra, but could also be a ``CronSchedule`` firing on its own
+        (which injects e.g. its ``kickoff_time_input_arg``).
+        Any input value such an actor supplies explicitly overrides the default computed here for that one execution.
+        The values from this function only take effect when nothing overrides them.
+
 
     Args:
-        workflow (WorkflowBase): A flytekit ``@workflow``-decorated function.
-        job_cfg (DictConfig): Hydra user config (i.e. ``cfg`` with the ``hydra`` key removed).
-        hydra_cfg (Any): Hydra internal config (``cfg.hydra`` or ``HydraConfig.get()``).
-        runtime_cfg_key (str): Name of the runtime config parameter.
+        workflow (WorkflowBase): A Flytekit ``@workflow``-decorated function.
+        job_cfg (DictConfig): The user-defined Hydra configuration (i.e., the full config
+            with the internal ``hydra`` metadata key removed).
+        hydra_cfg (Any): The internal Hydra configuration block (typically ``cfg.hydra``
+            or obtained via ``HydraConfig.get()``).
+        runtime_cfg_key (str, optional): The parameter name reserved for the runtime
+            configuration. Defaults to ``RUNTIME_CFG_KEY``.
 
     Returns:
-        dict[str, Any]: Mapping of workflow parameter names to their resolved values.
+        dict[str, Any]: A mapping of workflow parameter names to their resolved input values.
+
+    Example:
+        Suppose we have a Flyte workflow defined as:
+
+        >>> from flytekit import workflow
+        >>> from omegaconf import DictConfig
+        >>>
+        >>> @workflow
+        >>> def train_pipeline(cfg: DictConfig, lr: float, epochs: int):
+        ...     pass
+
+        And we have the following top-level Hydra user configuration (``job_cfg``):
+
+        >>> from omegaconf import OmegaConf
+        >>> job_cfg = OmegaConf.create({
+        ...     "lr": 0.001,
+        ...     "epochs": 50,
+        ...     "batch_size": 32,  # Not present in workflow arguments; will be ignored
+        ... })
+
+        When we call ``build_workflow_inputs(train_pipeline, job_cfg, hydra_cfg)``,
+        the returned dictionary maps the workflow inputs as follows:
+
+        >>> inputs = build_workflow_inputs(train_pipeline, job_cfg, hydra_cfg)
+        >>> print(inputs)
+        {
+            "cfg": {
+                "lr": 0.001,
+                "epochs": 50,
+                "batch_size": 32
+            },
+            "lr": 0.001,
+            "epochs": 50
+        }
+
+        Here, ``cfg`` receives the complete, top-level ``job_cfg`` dictionary, whereas
+        ``lr`` and ``epochs`` are resolved individually from their matching keys.
     """
+    # dict of inputs that will be returned
     inputs = {}
+    # list of argument names the workflow expects
     wf_inputs = workflow.interface.inputs
 
+    # logging: populate runtime_cfg_key with hydra's runtime configuration
     if runtime_cfg_key in wf_inputs:
         inputs[runtime_cfg_key] = build_runtime_cfg(hydra_cfg)
 
@@ -264,6 +324,10 @@ def build_workflow_inputs(
             continue
         if name in ("cfg", "config"):
             inputs[name] = job_cfg  # if it's called cfg or config, set its value to the top level cfg
+            logger.warning(
+                "Assuming this workflow is 'legacy': Workflow contains 'config' or 'cfg' argument."
+                "Its value will be set to the top-level hydra config in order to maintain backwards compatibility."
+            )
         else:
             # else, check if the value is set inside the config and set if present
             val = OmegaConf.select(job_cfg, name)
