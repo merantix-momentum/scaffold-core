@@ -355,7 +355,7 @@ class FlyteLauncher(Launcher):
                 docker_client.images.get_registry_data(image)
             except docker.errors.NotFound:
                 raise UserWarning(f"Could not find image: {image}!\n")
-            
+
     def _get_and_check_image_tags_without_building(self) -> Tuple[str, Dict[str, str]]:
         """
         Check the existence of provided image details and compile full list of identifiers for flyte
@@ -365,8 +365,8 @@ class FlyteLauncher(Launcher):
                                          their full identifiers.
         """
         default_image_tag = (
-        f"{self.config.hydra.launcher.workflow.default_image.base_image}:"
-        f"{self.config.hydra.launcher.workflow.default_image.base_image_version}"
+            f"{self.config.hydra.launcher.workflow.default_image.base_image}:"
+            f"{self.config.hydra.launcher.workflow.default_image.base_image_version}"
         )
         extra_images = {}
         if self.config.hydra.launcher.workflow.extra_images is not None:
