@@ -7,6 +7,7 @@ https://pytest.org/en/6.2.x/writing_plugins.html#conftest-py-local-per-directory
 
 This means we only use conftest.py to define fixtures which will automatically be shared with the respective scope.
 """
+
 import os
 from collections import namedtuple
 from types import TracebackType
