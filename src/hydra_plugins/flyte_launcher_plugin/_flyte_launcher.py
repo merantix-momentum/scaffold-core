@@ -373,9 +373,9 @@ class FlyteLauncher(Launcher):
         extra_images = {}
         if self.config.hydra.launcher.workflow.extra_images is not None:
             for extra_image in self.config.hydra.launcher.workflow.extra_images:
-                extra_images[extra_image.flyte_image_name] = (
-                    f"{extra_image.target_image}:{extra_image.target_image_version}"
-                )
+                extra_images[
+                    extra_image.flyte_image_name
+                ] = f"{extra_image.target_image}:{extra_image.target_image_version}"
         if self.verify_images_exist:
             self._verify_images_exist([default_image_tag, *extra_images.values()])
         else:
