@@ -19,6 +19,7 @@ FlyteLauncherConf = builds(
     run=True,
     workflow=MISSING,
     notifications=[],
+    verify_image_exists=True,
 )
 
 scaffold_store(FlyteDockerImageConf, group="scaffold/flyte_launcher", name="FlyteDockerImageConf")

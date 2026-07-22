@@ -49,6 +49,7 @@ class FlyteLauncher(Launcher):
         run: bool,
         workflow: FlyteWorkflowConf,
         notifications: Optional[List[FlyteNotificationConf]],
+        verify_image_exists: bool = True,
     ) -> None:
         """
         Construct Flyte launcher.
@@ -76,6 +77,7 @@ class FlyteLauncher(Launcher):
         self.notifications = notifications
         self.endpoint = endpoint
         self.build_images = build_images
+        self.verify_image_exists = verify_image_exists
         self.fast_serialization = fast_serialization
         self.run = run
 
@@ -344,6 +346,18 @@ class FlyteLauncher(Launcher):
                     "Please check your flyte launcher config of default and extra images."
                 )
 
+    @staticmethod
+    def _verify_images_exist(images: List[str]) -> None:
+        """Verify images exist in the registry via the local Docker daemon."""
+        import docker
+
+        docker_client = docker.from_env()
+        for image in images:
+            try:
+                docker_client.images.get_registry_data(image)
+            except docker.errors.NotFound:
+                raise UserWarning(f"Could not find image: {image}!\n")
+
     def _get_and_check_image_tags_without_building(self) -> Tuple[str, Dict[str, str]]:
         """
         Check the existence of provided image details and compile full list of identifiers for flyte
@@ -352,28 +366,20 @@ class FlyteLauncher(Launcher):
             Tuple[str, Dict[str, str]] - The name of the default image as well as a mapping from flyte image names to
                                          their full identifiers.
         """
-        import docker
-
-        docker_client = docker.from_env()
-
-        def _check_if_image_exists(image: str) -> None:
-            try:
-                docker_client.images.get_registry_data(image)
-            except docker.errors.NotFound:
-                msg = f"Could not find image: {image}!\n"
-                raise UserWarning(msg)
-
-        extra_images = {}
         default_image_tag = (
             f"{self.config.hydra.launcher.workflow.default_image.base_image}:"
             f"{self.config.hydra.launcher.workflow.default_image.base_image_version}"
         )
-        _check_if_image_exists(default_image_tag)
+        extra_images = {}
         if self.config.hydra.launcher.workflow.extra_images is not None:
             for extra_image in self.config.hydra.launcher.workflow.extra_images:
-                extra_image_uri = f"{extra_image.target_image}:{extra_image.target_image_version}"
-                _check_if_image_exists(extra_image_uri)
-                extra_images[extra_image.flyte_image_name] = extra_image_uri
+                extra_images[
+                    extra_image.flyte_image_name
+                ] = f"{extra_image.target_image}:{extra_image.target_image_version}"
+        if self.verify_images_exist:
+            self._verify_images_exist([default_image_tag, *extra_images.values()])
+        else:
+            logging.info("Skipping registry existence check for images (daemon-free register-only mode).")
 
         return default_image_tag, extra_images
 
