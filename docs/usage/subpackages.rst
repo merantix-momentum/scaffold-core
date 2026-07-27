@@ -8,6 +8,7 @@ Scaffold has several loosely coupled subpackages, which are motivated and their 
    :caption: Contents:
 
    subpackages/hydra
+   subpackages/secrets_plugins
    subpackages/iterstream
    subpackages/catalog
    subpackages/artifact_manager

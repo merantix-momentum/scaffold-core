@@ -25,6 +25,11 @@ Repository = "https://github.com/merantix-momentum/scaffold-core/"
 Documentation = "https://docs.scaffold.merantix-momentum.cloud/"
 Homepage = "https://merantix-momentum.com"
 
+[project.entry-points."hydra_plugins"]
+aws_secrets = "hydra_plugins.aws_secrets_plugin.aws_secrets_plugin:register_aws_resolver"
+gcp_secrets = "hydra_plugins.gcp_secrets_plugin.gcp_secrets_plugin:register_gcp_resolver"
+azure_secrets = "hydra_plugins.azure_secrets_plugin.azure_secrets_plugin:register_azure_resolver"
+
 [project.optional-dependencies]
 # data
 data = [
@@ -72,6 +77,20 @@ aim = [
     "aim>=3.29.1",
     "fsspec>=2024.12.0",
     "gcsfs>=2024.12.0",
+]
+
+# secrets managers
+aws_secrets = [
+    "boto3",
+]
+
+gcp_secrets = [
+    "google-cloud-secret-manager",
+]
+
+azure_secrets = [
+    "azure-identity",
+    "azure-keyvault-secrets",
 ]
 
 [dependency-groups]

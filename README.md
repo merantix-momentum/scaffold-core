@@ -45,6 +45,9 @@ Install the extras you need for your project. For example, to install the Flyte 
 * *torch:* Utilities for working with PyTorch
 * *monitoring:* Utilities for monitoring training jobs
 * *wandb:* Utilities for logging to Weights and Biases
+* *aws_secrets:* AWS Secret Manager integration for Hydra
+* *gcp_secrets:* GCP Secret Manager integration for Hydra
+* *azure_secrets:* Azure Key Vault integration for Hydra
 * *dev:* Dependencies required for development and running tests
 
 ## 📖 Documentation
