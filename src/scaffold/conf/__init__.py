@@ -18,12 +18,12 @@ def add_if_not_exists(store: ZenStore, cfg_object: Any, group: str, name: str):
     """
     cs = ConfigStore.instance()
     try:
-        cs.list(group)
-        print(cs.list(group))
-        if f"{name}.yaml" not in cs.list(group):
-            store(cfg_object, group=group, name=name)
-    except KeyError:
-        # group doesn't exist yet, safe to add
+        existing = cs.list(group)
+    except (KeyError, OSError):
+        # group doesn't exist yet (cs.list raises IOError/OSError), safe to add
+        store(cfg_object, group=group, name=name)
+        return
+    if f"{name}.yaml" not in existing:
         store(cfg_object, group=group, name=name)
 
 
