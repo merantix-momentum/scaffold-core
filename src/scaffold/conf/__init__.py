@@ -18,12 +18,12 @@ def add_if_not_exists(store: ZenStore, cfg_object: Any, group: str, name: str):
     """
     cs = ConfigStore.instance()
     try:
-        cs.list(group)
-        print(cs.list(group))
-        if f"{name}.yaml" not in cs.list(group):
-            store(cfg_object, group=group, name=name)
-    except KeyError:
-        # group doesn't exist yet, safe to add
+        existing = cs.list(group)
+    except (KeyError, OSError):
+        # group doesn't exist yet (cs.list raises IOError/OSError), safe to add
+        store(cfg_object, group=group, name=name)
+        return
+    if f"{name}.yaml" not in existing:
         store(cfg_object, group=group, name=name)
 
 
@@ -37,17 +37,16 @@ def register_all() -> None:
 
     if importlib.util.find_spec("flytekit") is not None:
         from scaffold.conf.scaffold import flyte_launcher  # noqa: F401
+        from scaffold.conf.scaffold.flyte_launcher import FlyteLauncherConf
+        from scaffold.flyte.launcher_conf import FlyteWorkflowConf
+
+        # to maintain backwards compatibility, add legacy configs to the store if they were not set by the user already
+        add_if_not_exists(legacy_scaffold_store, FlyteLauncherConf, "hydra/launcher", "flyte")
+        add_if_not_exists(legacy_scaffold_store, FlyteWorkflowConf, "scaffold/flyte_launcher", "FlyteWorkflowConfig")
 
     if importlib.util.find_spec("lightning") is not None:
         from scaffold.conf.scaffold.lightning import callbacks  # noqa: F401
 
     scaffold_store.add_to_hydra_store(overwrite_ok=True)
-
-    from scaffold.conf.scaffold.flyte_launcher import FlyteLauncherConf
-    from scaffold.flyte.launcher_conf import FlyteWorkflowConf
-
-    # to maintain backwards compatibility, add legacy configs to the store if they were not set by the user already
-    add_if_not_exists(legacy_scaffold_store, FlyteLauncherConf, "hydra/launcher", "flyte")
-    add_if_not_exists(legacy_scaffold_store, FlyteWorkflowConf, "scaffold/flyte_launcher", "FlyteWorkflowConfig")
 
     legacy_scaffold_store.add_to_hydra_store(overwrite_ok=True)
