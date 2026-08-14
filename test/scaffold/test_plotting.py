@@ -9,6 +9,7 @@ ALL_STYLE_VARIANTS = [
     (MXM_STYLE.DARK, 0),
     (MXM_STYLE.DARK, 1),
     (MXM_STYLE.DARK, 2),
+    (MXM_STYLE.UNIVERSAL, 0),
 ]
 
 
