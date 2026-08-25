@@ -376,7 +376,7 @@ class FlyteLauncher(Launcher):
                 extra_images[
                     extra_image.flyte_image_name
                 ] = f"{extra_image.target_image}:{extra_image.target_image_version}"
-        if self.verify_images_exist:
+        if self.verify_image_exists:
             self._verify_images_exist([default_image_tag, *extra_images.values()])
         else:
             logging.info("Skipping registry existence check for images (daemon-free register-only mode).")
