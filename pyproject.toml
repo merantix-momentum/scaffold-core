@@ -33,8 +33,8 @@ data = [
     "docarray",
     "fsspec>=2024.12.0", # Experience shows best keep it updated
     "gcsfs>=2024.12.0", # Experience shows best keep it updated
-    "numpy>=1.0.0; python_version>='3.10'",
-    "numpy<2.0.0; python_version<'3.10'", # issue with pyarrow if we dont explicitly downgrade in this case
+    "numpy>=1.0.0; python_version>='3.12'",
+    "numpy<2.0.0; python_version<'3.12'", # issue with pyarrow if we dont explicitly downgrade in this case
 ]
 
 # flyte
