@@ -49,7 +49,7 @@ class FlyteLauncher(Launcher):
         run: bool,
         workflow: FlyteWorkflowConf,
         notifications: Optional[List[FlyteNotificationConf]],
-        verify_image_exists: bool = True,
+        verify_images_exist: bool = True,
     ) -> None:
         """
         Construct Flyte launcher.
@@ -77,7 +77,7 @@ class FlyteLauncher(Launcher):
         self.notifications = notifications
         self.endpoint = endpoint
         self.build_images = build_images
-        self.verify_image_exists = verify_image_exists
+        self.verify_images_exist = verify_images_exist
         self.fast_serialization = fast_serialization
         self.run = run
 
