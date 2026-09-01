@@ -28,4 +28,3 @@ Build the documentation locally
 -------------------------------
 
 Running ``uv run sphinx-build -b html ./docs ./docs/_build/html`` from the repository root will generate the documentation.
-Scaffold supports Python 3.11 and 3.12.
