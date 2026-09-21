@@ -53,3 +53,14 @@ database:
 - **Automatic Registration**: The plugin auto-registers on Hydra initialization
 - **JSON Support**: Extract specific keys from JSON-formatted secrets
 - **Type Safe**: Proper error messages for misconfiguration
+
+## Authentication
+
+The aws secrets plugin uses `boto3`, which resolves credentials using the Standard AWS Credential Provider Chain in the following order:
+
+1. Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
+2. Managed Identity / IRSA (IAM roles for EKS service accounts or ECS tasks)
+3. AWS CLI credentials (`~/.aws/credentials` or IAM Identity Center / SSO)
+4. EC2 Instance Metadata Service (IAM roles attached to EC2 instances)
+
+You may create AWS credentials using ``aws configure``.

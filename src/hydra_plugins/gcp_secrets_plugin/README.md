@@ -65,5 +65,6 @@ api:
 GCP Secret Manager uses Application Default Credentials. Ensure your environment has proper credentials configured:
 
 ```bash
+gcloud auth application-default login &&
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
 ```
