@@ -1,4 +1,5 @@
 import logging
+import re
 import typing as t
 
 from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
@@ -6,6 +7,9 @@ from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpAr
 from scaffold.data.fs import get_fs_from_url, join_path
 
 logger = logging.getLogger(__name__)
+
+# Versions are numbered directories under the artifact
+VERSION_PATTERN = re.compile(r"^v\d+$")
 
 
 class FileSystemArtifactManager(ArtifactManager):
@@ -70,6 +74,18 @@ class FileSystemArtifactManager(ArtifactManager):
             if (ver := entry["name"].split("/")[-1]).startswith("v") and ver[1:].isdigit()
         ]
 
+    def _check_version(self, version: str) -> None:
+        """Reject a version string that does not name a numbered version directory.
+
+        Args:
+            version (str): The version string to check.
+
+        Raises:
+            ValueError: If the version is not of the form ``v<number>``.
+        """
+        if not VERSION_PATTERN.match(version):
+            raise ValueError(f"'{version}' is not a version. Versions are numbered, such as 'v0' or 'v3'.")
+
     def artifact_url(self, artifact: Artifact) -> str:
         """Where a version's contents live, under this manager's root.
 
@@ -103,10 +119,12 @@ class FileSystemArtifactManager(ArtifactManager):
 
         Raises:
             FileNotFoundError: If the artifact has no versions, or not the one asked for.
+            ValueError: If the version is neither ``"latest"`` nor of the form ``v<number>``.
         """
         collection = collection or self.active_collection
         base_artifact_path = self._artifact_dir(artifact_name, collection)
         if version is not None and version != "latest":
+            self._check_version(version)
             if not self.fs.exists(join_path(base_artifact_path, version)):
                 raise FileNotFoundError(
                     f"Artifact '{artifact_name}' has no version '{version}' in collection '{collection}'"
@@ -164,8 +182,11 @@ class FileSystemArtifactManager(ArtifactManager):
 
         Raises:
             FileNotFoundError: If the version is not there.
-            ValueError: If it is the newest version of its artifact.
+            ValueError: If it is the newest version of its artifact, or is not of the form
+                ``v<number>``, which would point the removal at something that is not a
+                version, such as the metadata directory.
         """
+        self._check_version(artifact.version)
         url = self.artifact_url(artifact)
         if not self.fs.exists(url):
             raise FileNotFoundError(f"{artifact.collection}/{artifact.name}:{artifact.version} is not there")

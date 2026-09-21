@@ -364,3 +364,33 @@ def test_removing_a_version_that_is_not_there_says_so(artifact_manager):
         artifact_manager.remove_version(
             Artifact(name="detector", collection=artifact_manager.active_collection, version="v7")
         )
+
+
+def test_only_numbered_versions_can_be_resolved(artifact_manager, temp_src_dir):
+    """The metadata directory sits beside the versions and is not one of them."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    for not_a_version in [ARTIFACT_META_DIR, "latest-1", "v", "v1.2", "V0"]:
+        with pytest.raises(ValueError, match="is not a version"):
+            artifact_manager.resolve("data", version=not_a_version)
+
+
+def test_removing_the_metadata_directory_as_if_it_were_a_version_is_refused(artifact_manager, temp_src_dir):
+    """artifact_url() would happily point at it, and rm would take the description with it."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    with pytest.raises(ValueError, match="is not a version"):
+        artifact_manager.remove_version(
+            Artifact(name="data", collection=artifact_manager.active_collection, version=ARTIFACT_META_DIR)
+        )
+
+    desc = join_path(
+        artifact_manager.url, artifact_manager.active_collection, "data", ARTIFACT_META_DIR, ARTIFACT_DESCRIPTION_FILE
+    )
+    assert artifact_manager.fs.exists(desc)
