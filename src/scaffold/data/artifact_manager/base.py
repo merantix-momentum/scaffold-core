@@ -6,7 +6,7 @@ import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, List, NoReturn, Optional, Union
 
 from scaffold.data.fs import join_path
 
@@ -89,6 +89,9 @@ class DirectoryLogger:
         self._collection = collection or artifact_manager.active_collection
         self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
+        # None until __exit__, and still None if nothing was written: an empty directory
+        # is not logged and so has no version.
+        self.artifact: Optional[Artifact] = None
 
     def __enter__(self) -> str:
         """Create and return a directory for logging files.
@@ -101,7 +104,7 @@ class DirectoryLogger:
         return self.artifact_dir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Log the folder if non-empty and clean up the temporary directory."""
+        """Log the folder if non-empty, recording the version, and clean up."""
         if os.listdir(self.artifact_dir):
             self.artifact = self.artifact_manager.log_files(
                 self._artifact_name, self.artifact_dir, self._artifact_description, self._collection
@@ -208,6 +211,116 @@ class ArtifactManager(ABC):
         return any(
             [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
         )
+
+    def _unsupported(self, what: str) -> NoReturn:
+        """Refuse an operation this backend cannot offer, naming the backend.
+
+        Args:
+            what (str): What was asked for, as a verb phrase.
+
+        Raises:
+            NotImplementedError: Always.
+        """
+        raise NotImplementedError(f"{type(self).__name__} cannot {what}")
+
+    def list_versions(self, artifact_name: str, collection: Optional[str] = None) -> List[str]:
+        """The versions of an artifact, oldest first.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            List[str]: Version strings such as ``["v0", "v1"]``, empty if there are none.
+        """
+        self._unsupported("list the versions of an artifact")
+
+    def resolve(
+        self,
+        artifact_name: str,
+        collection: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> Artifact:
+        """Name a concrete version of an artifact, without transferring anything.
+
+        Resolve once and pass the result on, so every step of a pipeline reads the same
+        version even if a new one is logged while it runs.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+            version (Optional[str]): A version such as ``"v3"``. None or ``"latest"`` resolves
+                to the most recent one.
+
+        Returns:
+            Artifact: The resolved artifact, whose version is never ``"latest"``.
+
+        Raises:
+            FileNotFoundError: If the artifact has no versions, or not the one asked for.
+        """
+        self._unsupported("resolve an artifact version")
+
+    def artifact_url(self, artifact: Artifact) -> str:
+        """Where a version's contents live, for a reader that opens them in place.
+
+        Only backends that store artifacts at an addressable location can answer this. Use
+        it for data too large to copy; :meth:`download_artifact` covers everything else.
+
+        Args:
+            artifact (Artifact): The artifact to locate, at a concrete version.
+
+        Returns:
+            str: The URL of that version's contents.
+        """
+        self._unsupported("report where an artifact lives without downloading it")
+
+    def next_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
+        """Assign the next version of an artifact, for a write that happens in place.
+
+        Use this when the data is too large to build locally and upload with
+        :meth:`log_files`: it assigns the version, and the caller writes into
+        :meth:`artifact_url` directly.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            Artifact: The next version, ready to be written into.
+        """
+        self._unsupported("assign a version for a write that happens in place")
+
+    def remove_version(self, artifact: Artifact) -> None:
+        """Delete one version of an artifact and everything under it, irreversibly.
+
+        This removes one version, not the artifact, so an artifact whose versions have all
+        been removed stays distinguishable from one that never existed.
+
+        Backends that number versions sequentially must refuse the newest one. Removing it
+        frees a number that :meth:`next_version` hands out again, so the next write would
+        land on a version another record already names.
+
+        Args:
+            artifact (Artifact): The version to remove, at a concrete version.
+
+        Raises:
+            FileNotFoundError: If the version is not there.
+            ValueError: If it is the newest version of its artifact.
+        """
+        self._unsupported("remove a version of an artifact")
+
+    def set_description(self, artifact_name: str, description: str, collection: Optional[str] = None) -> None:
+        """Record an artifact's description, which belongs to the artifact and not a version.
+
+        :meth:`log_files` writes the description as part of logging. A write that happens
+        in place has no such step, so the description is available on its own.
+
+        Args:
+            artifact_name (str): The artifact name.
+            description (str): The description to record.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        self._unsupported("record an artifact description on its own")
 
     def log_folder(
         self, artifact_name: str, artifact_description: str, collection: Optional[str] = None

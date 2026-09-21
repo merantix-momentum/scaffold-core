@@ -144,6 +144,55 @@ artifact is automatically logged when the context is exited. Later, the artifact
             pass
 
 
+Naming, Writing and Removing Versions
+-------------------------------------
+Besides logging and downloading, ``FileSystemArtifactManager`` can name a version without
+transferring anything, hand out a version to write into directly, and remove one again.
+``WandbArtifactManager`` raises ``NotImplementedError`` for all of these.
+
+``resolve`` turns "latest" into a concrete version. Resolve once and pass the result on, so
+every step of a pipeline reads the same version even if a new one is logged while it runs.
+
+.. code-block:: python
+
+    manager = FileSystemArtifactManager(url="gs://mybucket/artifacts")
+
+    artifact = manager.resolve("my_dataset")                 # the highest-numbered version
+    pinned = manager.resolve("my_dataset", version="v3")
+    print(manager.list_versions("my_dataset"))               # ["v0", "v1", ...]
+
+    # Where the version's contents live, for data too large to download.
+    url = manager.artifact_url(artifact)
+
+``log_files`` uploads from a local path, which does not work for data too large to build
+locally first. ``next_version`` assigns a version instead, and you write into its URL.
+Because there is no upload step, the description is set on its own.
+
+.. code-block:: python
+
+    artifact = manager.next_version("my_dataset")
+    df.write_parquet(f"{manager.artifact_url(artifact)}/part-0.parquet")
+    manager.set_description("my_dataset", "one row per event, partitioned by day")
+
+Note that backends hold a reservation differently. On a local filesystem the version
+directory is created, so the number stays taken even if you write nothing into it, and
+``resolve`` can return an empty version. On an object store there are no directories, so a
+version nobody wrote into is absent and the next caller is handed the same number. Write
+into a reserved version promptly, and treat the number as used either way. Reserving is not
+atomic, so concurrent writers need their own artifact names.
+
+``remove_version`` deletes one version and everything under it, for a run that writes a
+version per epoch and accumulates versions nothing reads. It refuses the newest version,
+because removing it would free a number that ``next_version`` hands out again.
+
+.. code-block:: python
+
+    from scaffold.data.artifact_manager.base import Artifact
+
+    for old in manager.list_versions("checkpoints")[:-3]:
+        manager.remove_version(Artifact(name="checkpoints", collection="default", version=old))
+
+
 Model Logger
 ============
 
@@ -179,8 +228,9 @@ of ``ArtifactManager`` (e.g. WandbArtifactManager) can be used instead.
     model_logger = ModelLogger(artifact_manager=manager)
 
     # Log the model state under the artifact id "my_model_state".
-    afid = model_logger.log_state_to_artifact("my_model_state", model, "this is a sample description that will be logged", optimizers=[optimizer])
-    print(f"Logged model state with artifact id: {afid}")
+    # log_state_to_artifact() returns the Artifact it wrote, so the version is available too.
+    artifact = model_logger.log_state_to_artifact("my_model_state", model, "this is a sample description that will be logged", optimizers=[optimizer])
+    print(f"Logged model state {artifact.name} at version {artifact.version}")
 
 Usage Example: Retrieving a Model State
 -----------------------------------------
