@@ -6,7 +6,7 @@ import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, List, NoReturn, Optional, Union
+from typing import Any, Iterable, List, Optional, Union
 
 from scaffold.data.fs import join_path
 
@@ -212,17 +212,6 @@ class ArtifactManager(ABC):
             [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
         )
 
-    def _unsupported(self, what: str) -> NoReturn:
-        """Refuse an operation this backend cannot offer, naming the backend.
-
-        Args:
-            what (str): What was asked for, as a verb phrase.
-
-        Raises:
-            NotImplementedError: Always.
-        """
-        raise NotImplementedError(f"{type(self).__name__} cannot {what}")
-
     def list_versions(self, artifact_name: str, collection: Optional[str] = None) -> List[str]:
         """The versions of an artifact, oldest first.
 
@@ -233,7 +222,7 @@ class ArtifactManager(ABC):
         Returns:
             List[str]: Version strings such as ``["v0", "v1"]``, empty if there are none.
         """
-        self._unsupported("list the versions of an artifact")
+        raise NotImplementedError
 
     def resolve(
         self,
@@ -258,7 +247,7 @@ class ArtifactManager(ABC):
         Raises:
             FileNotFoundError: If the artifact has no versions, or not the one asked for.
         """
-        self._unsupported("resolve an artifact version")
+        raise NotImplementedError
 
     def artifact_url(self, artifact: Artifact) -> str:
         """Where a version's contents live, for a reader that opens them in place.
@@ -272,7 +261,7 @@ class ArtifactManager(ABC):
         Returns:
             str: The URL of that version's contents.
         """
-        self._unsupported("report where an artifact lives without downloading it")
+        raise NotImplementedError
 
     def next_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
         """Assign the next version of an artifact, for a write that happens in place.
@@ -288,7 +277,7 @@ class ArtifactManager(ABC):
         Returns:
             Artifact: The next version, ready to be written into.
         """
-        self._unsupported("assign a version for a write that happens in place")
+        raise NotImplementedError
 
     def remove_version(self, artifact: Artifact) -> None:
         """Delete one version of an artifact and everything under it, irreversibly.
@@ -307,7 +296,7 @@ class ArtifactManager(ABC):
             FileNotFoundError: If the version is not there.
             ValueError: If it is the newest version of its artifact.
         """
-        self._unsupported("remove a version of an artifact")
+        raise NotImplementedError
 
     def set_description(self, artifact_name: str, description: str, collection: Optional[str] = None) -> None:
         """Record an artifact's description, which belongs to the artifact and not a version.
@@ -320,7 +309,7 @@ class ArtifactManager(ABC):
             description (str): The description to record.
             collection (Optional[str]): The collection name. Defaults to the active collection.
         """
-        self._unsupported("record an artifact description on its own")
+        raise NotImplementedError
 
     def log_folder(
         self, artifact_name: str, artifact_description: str, collection: Optional[str] = None
