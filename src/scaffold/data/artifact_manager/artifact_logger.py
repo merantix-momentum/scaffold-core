@@ -7,7 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Optional, TYPE_CHECKING
 
-from scaffold.data.artifact_manager.base import ArtifactManager, DirectoryLogger
+from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, DirectoryLogger
 
 # Enables the usage for type hints. Will not be executed during runtime, because we want to use lazy imports.
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class ModelLogger:
         optimizers: List[torch.optim.Optimizer] = None,
         collection: Optional[str] = None,
         **kwargs,
-    ) -> str:
+    ) -> Artifact:
         """Logs the model and optimizer state dicts under the specified artifact id.
 
         Args:
@@ -99,13 +99,22 @@ class ModelLogger:
             optimizers (List[torch.optim.Optimizer]): All optimizers to save the state dicts off.
             collection (Optional[str]): Collection to log the artifact to.
             kwargs: Additional key value pairs to save to the state dict
+
+        Returns:
+            Artifact: The version just written.
+
+        Raises:
+            RuntimeError: If no state was written, so there is no version to return.
         """
-        with DirectoryLogger(
+        logging_dir = DirectoryLogger(
             self.artifact_manager, afid, collection=collection, artifact_description=artifact_description
-        ) as dp:
+        )
+        with logging_dir as dp:
             self.save_state(Path(dp), model, optimizers, **kwargs)
 
-        return afid
+        if logging_dir.artifact is None:
+            raise RuntimeError(f"save_state wrote no files, so no version was logged for afid '{afid}'.")
+        return logging_dir.artifact
 
     def retrieve_state_from_artifact(
         self, afid: str, collection: Optional[str] = None, version: int = None, device: Optional[str] = None

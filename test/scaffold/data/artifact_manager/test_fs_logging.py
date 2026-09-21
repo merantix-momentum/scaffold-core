@@ -231,3 +231,136 @@ def test_download_tmp(temp_src_dir, artifact_manager):
             with fs_temp.open(file_path, "rt") as f:
                 file_content = f.read()
             assert file_content == test_files.get(base)
+
+
+def test_resolve_names_a_concrete_version_without_transferring_anything(artifact_manager, temp_src_dir):
+    """A concrete version and its location are available without downloading anything."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    first = artifact_manager.log_files("data", temp_src_dir, "desc")
+    second = artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    assert artifact_manager.resolve("data") == second
+    assert artifact_manager.resolve("data", version="latest") == second
+    assert artifact_manager.resolve("data", version="v0") == first
+    assert artifact_manager.artifact_url(first).endswith(f"{first.collection}/data/v0")
+    assert artifact_manager.fs.exists(artifact_manager.artifact_url(first))
+
+
+def test_resolve_refuses_what_is_not_there_rather_than_guessing(artifact_manager, temp_src_dir):
+    """A missing version and a missing artifact each raise instead of falling back."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    with pytest.raises(FileNotFoundError, match="v7"):
+        artifact_manager.resolve("data", version="v7")
+    with pytest.raises(FileNotFoundError, match="no versions"):
+        artifact_manager.resolve("never-logged")
+
+
+def test_next_version_hands_out_a_place_to_write_in(artifact_manager):
+    """A dataset too large to build locally is written into its version in place."""
+    artifact_manager, _ = artifact_manager
+    first = artifact_manager.next_version("store")
+    with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(first), "part.bin"), "w") as f:
+        f.write("rows")
+    second = artifact_manager.next_version("store")
+    with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(second), "part.bin"), "w") as f:
+        f.write("more rows")
+
+    assert (first.name, first.version) == ("store", "v0")
+    assert artifact_manager.list_versions("store") == ["v0", "v1"]
+    assert artifact_manager.resolve("store") == second
+
+
+def test_a_version_nobody_wrote_into_is_handed_out_again(artifact_manager):
+    """An object store has no empty directories, so a number is only taken once it is used."""
+    artifact_manager, store_type = artifact_manager
+    if store_type != "cloud":
+        pytest.skip("a real filesystem does keep the empty directory")
+
+    assert artifact_manager.next_version("store").version == "v0"
+    reused = artifact_manager.next_version("store")
+    assert reused.version == "v0"
+
+    with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(reused), "part.bin"), "w") as f:
+        f.write("rows")
+
+    assert artifact_manager.next_version("store").version == "v1"
+
+
+def test_a_reserved_version_and_a_logged_one_share_one_counter(artifact_manager, temp_src_dir):
+    """next_version and log_files draw from one sequence, so neither overwrites the other."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+
+    first = artifact_manager.next_version("mixed")
+    with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(first), "part.bin"), "w") as f:
+        f.write("rows")
+    logged = artifact_manager.log_files("mixed", temp_src_dir, "desc")
+    third = artifact_manager.next_version("mixed")
+
+    assert (first.version, logged.version, third.version) == ("v0", "v1", "v2")
+
+
+def test_a_description_can_be_recorded_without_logging_files(artifact_manager):
+    """The description belongs to the artifact, so an in-place write can set it on its own."""
+    artifact_manager, _ = artifact_manager
+    artifact_manager.next_version("store")
+    artifact_manager.set_description("store", "written in place")
+
+    desc = join_path(
+        artifact_manager.url, artifact_manager.active_collection, "store", ARTIFACT_META_DIR, ARTIFACT_DESCRIPTION_FILE
+    )
+    with artifact_manager.fs.open(desc) as f:
+        assert f.read().decode() == "written in place"
+
+
+def test_a_version_can_be_removed_so_a_run_that_keeps_checkpointing_does_not_grow(artifact_manager):
+    """Removing a version drops its contents and leaves the rest of the artifact standing."""
+    artifact_manager, _ = artifact_manager
+    written = []
+    for _ in range(3):
+        version = artifact_manager.next_version("detector")
+        with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(version), "state.bin"), "w") as f:
+            f.write("weights")
+        written.append(version)
+
+    artifact_manager.remove_version(written[0])
+
+    assert artifact_manager.list_versions("detector") == ["v1", "v2"]
+    assert not artifact_manager.fs.exists(artifact_manager.artifact_url(written[0]))
+    assert artifact_manager.resolve("detector") == written[2]
+
+
+def test_removing_the_newest_version_is_refused_because_its_number_would_be_reused(artifact_manager):
+    """next_version is max + 1, so freeing the top would put two writes at one address."""
+    artifact_manager, _ = artifact_manager
+    for _ in range(2):
+        version = artifact_manager.next_version("detector")
+        with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(version), "state.bin"), "w") as f:
+            f.write("weights")
+
+    with pytest.raises(ValueError, match="newest version"):
+        artifact_manager.remove_version(
+            Artifact(name="detector", collection=artifact_manager.active_collection, version="v1")
+        )
+
+    assert artifact_manager.list_versions("detector") == ["v0", "v1"]
+
+
+def test_removing_a_version_that_is_not_there_says_so(artifact_manager):
+    """A request for a version that was never written reports that, rather than passing."""
+    artifact_manager, _ = artifact_manager
+    version = artifact_manager.next_version("detector")
+    with artifact_manager.fs.open(join_path(artifact_manager.artifact_url(version), "state.bin"), "w") as f:
+        f.write("weights")
+
+    with pytest.raises(FileNotFoundError):
+        artifact_manager.remove_version(
+            Artifact(name="detector", collection=artifact_manager.active_collection, version="v7")
+        )
