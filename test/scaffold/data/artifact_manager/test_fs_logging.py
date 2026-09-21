@@ -1,6 +1,8 @@
+import os
 import shutil
 import tempfile
 import uuid
+from pathlib import Path
 
 import pytest
 
@@ -450,3 +452,58 @@ def test_exists_skips_directories_that_are_not_collections(artifact_manager, tem
 
     assert artifact_manager.exists("data")
     assert not artifact_manager.exists("never-logged")
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        ["weights.bin"],
+        ["weights.bin", "record.json"],
+        ["model/weights.bin", "model/config.json"],
+        ["model/weights.bin", "record.json"],
+        ["a/b/c/d.txt"],
+    ],
+    ids=["one file", "two files", "one directory", "directory and file", "deeply nested"],
+)
+def test_a_version_downloads_with_the_layout_it_was_logged_with(contents, temp_src_dir, artifact_manager):
+    """Whatever shape a version holds, downloading it reproduces that shape exactly."""
+    manager, _ = artifact_manager
+    with manager.log_folder("bundle", "sample description", "my_collection") as folder:
+        for relative_path in contents:
+            os.makedirs(os.path.dirname(join_path(folder, relative_path)), exist_ok=True)
+            with open(join_path(folder, relative_path), "w") as f:
+                f.write(relative_path)
+
+    download_dir = join_path(temp_src_dir, "downloaded")
+    fs_local = get_fs_from_url(download_dir)
+    fs_local.mkdirs(download_dir, exist_ok=True)
+    manager.download_artifact("bundle", "my_collection", version="v0", to=download_dir)
+
+    for relative_path in contents:
+        downloaded = join_path(download_dir, relative_path)
+        assert fs_local.exists(downloaded), f"{relative_path} is not where it was logged"
+        with fs_local.open(downloaded, "rt") as f:
+            assert f.read() == relative_path
+
+
+def test_a_folder_given_as_a_path_object_is_logged_like_a_string_one(temp_src_dir, artifact_manager):
+    """ArtifactManager.log_files annotates local_path as a Path, so both forms have to work."""
+    manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+
+    artifact = manager.log_files("from_path", Path(temp_src_dir), "desc")
+
+    assert manager.fs.exists(join_path(manager.artifact_url(artifact.name, artifact.version), "a.txt"))
+
+
+def test_a_single_file_without_an_artifact_path_lands_at_the_version_root(temp_src_dir, artifact_manager):
+    """A file logged without artifact_path keeps its name inside the version, on every store."""
+    manager, _ = artifact_manager
+    src_file = join_path(temp_src_dir, "a.txt")
+    with open(src_file, "w") as f:
+        f.write("x")
+
+    artifact = manager.log_files("single_file", src_file, "desc")
+
+    assert manager.fs.exists(join_path(manager.artifact_url(artifact.name, artifact.version), "a.txt"))
