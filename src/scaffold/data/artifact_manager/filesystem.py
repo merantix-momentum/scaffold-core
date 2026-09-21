@@ -241,6 +241,8 @@ class FileSystemArtifactManager(ArtifactManager):
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
         collection = collection or self.active_collection
+        # The interface accepts a Path, which has none of the string methods used below.
+        local_path = str(local_path)
         version_nums = self._version_numbers(self._artifact_dir(artifact_name, collection))
         new_version = f"v{max(version_nums) + 1}" if version_nums else "v0"
         artifact = Artifact(name=artifact_name, collection=collection, version=new_version)
@@ -257,10 +259,15 @@ class FileSystemArtifactManager(ArtifactManager):
             self.fs.put(local_path, target_file, recursive=False)
             logged_location = target_file
         else:
-            # Upload an entire folder.
             if not self.fs.exists(target_dir):
                 self.fs.mkdirs(target_dir, exist_ok=True)
-            self.fs.put(local_path, target_dir, recursive=True)
+            if get_fs_from_url(local_path).isdir(local_path):
+                # A trailing separator copies the folder's contents to the version root.
+                # Without it fsspec copies the folder itself, nesting everything under a
+                # directory named after whatever the local folder happened to be called.
+                self.fs.put(local_path.rstrip("/") + "/", target_dir, recursive=True)
+            else:
+                self.fs.put(local_path, target_dir, recursive=True)
             logged_location = target_dir
 
         logger.info(f"Logged artifact '{artifact_name}' to {logged_location}")
@@ -337,7 +344,10 @@ class FileSystemArtifactManager(ArtifactManager):
             # Callers catch ValueError from this method, so keep that type here.
             raise ValueError(str(error)) from error
         if to is not None:
-            self.fs.get(join_path(self.artifact_url(artifact), "*"), to, recursive=True)
+            # A trailing separator copies the version's contents to `to`. A glob here would
+            # instead derive the destination layout from the common prefix of whatever it
+            # matched, which varies with how many entries the version holds.
+            self.fs.get(self.artifact_url(artifact).rstrip("/") + "/", to, recursive=True)
             return artifact
         else:
             return TmpArtifact(self, collection, artifact_name, artifact.version)
