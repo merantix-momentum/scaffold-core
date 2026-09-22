@@ -1,4 +1,5 @@
 import logging
+import re
 import typing as t
 
 from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
@@ -6,6 +7,9 @@ from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpAr
 from scaffold.data.fs import get_fs_from_url, join_path
 
 logger = logging.getLogger(__name__)
+
+# Versions are numbered directories under the artifact
+VERSION_PATTERN = re.compile(r"^v\d+$")
 
 
 class FileSystemArtifactManager(ArtifactManager):
@@ -52,6 +56,164 @@ class FileSystemArtifactManager(ArtifactManager):
         artifact_dir = join_path(self.url, collection, artifact_name)
         return self.fs.exists(artifact_dir)
 
+    def _artifact_dir(self, artifact_name: str, collection: t.Optional[str] = None) -> str:
+        """The directory holding every version of one artifact."""
+        return join_path(self.url, collection or self.active_collection, artifact_name)
+
+    def _version_numbers(self, base_artifact_path: str) -> t.List[int]:
+        """The version numbers under an artifact directory, unsorted, empty if there are none."""
+        if not self.fs.exists(base_artifact_path):
+            return []
+        try:
+            entries = self.fs.ls(base_artifact_path, detail=True)
+        except FileNotFoundError:
+            return []
+        return [
+            int(ver[1:])
+            for entry in entries
+            if (ver := entry["name"].split("/")[-1]).startswith("v") and ver[1:].isdigit()
+        ]
+
+    def _check_version(self, version: str) -> None:
+        """Reject a version string that does not name a numbered version directory.
+
+        Args:
+            version (str): The version string to check.
+
+        Raises:
+            ValueError: If the version is not of the form ``v<number>``.
+        """
+        if not VERSION_PATTERN.match(version):
+            raise ValueError(f"'{version}' is not a version. Versions are numbered, such as 'v0' or 'v3'.")
+
+    def artifact_url(self, artifact: Artifact) -> str:
+        """Where a version's contents live, under this manager's root.
+
+        Args:
+            artifact (Artifact): The artifact to locate, at a concrete version.
+
+        Returns:
+            str: The URL of that version's contents.
+        """
+        return join_path(self.url, artifact.collection, artifact.name, artifact.version)
+
+    def resolve(
+        self,
+        artifact_name: str,
+        collection: t.Optional[str] = None,
+        version: t.Optional[str] = None,
+    ) -> Artifact:
+        """Name a concrete version of an artifact, without transferring anything.
+
+        Versions are numbered directories under the artifact, so the most recent one is the
+        highest number present.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+            version (Optional[str]): A version such as ``"v3"``. None or ``"latest"`` resolves
+                to the highest-numbered version.
+
+        Returns:
+            Artifact: The resolved artifact, whose version is never ``"latest"``.
+
+        Raises:
+            FileNotFoundError: If the artifact has no versions, or not the one asked for.
+            ValueError: If the version is neither ``"latest"`` nor of the form ``v<number>``.
+        """
+        collection = collection or self.active_collection
+        base_artifact_path = self._artifact_dir(artifact_name, collection)
+        if version is not None and version != "latest":
+            self._check_version(version)
+            if not self.fs.exists(join_path(base_artifact_path, version)):
+                raise FileNotFoundError(
+                    f"Artifact '{artifact_name}' has no version '{version}' in collection '{collection}'"
+                )
+            return Artifact(name=artifact_name, collection=collection, version=version)
+        numbers = self._version_numbers(base_artifact_path)
+        if not numbers:
+            raise FileNotFoundError(f"Artifact '{artifact_name}' has no versions in collection '{collection}'")
+        return Artifact(name=artifact_name, collection=collection, version=f"v{max(numbers)}")
+
+    def next_version(self, artifact_name: str, collection: t.Optional[str] = None) -> Artifact:
+        """Reserve the next version of an artifact for a write that happens in place.
+
+        Use this when the data is too large to build locally and upload with
+        :meth:`log_files`: it assigns the next version number, and the caller writes into
+        :meth:`artifact_url` directly.
+
+        What a reservation holds depends on the backend. On a local filesystem ``mkdirs``
+        creates the directory, so the number stays taken even if nothing is written into it
+        and :meth:`resolve` can return an empty version. An object store has no directories,
+        so a version nobody wrote into is absent and the next caller is handed the same
+        number. Write promptly either way.
+
+        Reserving is not atomic. Two callers reading the same highest version are both given
+        the one after it, so give concurrent writers their own artifact names or serialize
+        them.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            Artifact: The next version, ready to be written into.
+        """
+        collection = collection or self.active_collection
+        base_artifact_path = self._artifact_dir(artifact_name, collection)
+        numbers = self._version_numbers(base_artifact_path)
+        artifact = Artifact(
+            name=artifact_name,
+            collection=collection,
+            version=f"v{max(numbers) + 1}" if numbers else "v0",
+        )
+        self.fs.mkdirs(self.artifact_url(artifact), exist_ok=True)
+        return artifact
+
+    def remove_version(self, artifact: Artifact) -> None:
+        """Delete one version's directory and everything under it, irreversibly.
+
+        The newest version is refused. :meth:`next_version` assigns ``max(numbers) + 1``, so
+        removing the highest hands that number out again and the next write would land on a
+        version some record already names.
+
+        Args:
+            artifact (Artifact): The version to remove, at a concrete version.
+
+        Raises:
+            FileNotFoundError: If the version is not there.
+            ValueError: If it is the newest version of its artifact, or is not of the form
+                ``v<number>``, which would point the removal at something that is not a
+                version, such as the metadata directory.
+        """
+        self._check_version(artifact.version)
+        url = self.artifact_url(artifact)
+        if not self.fs.exists(url):
+            raise FileNotFoundError(f"{artifact.collection}/{artifact.name}:{artifact.version} is not there")
+        numbers = self._version_numbers(self._artifact_dir(artifact.name, artifact.collection))
+        if numbers and artifact.version == f"v{max(numbers)}":
+            raise ValueError(
+                f"{artifact.collection}/{artifact.name}:{artifact.version} is the newest version, and removing it "
+                "would free a number that next_version hands out again. Remove older versions instead."
+            )
+        self.fs.rm(url, recursive=True)
+
+    def set_description(self, artifact_name: str, description: str, collection: t.Optional[str] = None) -> None:
+        """Record an artifact's description, which belongs to the artifact and not to a version.
+
+        :meth:`log_files` writes the description as part of logging. A write that happens
+        in place has no such step, so the description is exposed on its own.
+
+        Args:
+            artifact_name (str): The artifact name.
+            description (str): The description to record.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
+        self.fs.mkdirs(meta_dir, exist_ok=True)
+        with self.fs.open(join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE), "w") as f:
+            f.write(description)
+
     def log_files(
         self,
         artifact_name: str,
@@ -79,29 +241,12 @@ class FileSystemArtifactManager(ArtifactManager):
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
         collection = collection or self.active_collection
-        base_artifact_path = join_path(self.url, collection, artifact_name)
-        # Determine new version; start at "v0"
-        if self.fs.exists(base_artifact_path):
-            try:
-                entries = self.fs.ls(base_artifact_path, detail=True)
-                version_nums: t.List[int] = []
-                for entry in entries:
-                    ver = entry["name"].split("/")[-1]
-                    if ver.startswith("v") and ver[1:].isdigit():
-                        version_nums.append(int(ver[1:]))
-                new_version = f"v{max(version_nums) + 1}" if version_nums else "v0"
-            except Exception:
-                new_version = "v0"
-        else:
-            new_version = "v0"
-        target_dir = join_path(base_artifact_path, new_version)
+        version_nums = self._version_numbers(self._artifact_dir(artifact_name, collection))
+        new_version = f"v{max(version_nums) + 1}" if version_nums else "v0"
+        artifact = Artifact(name=artifact_name, collection=collection, version=new_version)
+        target_dir = self.artifact_url(artifact)
 
-        # write description
-        meta_dir = join_path(base_artifact_path, ARTIFACT_META_DIR)
-        self.fs.mkdirs(meta_dir, exist_ok=True)
-        desc_file = join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE)
-        with self.fs.open(desc_file, "w") as f:
-            f.write(description)
+        self.set_description(artifact_name, description, collection)
 
         if artifact_path:
             # Upload a single file to target_dir/artifact_path.
@@ -120,7 +265,7 @@ class FileSystemArtifactManager(ArtifactManager):
 
         logger.info(f"Logged artifact '{artifact_name}' to {logged_location}")
 
-        return Artifact(name=artifact_name, collection=collection, version=new_version)
+        return artifact
 
     def list_artifacts(self, collection: str = None) -> t.List[str]:
         """Get sorted versions for an artifact.
@@ -158,21 +303,7 @@ class FileSystemArtifactManager(ArtifactManager):
         if collection is None:
             collection = self.active_collection
 
-        base_artifact_path = join_path(self.url, collection, artifact_name)
-        if not self.fs.exists(base_artifact_path):
-            return []
-
-        try:
-            entries = self.fs.ls(base_artifact_path, detail=True)
-            versions: t.List[t.Tuple[int, str]] = []
-            for entry in entries:
-                ver = entry["name"].split("/")[-1]
-                if ver.startswith("v") and ver[1:].isdigit():
-                    versions.append((int(ver[1:]), ver))
-            versions.sort()
-            return [ver for _, ver in versions]
-        except Exception:
-            return []
+        return [f"v{n}" for n in sorted(self._version_numbers(self._artifact_dir(artifact_name, collection)))]
 
     def download_artifact(
         self,
@@ -195,24 +326,18 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
                 Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
+
+        Raises:
+            ValueError: If the artifact has no versions, or not the one asked for.
         """
         collection = collection or self.active_collection
-        base_artifact_path = join_path(self.url, collection, artifact_name)
-        if version is None or version == "latest":
-            if not self.fs.exists(base_artifact_path):
-                raise ValueError(f"Artifact {artifact_name} not found in collection {collection}")
-            entries = self.fs.ls(base_artifact_path, detail=True)
-            version_nums: t.List[int] = []
-            for entry in entries:
-                ver = entry["name"].split("/")[-1]
-                if ver.startswith("v") and ver[1:].isdigit():
-                    version_nums.append(int(ver[1:]))
-            if not version_nums:
-                raise ValueError(f"No version found for artifact {artifact_name} in collection {collection}")
-            version = f"v{max(version_nums)}"
-        remote_artifact_path = join_path(base_artifact_path, version)
+        try:
+            artifact = self.resolve(artifact_name, collection, version)
+        except FileNotFoundError as error:
+            # Callers catch ValueError from this method, so keep that type here.
+            raise ValueError(str(error)) from error
         if to is not None:
-            self.fs.get(join_path(remote_artifact_path, "*"), to, recursive=True)
-            return Artifact(name=artifact_name, collection=collection, version=version)
+            self.fs.get(join_path(self.artifact_url(artifact), "*"), to, recursive=True)
+            return artifact
         else:
-            return TmpArtifact(self, collection, artifact_name, version)
+            return TmpArtifact(self, collection, artifact_name, artifact.version)
