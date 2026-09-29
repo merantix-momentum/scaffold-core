@@ -12,6 +12,9 @@ from scaffold.data.fs import join_path
 
 logger = logging.getLogger(__name__)
 
+# Collections cannot be nested, so a name must not contain a path separator.
+COLLECTION_PATTERN = re.compile(r"[a-zA-Z0-9\-_:]+")
+
 
 @dataclass(frozen=True)
 class Artifact:
@@ -86,7 +89,7 @@ class DirectoryLogger:
         """
         self.artifact_manager = artifact_manager
         self._artifact_name = artifact_name
-        self._collection = collection or artifact_manager.active_collection
+        self._collection = artifact_manager._collection(collection)
         self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
         # None until __exit__, and still None if nothing was written: an empty directory
@@ -115,7 +118,7 @@ class DirectoryLogger:
 class ArtifactManager(ABC):
     def __init__(self, collection: str = "default"):
         """Artifact manager interface for various backends."""
-        self._active_collection = collection
+        self.active_collection = collection
 
     @property
     def active_collection(self) -> str:
@@ -140,12 +143,28 @@ class ArtifactManager(ABC):
 
         The provided value is verified to ensure that no nested collections are used.
         """
-        if not re.match(r"^[a-zA-Z0-9\-_:]+$", value):
-            raise ValueError(
-                "Invalid collection name - must not be empty and can only contain alphanumerics, dashes, underscores "
-                "and colons."
-            )
+        self._check_collection(value)
         self._active_collection = value
+
+    @staticmethod
+    def _check_collection(collection: str) -> None:
+        """Reject a collection name that is empty or would nest collections.
+
+        Raises:
+            ValueError: If the name contains anything but alphanumerics, dashes, underscores and colons.
+        """
+        if not COLLECTION_PATTERN.fullmatch(collection):
+            raise ValueError(
+                f"Invalid collection name '{collection}' - must not be empty and can only contain alphanumerics, "
+                "dashes, underscores and colons."
+            )
+
+    def _collection(self, collection: Optional[str]) -> str:
+        """The given collection after checking its name, or the active collection if None."""
+        if collection is None:
+            return self.active_collection
+        self._check_collection(collection)
+        return collection
 
     @abstractmethod
     def list_collection_names(self) -> Iterable:
@@ -210,9 +229,12 @@ class ArtifactManager(ABC):
         raise NotImplementedError
 
     def exists(self, artifact_name: str) -> bool:
-        """Check if artifact exists in specified collection."""
+        """Check if artifact exists in any collection."""
+        # A directory in the store root whose name is not a valid collection name is not a collection.
         return any(
-            [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
+            self.exists_in_collection(artifact_name, collection)
+            for collection in self.list_collection_names()
+            if COLLECTION_PATTERN.fullmatch(collection)
         )
 
     def list_versions(self, artifact_name: str, collection: Optional[str] = None) -> List[str]:

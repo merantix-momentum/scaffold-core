@@ -79,7 +79,7 @@ class WandbArtifactManager(ArtifactManager):
         Returns:
             bool: True if the artifact exists in the collection, False otherwise.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         if collection not in self.list_collection_names():
             return False
         return artifact_name in [
@@ -109,7 +109,7 @@ class WandbArtifactManager(ArtifactManager):
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         artifact = self._wandb.Artifact(artifact_name, type=collection)
         fs = get_fs_from_url(local_path)
         if fs.isdir(local_path):
@@ -142,7 +142,7 @@ class WandbArtifactManager(ArtifactManager):
             Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
                 Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         if version is None:
             version = "latest"
         if self._wandb.run is None:

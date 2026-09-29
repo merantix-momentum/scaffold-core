@@ -53,7 +53,7 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             bool: True if the artifact exists, False otherwise.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         return self.fs.exists(self._artifact_dir(artifact_name, collection))
 
     def _artifact_dir(self, artifact_name: str, collection: str) -> str:
@@ -100,7 +100,7 @@ class FileSystemArtifactManager(ArtifactManager):
                 at something that is not a version, such as the metadata directory.
         """
         self._check_version(version)
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         return join_path(self._artifact_dir(artifact_name, collection), version)
 
     def resolve(
@@ -127,7 +127,7 @@ class FileSystemArtifactManager(ArtifactManager):
             FileNotFoundError: If the artifact has no versions, or not the one asked for.
             ValueError: If the version is neither ``"latest"`` nor of the form ``v<number>``.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         if version is None or version == "latest":
             numbers = self._version_numbers(artifact_name, collection)
             if not numbers:
@@ -163,7 +163,7 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             Artifact: The next version, ready to be written into.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         numbers = self._version_numbers(artifact_name, collection)
         version = f"v{max(numbers) + 1}" if numbers else "v0"
         self.fs.mkdirs(self.artifact_url(artifact_name, version, collection), exist_ok=True)
@@ -186,7 +186,7 @@ class FileSystemArtifactManager(ArtifactManager):
             ValueError: If it is the newest version of its artifact, or is not of the form
                 ``v<number>``.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         artifact = self.resolve(artifact_name, collection, version)
         if artifact == self.resolve(artifact_name, collection):
             raise ValueError(
@@ -207,7 +207,7 @@ class FileSystemArtifactManager(ArtifactManager):
             description (str): The description to record.
             collection (Optional[str]): The collection name. Defaults to the active collection.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
         self.fs.mkdirs(meta_dir, exist_ok=True)
         with self.fs.open(join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE), "w") as f:
@@ -239,7 +239,7 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         artifact = self.reserve_version(artifact_name, collection)
         target_dir = self.artifact_url(artifact_name, artifact.version, collection)
 
@@ -271,7 +271,7 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             List[str]: The artifact names, empty if the collection does not exist.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         try:
             entries = self.fs.ls(join_path(self.url, collection), detail=True)
         except FileNotFoundError:
@@ -288,7 +288,7 @@ class FileSystemArtifactManager(ArtifactManager):
         Returns:
             List[str]: List of version strings sorted by version number (e.g., ["v0", "v1", "v2"]).
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         return [f"v{n}" for n in sorted(self._version_numbers(artifact_name, collection))]
 
     def download_artifact(

@@ -404,3 +404,49 @@ def test_removing_the_metadata_directory_as_if_it_were_a_version_is_refused(arti
         artifact_manager.url, artifact_manager.active_collection, "data", ARTIFACT_META_DIR, ARTIFACT_DESCRIPTION_FILE
     )
     assert artifact_manager.fs.exists(desc)
+
+
+def test_every_method_taking_a_collection_rejects_one_that_would_nest(artifact_manager, temp_src_dir):
+    """A collection passed per call is held to the same rule as the active collection."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    for bad in ["a/b", "", "../default"]:
+        for call in [
+            lambda: artifact_manager.log_files("data", temp_src_dir, "desc", collection=bad),
+            lambda: artifact_manager.log_folder("data", "desc", collection=bad),
+            lambda: artifact_manager.reserve_version("data", collection=bad),
+            lambda: artifact_manager.set_description("data", "desc", collection=bad),
+            lambda: artifact_manager.resolve("data", collection=bad),
+            lambda: artifact_manager.download_artifact("data", collection=bad),
+            lambda: artifact_manager.artifact_url("data", "v0", collection=bad),
+            lambda: artifact_manager.remove_version("data", "v0", collection=bad),
+            lambda: artifact_manager.list_versions("data", collection=bad),
+            lambda: artifact_manager.list_artifacts(collection=bad),
+            lambda: artifact_manager.exists_in_collection("data", collection=bad),
+        ]:
+            with pytest.raises(ValueError, match="Invalid collection name"):
+                call()
+
+
+def test_the_constructor_rejects_a_collection_that_would_nest(temp_store_dir):
+    """The initial active collection goes through the same check as a later assignment."""
+    with pytest.raises(ValueError, match="Invalid collection name"):
+        FileSystemArtifactManager(url=temp_store_dir, collection="a/b")
+
+
+def test_exists_skips_directories_that_are_not_collections(artifact_manager, temp_src_dir):
+    """A stray directory in the store root does not make exists() raise."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+    stray = join_path(artifact_manager.url, "not.a.collection")
+    artifact_manager.fs.mkdirs(stray, exist_ok=True)
+    with artifact_manager.fs.open(join_path(stray, "file.txt"), "w") as f:
+        f.write("x")
+
+    assert artifact_manager.exists("data")
+    assert not artifact_manager.exists("never-logged")
