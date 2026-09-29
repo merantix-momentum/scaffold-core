@@ -507,3 +507,16 @@ def test_a_single_file_without_an_artifact_path_lands_at_the_version_root(temp_s
     artifact = manager.log_files("single_file", src_file, "desc")
 
     assert manager.fs.exists(join_path(manager.artifact_url(artifact.name, artifact.version), "a.txt"))
+
+
+def test_a_single_file_logged_without_an_artifact_path_downloads_again(temp_src_dir, artifact_manager):
+    """A single logged file comes back from the latest version, on every store."""
+    manager, _ = artifact_manager
+    src_file = join_path(temp_src_dir, "my_model.pth")
+    with open(src_file, "w") as f:
+        f.write("weights")
+
+    manager.log_files("model", src_file, "desc")
+
+    with manager.download_artifact("model") as download_dir, open(join_path(download_dir, "my_model.pth")) as f:
+        assert f.read() == "weights"
