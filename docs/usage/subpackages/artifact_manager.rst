@@ -162,16 +162,17 @@ every step of a pipeline reads the same version even if a new one is logged whil
     print(manager.list_versions("my_dataset"))               # ["v0", "v1", ...]
 
     # Where the version's contents live, for data too large to download.
-    url = manager.artifact_url(artifact)
+    url = manager.artifact_url(artifact.name, artifact.version)
 
 ``log_files`` uploads from a local path, which does not work for data too large to build
-locally first. ``next_version`` assigns a version instead, and you write into its URL.
+locally first. ``reserve_version`` reserves a version instead, and you write into its URL.
+``log_files`` reserves its version the same way, so the two never hand out the same number.
 Because there is no upload step, the description is set on its own.
 
 .. code-block:: python
 
-    artifact = manager.next_version("my_dataset")
-    df.write_parquet(f"{manager.artifact_url(artifact)}/part-0.parquet")
+    artifact = manager.reserve_version("my_dataset")
+    df.write_parquet(f"{manager.artifact_url(artifact.name, artifact.version)}/part-0.parquet")
     manager.set_description("my_dataset", "one row per event, partitioned by day")
 
 Note that backends hold a reservation differently. On a local filesystem the version
@@ -183,14 +184,17 @@ atomic, so concurrent writers need their own artifact names.
 
 ``remove_version`` deletes one version and everything under it, for a run that writes a
 version per epoch and accumulates versions nothing reads. It refuses the newest version,
-because removing it would free a number that ``next_version`` hands out again.
+because removing it would free a number that ``reserve_version`` hands out again.
 
 .. code-block:: python
 
-    from scaffold.data.artifact_manager.base import Artifact
-
     for old in manager.list_versions("checkpoints")[:-3]:
-        manager.remove_version(Artifact(name="checkpoints", collection="default", version=old))
+        manager.remove_version("checkpoints", old)
+
+Every method that takes a version accepts only numbered ones such as ``"v3"``, plus
+``"latest"`` where the method resolves it, and raises ``ValueError`` for anything else. A
+version or artifact that does not exist raises ``FileNotFoundError``, including from
+``download_artifact``.
 
 
 Model Logger

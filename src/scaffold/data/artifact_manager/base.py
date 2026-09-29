@@ -203,6 +203,9 @@ class ArtifactManager(ABC):
         Returns:
             Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
                 Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
+
+        Raises:
+            FileNotFoundError: If the artifact has no versions, or not the one asked for.
         """
         raise NotImplementedError
 
@@ -246,28 +249,34 @@ class ArtifactManager(ABC):
 
         Raises:
             FileNotFoundError: If the artifact has no versions, or not the one asked for.
+            ValueError: If the version is not one this backend can name.
         """
         raise NotImplementedError
 
-    def artifact_url(self, artifact: Artifact) -> str:
-        """Where a version's contents live, for a reader that opens them in place.
+    def artifact_url(self, artifact_name: str, version: str, collection: Optional[str] = None) -> str:
+        """Where a version's contents live, for a reader or writer that opens them in place.
 
         Only backends that store artifacts at an addressable location can answer this. Use
         it for data too large to copy; :meth:`download_artifact` covers everything else.
 
         Args:
-            artifact (Artifact): The artifact to locate, at a concrete version.
+            artifact_name (str): The artifact name.
+            version (str): A concrete version such as ``"v3"``, not ``"latest"``.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
 
         Returns:
             str: The URL of that version's contents.
+
+        Raises:
+            ValueError: If the version is not one this backend can name.
         """
         raise NotImplementedError
 
-    def next_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
-        """Assign the next version of an artifact, for a write that happens in place.
+    def reserve_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
+        """Reserve the next version of an artifact, for a write that happens in place.
 
         Use this when the data is too large to build locally and upload with
-        :meth:`log_files`: it assigns the version, and the caller writes into
+        :meth:`log_files`: it reserves the version, and the caller writes into
         :meth:`artifact_url` directly.
 
         Args:
@@ -279,22 +288,25 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
-    def remove_version(self, artifact: Artifact) -> None:
+    def remove_version(self, artifact_name: str, version: str, collection: Optional[str] = None) -> None:
         """Delete one version of an artifact and everything under it, irreversibly.
 
         This removes one version, not the artifact, so an artifact whose versions have all
         been removed stays distinguishable from one that never existed.
 
         Backends that number versions sequentially must refuse the newest one. Removing it
-        frees a number that :meth:`next_version` hands out again, so the next write would
+        frees a number that :meth:`reserve_version` hands out again, so the next write would
         land on a version another record already names.
 
         Args:
-            artifact (Artifact): The version to remove, at a concrete version.
+            artifact_name (str): The artifact name.
+            version (str): The version to remove, such as ``"v3"``.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
 
         Raises:
             FileNotFoundError: If the version is not there.
-            ValueError: If it is the newest version of its artifact.
+            ValueError: If it is the newest version of its artifact, or not one this backend
+                can name.
         """
         raise NotImplementedError
 
