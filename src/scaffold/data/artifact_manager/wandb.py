@@ -79,7 +79,7 @@ class WandbArtifactManager(ArtifactManager):
         Returns:
             bool: True if the artifact exists in the collection, False otherwise.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         if collection not in self.list_collection_names():
             return False
         return artifact_name in [
@@ -108,9 +108,8 @@ class WandbArtifactManager(ArtifactManager):
             artifact_path (Optional[str]): An optional subpath within the artifact.
         Returns:
             Artifact: The logged artifact with its metadata (name, collection, version).
-                For WandB, the version is typically "latest" as WandB manages versions internally.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         artifact = self._wandb.Artifact(artifact_name, type=collection)
         fs = get_fs_from_url(local_path)
         if fs.isdir(local_path):
@@ -119,9 +118,7 @@ class WandbArtifactManager(ArtifactManager):
             artifact.add_file(str(local_path), name=artifact_path)
         artifact.save()
         artifact.wait()
-        # WandB uses "latest" as the version alias for the most recent artifact
-        # The actual version is managed by WandB internally, but "latest" is the standard way to reference it
-        return Artifact(name=artifact_name, collection=collection, version="latest")
+        return Artifact(name=artifact_name, collection=collection, version=artifact.version)
 
     def download_artifact(
         self,
@@ -145,7 +142,7 @@ class WandbArtifactManager(ArtifactManager):
             Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
                 Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
         """
-        collection = collection or self.active_collection
+        collection = self._collection(collection)
         if version is None:
             version = "latest"
         if self._wandb.run is None:

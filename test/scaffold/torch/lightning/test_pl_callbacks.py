@@ -34,8 +34,8 @@ def test_lightning_checkpointer(tmpdir: LocalPath) -> None:
         optim = Adam(model.parameters())
         additional_key_value_pairs = {"current_epoch": 1, "loss": 0.1}
 
-        afid = checkpointer._log_state_with_new_afid(model=model, optimizers=[optim], **additional_key_value_pairs)
-        state = checkpointer.model_logger.retrieve_state_from_artifact(afid)
+        artifact = checkpointer._log_state_with_new_afid(model=model, optimizers=[optim], **additional_key_value_pairs)
+        state = checkpointer.model_logger.retrieve_state_from_artifact(artifact.name)
 
         checkpointer.model_logger.save_state(checkpointer.best_state_dir, model, [optim], **additional_key_value_pairs)
         state_2 = checkpointer.load_best_state()

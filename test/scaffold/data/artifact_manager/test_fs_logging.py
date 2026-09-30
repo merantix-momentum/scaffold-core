@@ -231,3 +231,222 @@ def test_download_tmp(temp_src_dir, artifact_manager):
             with fs_temp.open(file_path, "rt") as f:
                 file_content = f.read()
             assert file_content == test_files.get(base)
+
+
+def write_into(manager, artifact, filename, content):
+    with manager.fs.open(join_path(manager.artifact_url(artifact.name, artifact.version), filename), "w") as f:
+        f.write(content)
+
+
+def test_resolve_names_a_concrete_version_without_transferring_anything(artifact_manager, temp_src_dir):
+    """A concrete version and its location are available without downloading anything."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    first = artifact_manager.log_files("data", temp_src_dir, "desc")
+    second = artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    assert artifact_manager.resolve("data") == second
+    assert artifact_manager.resolve("data", version="latest") == second
+    assert artifact_manager.resolve("data", version="v0") == first
+    assert artifact_manager.artifact_url("data", "v0").endswith(f"{first.collection}/data/v0")
+    assert artifact_manager.fs.exists(artifact_manager.artifact_url("data", "v0"))
+
+
+def test_resolve_refuses_what_is_not_there_rather_than_guessing(artifact_manager, temp_src_dir):
+    """A missing version and a missing artifact each raise instead of falling back."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    with pytest.raises(FileNotFoundError, match="v7"):
+        artifact_manager.resolve("data", version="v7")
+    with pytest.raises(FileNotFoundError, match="no versions"):
+        artifact_manager.resolve("never-logged")
+
+
+def test_download_raises_the_same_error_as_resolve_for_what_is_not_there(artifact_manager, temp_src_dir):
+    """download_artifact resolves first, so a missing artifact or version is a FileNotFoundError."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    with pytest.raises(FileNotFoundError, match="v7"):
+        artifact_manager.download_artifact("data", version="v7", to=temp_src_dir)
+    with pytest.raises(FileNotFoundError, match="no versions"):
+        artifact_manager.download_artifact("never-logged")
+
+
+def test_reserve_version_hands_out_a_place_to_write_in(artifact_manager):
+    """A dataset too large to build locally is written into its version in place."""
+    artifact_manager, _ = artifact_manager
+    first = artifact_manager.reserve_version("store")
+    write_into(artifact_manager, first, "part.bin", "rows")
+    second = artifact_manager.reserve_version("store")
+    write_into(artifact_manager, second, "part.bin", "more rows")
+
+    assert (first.name, first.version) == ("store", "v0")
+    assert artifact_manager.list_versions("store") == ["v0", "v1"]
+    assert artifact_manager.resolve("store") == second
+
+
+def test_a_version_nobody_wrote_into_is_handed_out_again(artifact_manager):
+    """An object store has no empty directories, so a number is only taken once it is used."""
+    artifact_manager, store_type = artifact_manager
+    if store_type != "cloud":
+        pytest.skip("a real filesystem does keep the empty directory")
+
+    assert artifact_manager.reserve_version("store").version == "v0"
+    reused = artifact_manager.reserve_version("store")
+    assert reused.version == "v0"
+
+    write_into(artifact_manager, reused, "part.bin", "rows")
+
+    assert artifact_manager.reserve_version("store").version == "v1"
+
+
+def test_a_reserved_version_and_a_logged_one_share_one_counter(artifact_manager, temp_src_dir):
+    """reserve_version and log_files draw from one sequence, so neither overwrites the other."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+
+    first = artifact_manager.reserve_version("mixed")
+    write_into(artifact_manager, first, "part.bin", "rows")
+    logged = artifact_manager.log_files("mixed", temp_src_dir, "desc")
+    third = artifact_manager.reserve_version("mixed")
+
+    assert (first.version, logged.version, third.version) == ("v0", "v1", "v2")
+
+
+def test_a_description_can_be_recorded_without_logging_files(artifact_manager):
+    """The description belongs to the artifact, so an in-place write can set it on its own."""
+    artifact_manager, _ = artifact_manager
+    artifact_manager.reserve_version("store")
+    artifact_manager.set_description("store", "written in place")
+
+    desc = join_path(
+        artifact_manager.url, artifact_manager.active_collection, "store", ARTIFACT_META_DIR, ARTIFACT_DESCRIPTION_FILE
+    )
+    with artifact_manager.fs.open(desc) as f:
+        assert f.read().decode() == "written in place"
+
+
+def test_a_version_can_be_removed_so_a_run_that_keeps_checkpointing_does_not_grow(artifact_manager):
+    """Removing a version drops its contents and leaves the rest of the artifact standing."""
+    artifact_manager, _ = artifact_manager
+    written = []
+    for _ in range(3):
+        version = artifact_manager.reserve_version("detector")
+        write_into(artifact_manager, version, "state.bin", "weights")
+        written.append(version)
+
+    artifact_manager.remove_version("detector", "v0")
+
+    assert artifact_manager.list_versions("detector") == ["v1", "v2"]
+    assert not artifact_manager.fs.exists(artifact_manager.artifact_url("detector", "v0"))
+    assert artifact_manager.resolve("detector") == written[2]
+
+
+def test_removing_the_newest_version_is_refused_because_its_number_would_be_reused(artifact_manager):
+    """reserve_version is max + 1, so freeing the top would put two writes at one address."""
+    artifact_manager, _ = artifact_manager
+    for _ in range(2):
+        write_into(artifact_manager, artifact_manager.reserve_version("detector"), "state.bin", "weights")
+
+    for newest in ["v1", "latest"]:
+        with pytest.raises(ValueError, match="newest version"):
+            artifact_manager.remove_version("detector", newest)
+
+    assert artifact_manager.list_versions("detector") == ["v0", "v1"]
+
+
+def test_removing_a_version_that_is_not_there_says_so(artifact_manager):
+    """A request for a version that was never written reports that, rather than passing."""
+    artifact_manager, _ = artifact_manager
+    write_into(artifact_manager, artifact_manager.reserve_version("detector"), "state.bin", "weights")
+
+    with pytest.raises(FileNotFoundError):
+        artifact_manager.remove_version("detector", "v7")
+
+
+def test_every_method_taking_a_version_accepts_only_numbered_ones(artifact_manager, temp_src_dir):
+    """The metadata directory sits beside the versions and is not one of them, and v01 would alias v1."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    for not_a_version in [ARTIFACT_META_DIR, "latest-1", "v", "v1.2", "V0", "v01", "v0\n"]:
+        for call in [
+            lambda: artifact_manager.resolve("data", version=not_a_version),
+            lambda: artifact_manager.download_artifact("data", version=not_a_version),
+            lambda: artifact_manager.artifact_url("data", not_a_version),
+            lambda: artifact_manager.remove_version("data", not_a_version),
+        ]:
+            with pytest.raises(ValueError, match="is not a version"):
+                call()
+
+
+def test_removing_the_metadata_directory_as_if_it_were_a_version_is_refused(artifact_manager, temp_src_dir):
+    """rm on the metadata directory would take the description with it."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    with pytest.raises(ValueError, match="is not a version"):
+        artifact_manager.remove_version("data", ARTIFACT_META_DIR)
+
+    desc = join_path(
+        artifact_manager.url, artifact_manager.active_collection, "data", ARTIFACT_META_DIR, ARTIFACT_DESCRIPTION_FILE
+    )
+    assert artifact_manager.fs.exists(desc)
+
+
+def test_every_method_taking_a_collection_rejects_one_that_would_nest(artifact_manager, temp_src_dir):
+    """A collection passed per call is held to the same rule as the active collection."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+
+    for bad in ["a/b", "", "../default"]:
+        for call in [
+            lambda: artifact_manager.log_files("data", temp_src_dir, "desc", collection=bad),
+            lambda: artifact_manager.log_folder("data", "desc", collection=bad),
+            lambda: artifact_manager.reserve_version("data", collection=bad),
+            lambda: artifact_manager.set_description("data", "desc", collection=bad),
+            lambda: artifact_manager.resolve("data", collection=bad),
+            lambda: artifact_manager.download_artifact("data", collection=bad),
+            lambda: artifact_manager.artifact_url("data", "v0", collection=bad),
+            lambda: artifact_manager.remove_version("data", "v0", collection=bad),
+            lambda: artifact_manager.list_versions("data", collection=bad),
+            lambda: artifact_manager.list_artifacts(collection=bad),
+            lambda: artifact_manager.exists_in_collection("data", collection=bad),
+        ]:
+            with pytest.raises(ValueError, match="Invalid collection name"):
+                call()
+
+
+def test_the_constructor_rejects_a_collection_that_would_nest(temp_store_dir):
+    """The initial active collection goes through the same check as a later assignment."""
+    with pytest.raises(ValueError, match="Invalid collection name"):
+        FileSystemArtifactManager(url=temp_store_dir, collection="a/b")
+
+
+def test_exists_skips_directories_that_are_not_collections(artifact_manager, temp_src_dir):
+    """A stray directory in the store root does not make exists() raise."""
+    artifact_manager, _ = artifact_manager
+    with open(join_path(temp_src_dir, "a.txt"), "w") as f:
+        f.write("x")
+    artifact_manager.log_files("data", temp_src_dir, "desc")
+    stray = join_path(artifact_manager.url, "not.a.collection")
+    artifact_manager.fs.mkdirs(stray, exist_ok=True)
+    with artifact_manager.fs.open(join_path(stray, "file.txt"), "w") as f:
+        f.write("x")
+
+    assert artifact_manager.exists("data")
+    assert not artifact_manager.exists("never-logged")

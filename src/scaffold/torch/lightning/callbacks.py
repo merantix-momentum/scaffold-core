@@ -15,7 +15,7 @@ from pytorch_lightning.utilities import rank_zero_info, rank_zero_only
 
 from scaffold.data.artifact_manager.artifact_id_manager import validate_or_generate_target_afid
 from scaffold.data.artifact_manager.artifact_logger import ModelLogger, STATE_FILENAME
-from scaffold.data.artifact_manager.base import ArtifactManager
+from scaffold.data.artifact_manager.base import Artifact, ArtifactManager
 from scaffold.torch.distributed.ddp import is_distributed
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class LightningCheckpointer(Callback):
         optimizers: List[torch.optim.Optimizer],
         current_epoch: int,
         **kwargs,
-    ) -> str:
+    ) -> Artifact:
         """Generates a new random state afid and logs it to the artifact store.
 
         Args:
@@ -84,6 +84,9 @@ class LightningCheckpointer(Callback):
             optimizers (List[torch.optim.Optimizer]): All optimizers to save the state off.
             current_epoch (str): Current epoch.
             kwargs: Additional key value pairs to save to the state.
+
+        Returns:
+            Artifact: The checkpoint version just written.
         """
         rank_zero_info(f"Saving state to afid {self.target_afid}")
         return self.model_logger.log_state_to_artifact(

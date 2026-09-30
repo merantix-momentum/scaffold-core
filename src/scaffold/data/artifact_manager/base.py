@@ -6,11 +6,14 @@ import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, List, Optional, Union
 
 from scaffold.data.fs import join_path
 
 logger = logging.getLogger(__name__)
+
+# Collections cannot be nested, so a name must not contain a path separator.
+COLLECTION_PATTERN = re.compile(r"[a-zA-Z0-9\-_:]+")
 
 
 @dataclass(frozen=True)
@@ -86,9 +89,12 @@ class DirectoryLogger:
         """
         self.artifact_manager = artifact_manager
         self._artifact_name = artifact_name
-        self._collection = collection or artifact_manager.active_collection
+        self._collection = artifact_manager._collection(collection)
         self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
+        # None until __exit__, and still None if nothing was written: an empty directory
+        # is not logged and so has no version.
+        self.artifact: Optional[Artifact] = None
 
     def __enter__(self) -> str:
         """Create and return a directory for logging files.
@@ -101,7 +107,7 @@ class DirectoryLogger:
         return self.artifact_dir
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Log the folder if non-empty and clean up the temporary directory."""
+        """Log the folder if non-empty, recording the version, and clean up."""
         if os.listdir(self.artifact_dir):
             self.artifact = self.artifact_manager.log_files(
                 self._artifact_name, self.artifact_dir, self._artifact_description, self._collection
@@ -112,7 +118,7 @@ class DirectoryLogger:
 class ArtifactManager(ABC):
     def __init__(self, collection: str = "default"):
         """Artifact manager interface for various backends."""
-        self._active_collection = collection
+        self.active_collection = collection
 
     @property
     def active_collection(self) -> str:
@@ -137,12 +143,28 @@ class ArtifactManager(ABC):
 
         The provided value is verified to ensure that no nested collections are used.
         """
-        if not re.match(r"^[a-zA-Z0-9\-_:]+$", value):
-            raise ValueError(
-                "Invalid collection name - must not be empty and can only contain alphanumerics, dashes, underscores "
-                "and colons."
-            )
+        self._check_collection(value)
         self._active_collection = value
+
+    @staticmethod
+    def _check_collection(collection: str) -> None:
+        """Reject a collection name that is empty or would nest collections.
+
+        Raises:
+            ValueError: If the name contains anything but alphanumerics, dashes, underscores and colons.
+        """
+        if not COLLECTION_PATTERN.fullmatch(collection):
+            raise ValueError(
+                f"Invalid collection name '{collection}' - must not be empty and can only contain alphanumerics, "
+                "dashes, underscores and colons."
+            )
+
+    def _collection(self, collection: Optional[str]) -> str:
+        """The given collection after checking its name, or the active collection if None."""
+        if collection is None:
+            return self.active_collection
+        self._check_collection(collection)
+        return collection
 
     @abstractmethod
     def list_collection_names(self) -> Iterable:
@@ -200,14 +222,128 @@ class ArtifactManager(ABC):
         Returns:
             Union[Artifact, TmpArtifact]: If `to` is provided, returns an Artifact with metadata.
                 Otherwise, returns a TmpArtifact context manager that also has an `artifact` property.
+
+        Raises:
+            FileNotFoundError: If the artifact has no versions, or not the one asked for.
         """
         raise NotImplementedError
 
     def exists(self, artifact_name: str) -> bool:
-        """Check if artifact exists in specified collection."""
+        """Check if artifact exists in any collection."""
+        # A directory in the store root whose name is not a valid collection name is not a collection.
         return any(
-            [self.exists_in_collection(artifact_name, collection) for collection in self.list_collection_names()]
+            self.exists_in_collection(artifact_name, collection)
+            for collection in self.list_collection_names()
+            if COLLECTION_PATTERN.fullmatch(collection)
         )
+
+    def list_versions(self, artifact_name: str, collection: Optional[str] = None) -> List[str]:
+        """The versions of an artifact, oldest first.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            List[str]: Version strings such as ``["v0", "v1"]``, empty if there are none.
+        """
+        raise NotImplementedError
+
+    def resolve(
+        self,
+        artifact_name: str,
+        collection: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> Artifact:
+        """Name a concrete version of an artifact, without transferring anything.
+
+        Resolve once and pass the result on, so every step of a pipeline reads the same
+        version even if a new one is logged while it runs.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+            version (Optional[str]): A version such as ``"v3"``. None or ``"latest"`` resolves
+                to the most recent one.
+
+        Returns:
+            Artifact: The resolved artifact, whose version is never ``"latest"``.
+
+        Raises:
+            FileNotFoundError: If the artifact has no versions, or not the one asked for.
+            ValueError: If the version is not one this backend can name.
+        """
+        raise NotImplementedError
+
+    def artifact_url(self, artifact_name: str, version: str, collection: Optional[str] = None) -> str:
+        """Where a version's contents live, for a reader or writer that opens them in place.
+
+        Only backends that store artifacts at an addressable location can answer this. Use
+        it for data too large to copy; :meth:`download_artifact` covers everything else.
+
+        Args:
+            artifact_name (str): The artifact name.
+            version (str): A concrete version such as ``"v3"``, not ``"latest"``.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            str: The URL of that version's contents.
+
+        Raises:
+            ValueError: If the version is not one this backend can name.
+        """
+        raise NotImplementedError
+
+    def reserve_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
+        """Reserve the next version of an artifact, for a write that happens in place.
+
+        Use this when the data is too large to build locally and upload with
+        :meth:`log_files`: it reserves the version, and the caller writes into
+        :meth:`artifact_url` directly.
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            Artifact: The next version, ready to be written into.
+        """
+        raise NotImplementedError
+
+    def remove_version(self, artifact_name: str, version: str, collection: Optional[str] = None) -> None:
+        """Delete one version of an artifact and everything under it, irreversibly.
+
+        This removes one version, not the artifact, so an artifact whose versions have all
+        been removed stays distinguishable from one that never existed.
+
+        Backends that number versions sequentially must refuse the newest one. Removing it
+        frees a number that :meth:`reserve_version` hands out again, so the next write would
+        land on a version another record already names.
+
+        Args:
+            artifact_name (str): The artifact name.
+            version (str): The version to remove, such as ``"v3"``.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Raises:
+            FileNotFoundError: If the version is not there.
+            ValueError: If it is the newest version of its artifact, or not one this backend
+                can name.
+        """
+        raise NotImplementedError
+
+    def set_description(self, artifact_name: str, description: str, collection: Optional[str] = None) -> None:
+        """Record an artifact's description, which belongs to the artifact and not a version.
+
+        :meth:`log_files` writes the description as part of logging. A write that happens
+        in place has no such step, so the description is available on its own.
+
+        Args:
+            artifact_name (str): The artifact name.
+            description (str): The description to record.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        raise NotImplementedError
 
     def log_folder(
         self, artifact_name: str, artifact_description: str, collection: Optional[str] = None
