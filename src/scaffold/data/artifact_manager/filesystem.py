@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import typing as t
 
@@ -224,8 +225,9 @@ class FileSystemArtifactManager(ArtifactManager):
         """Log a file or folder as an artifact.
 
         This method uploads the file (or folder) located at `local_path` to the artifact store.
-        If `artifact_path` is provided, the file is uploaded to a subpath within the artifact;
-        otherwise, the entire folder is uploaded.
+        If `artifact_path` is provided, the file is uploaded to a subpath within the artifact.
+        Otherwise a folder's contents land at the version root, and a single file lands there
+        under its own name.
 
         Args:
             artifact_name (str): The artifact name.
@@ -240,22 +242,28 @@ class FileSystemArtifactManager(ArtifactManager):
             Artifact: The logged artifact with its metadata (name, collection, version).
         """
         collection = self._collection(collection)
+        # The interface accepts a Path, which has none of the string methods used below.
+        local_path = str(local_path)
         artifact = self.reserve_version(artifact_name, collection)
         target_dir = self.artifact_url(artifact_name, artifact.version, collection)
 
         self.set_description(artifact_name, description, collection)
 
-        if artifact_path:
-            # Upload a single file to target_dir/artifact_path.
-            target_file = join_path(target_dir, artifact_path)
+        if artifact_path or not get_fs_from_url(local_path).isdir(local_path):
+            # A single file goes to target_dir/artifact_path, or keeps its name at the version
+            # root. The name is given explicitly because an object store has no version
+            # directory for put to copy into, and would store the file as the version itself.
+            target_file = join_path(target_dir, artifact_path or os.path.basename(local_path))
             fs = get_fs_from_url(target_file)
             parent_dir = fs._parent(target_file)
             self.fs.mkdirs(parent_dir, exist_ok=True)
             self.fs.put(local_path, target_file, recursive=False)
             logged_location = target_file
         else:
-            # Upload an entire folder.
-            self.fs.put(local_path, target_dir, recursive=True)
+            # A trailing separator copies the folder's contents to the version root.
+            # Without it fsspec copies the folder itself, nesting everything under a
+            # directory named after whatever the local folder happened to be called.
+            self.fs.put(local_path.rstrip("/") + "/", target_dir, recursive=True)
             logged_location = target_dir
 
         logger.info(f"Logged artifact '{artifact_name}' to {logged_location}")
@@ -319,8 +327,11 @@ class FileSystemArtifactManager(ArtifactManager):
         """
         artifact = self.resolve(artifact_name, collection, version)
         if to is not None:
+            # A trailing separator copies the version's contents to `to`. A glob here would
+            # instead derive the destination layout from the common prefix of whatever it
+            # matched, which varies with how many entries the version holds.
             url = self.artifact_url(artifact_name, artifact.version, artifact.collection)
-            self.fs.get(join_path(url, "*"), to, recursive=True)
+            self.fs.get(url + "/", to, recursive=True)
             return artifact
         else:
             return TmpArtifact(self, artifact.collection, artifact_name, artifact.version)
