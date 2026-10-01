@@ -91,7 +91,6 @@ class WandbArtifactManager(ArtifactManager):
         self,
         artifact_name: str,
         local_path: str,
-        description: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
     ) -> Artifact:
@@ -103,7 +102,6 @@ class WandbArtifactManager(ArtifactManager):
         Args:
             artifact_name (str): The artifact name.
             local_path (str): The local path to the file or directory to be logged.
-            description (str): The artifact description. Is ignored for this ArtifactManager implementation.
             collection (Optional[str]): The collection (artifact type) name. Defaults to the active collection.
             artifact_path (Optional[str]): An optional subpath within the artifact.
         Returns:

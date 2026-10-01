@@ -49,10 +49,8 @@ download it back to a local directory.
 
     # Log a file artifact.
     # This call uploads the file located at "/path/to/local/file.txt" as "my_artifact".
-    # It also uploads the description as metadata. The exact location is specified in constants.py. Currently, it is "<artifact_base>/meta/readme.txt".
-    # This (short) description should explain what the artifact is, and for what purpose it was generated.
     # log_files() returns an Artifact object with metadata about the logged artifact.
-    artifact = manager.log_files("my_artifact", "/path/to/local/file.txt", "this is a description that will be logged to a file alongside the artifact")
+    artifact = manager.log_files("my_artifact", "/path/to/local/file.txt")
     print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
@@ -90,7 +88,7 @@ a file artifact and then downloads it.
 
     # Log a file artifact.
     # log_files() returns an Artifact object with metadata about the logged artifact.
-    artifact = manager.log_files("example_artifact", "/path/to/local/file.txt", "this is a sample description")
+    artifact = manager.log_files("example_artifact", "/path/to/local/file.txt")
     print(f"Logged artifact: {artifact.name}, version: {artifact.version}, collection: {artifact.collection}")
 
     # Download the artifact to a local directory.
@@ -167,13 +165,23 @@ every step of a pipeline reads the same version even if a new one is logged whil
 ``log_files`` uploads from a local path, which does not work for data too large to build
 locally first. ``reserve_version`` reserves a version instead, and you write into its URL.
 ``log_files`` reserves its version the same way, so the two never hand out the same number.
-Because there is no upload step, the description is set on its own.
 
 .. code-block:: python
 
     artifact = manager.reserve_version("my_dataset")
     df.write_parquet(f"{manager.artifact_url(artifact.name, artifact.version)}/part-0.parquet")
-    manager.set_description("my_dataset", "one row per event, partitioned by day")
+
+An artifact can carry an ``AGENTS.md`` that explains what it is and how it was generated.
+It belongs to the artifact rather than a version, and lives at
+``<artifact_root>/meta/AGENTS.md``. Logging does not write one, so set it explicitly,
+either from a string or from a local file. ``read_agentsmd`` returns an empty string if
+none was set.
+
+.. code-block:: python
+
+    manager.set_agentsmd("my_dataset", "one row per event, partitioned by day")
+    manager.set_agentsmd("my_dataset", Path("docs/my_dataset/AGENTS.md"))
+    print(manager.read_agentsmd("my_dataset"))
 
 Note that backends hold a reservation differently. On a local filesystem the version
 directory is created, so the number stays taken even if you write nothing into it, and
@@ -233,7 +241,7 @@ of ``ArtifactManager`` (e.g. WandbArtifactManager) can be used instead.
 
     # Log the model state under the artifact id "my_model_state".
     # log_state_to_artifact() returns the Artifact it wrote, so the version is available too.
-    artifact = model_logger.log_state_to_artifact("my_model_state", model, "this is a sample description that will be logged", optimizers=[optimizer])
+    artifact = model_logger.log_state_to_artifact("my_model_state", model, optimizers=[optimizer])
     print(f"Logged model state {artifact.name} at version {artifact.version}")
 
 Usage Example: Retrieving a Model State

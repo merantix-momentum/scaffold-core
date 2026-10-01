@@ -30,8 +30,7 @@ for filename, artifact_name, version, content in file_descriptions:
     logged_artifact = artifact_manager.log_files(
         artifact_name=artifact_name,
         local_path=file_path,
-        description="",
-        collection=collection,  # wandb manager ignored description
+        collection=collection,
     )
     assert isinstance(logged_artifact, Artifact)
     assert logged_artifact.name == artifact_name
@@ -55,9 +54,7 @@ for filename, artifact_name, version, content in file_descriptions:
 
 # --- Log a folder artifact ---
 # Here we log the entire contents of src_dir as an artifact named "folder"
-folder_artifact = artifact_manager.log_files(
-    "my_folder_artifact", src_dir.name, "", collection
-)  # wandb artifact manager ignores description
+folder_artifact = artifact_manager.log_files("my_folder_artifact", src_dir.name, collection)
 assert isinstance(folder_artifact, Artifact)
 # Download the folder artifact.
 download_base_folder = join_path(src_dir.name, "downloaded_folder")
@@ -82,7 +79,7 @@ assert not artifact_manager.exists_in_collection(
 ), "Artifact 'foo' should not exist in other_collection"
 
 # --- Log a folder using DirectoryLogger context manager ---
-logger = artifact_manager.log_folder("test_folder_artifact", "sample description", collection)
+logger = artifact_manager.log_folder("test_folder_artifact", collection)
 with logger as folder:
     # 'folder' is a temporary directory for logging.
     for filename, _, _, content in file_descriptions:

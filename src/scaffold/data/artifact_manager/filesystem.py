@@ -2,8 +2,9 @@ import logging
 import os
 import re
 import typing as t
+from pathlib import Path
 
-from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
+from scaffold.constants import ARTIFACT_AGENTSMD_FILE, ARTIFACT_META_DIR
 from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
 
@@ -197,28 +198,46 @@ class FileSystemArtifactManager(ArtifactManager):
             )
         self.fs.rm(self.artifact_url(artifact_name, artifact.version, collection), recursive=True)
 
-    def set_description(self, artifact_name: str, description: str, collection: t.Optional[str] = None) -> None:
-        """Record an artifact's description, which belongs to the artifact and not to a version.
-
-        :meth:`log_files` writes the description as part of logging. A write that happens
-        in place has no such step, so the description is exposed on its own.
+    def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: t.Optional[str] = None) -> None:
+        """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
 
         Args:
             artifact_name (str): The artifact name.
-            description (str): The description to record.
+            agentsmd (str | Path): The AGENTS.md to upload, either as string (contents) or as local file path.
             collection (Optional[str]): The collection name. Defaults to the active collection.
         """
+
+        if isinstance(agentsmd, Path):
+            if agentsmd.is_file():
+                agentsmd = agentsmd.read_text(encoding="utf-8")
+            else:
+                raise ValueError(f"Error uploading AGENTS.md: {agentsmd} is not a file.")
+
         collection = self._collection(collection)
         meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
         self.fs.mkdirs(meta_dir, exist_ok=True)
-        with self.fs.open(join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE), "w") as f:
-            f.write(description)
+        with self.fs.open(join_path(meta_dir, ARTIFACT_AGENTSMD_FILE), "w") as f:
+            f.write(agentsmd)
+
+    def read_agentsmd(self, artifact_name: str, collection: t.Optional[str] = None) -> str:
+        """Read an artifact's AGENTS.md as String (utf-8).
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        Returns:
+            the file content, empty if not found.
+        """
+        collection = self._collection(collection)
+        meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
+        path = join_path(meta_dir, ARTIFACT_AGENTSMD_FILE)
+        if self.fs.exists(path):
+            return self.fs.cat_file(path).decode("utf-8")
+        return ""
 
     def log_files(
         self,
         artifact_name: str,
         local_path: str,
-        description: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
     ) -> Artifact:
@@ -232,10 +251,6 @@ class FileSystemArtifactManager(ArtifactManager):
         Args:
             artifact_name (str): The artifact name.
             local_path (str): The local path to the file or folder.
-            description:
-                Description of the artifact.
-                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
-                and serves to reduce undocumented artifact clutter.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
         Returns:
@@ -246,8 +261,6 @@ class FileSystemArtifactManager(ArtifactManager):
         local_path = str(local_path)
         artifact = self.reserve_version(artifact_name, collection)
         target_dir = self.artifact_url(artifact_name, artifact.version, collection)
-
-        self.set_description(artifact_name, description, collection)
 
         if artifact_path or not get_fs_from_url(local_path).isdir(local_path):
             # A single file goes to target_dir/artifact_path, or keeps its name at the version

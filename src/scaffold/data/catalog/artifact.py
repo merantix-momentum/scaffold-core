@@ -47,18 +47,14 @@ class ArtifactDataset(Dataset, Mapping):
         self.version = self.sorted_versions()[-1]
         return self
 
-    def push(self, path: str, description: str) -> ArtifactDataset:
+    def push(self, path: str) -> ArtifactDataset:
         """
         Push an artifact to the artifact manager.
         Args:
             path (str):
                 Path to the file or folder to log as an artifact.
-            description (str):
-                Description of the artifact.
-                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
-                and serves to reduce undocumented artifact clutter.
         """
-        self.manager().log_files(self.artifact_name, path, description=description)
+        self.manager().log_files(self.artifact_name, path)
         self.version = self.sorted_versions()[-1]
         return self
 
