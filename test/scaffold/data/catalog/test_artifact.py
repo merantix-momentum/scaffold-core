@@ -113,11 +113,10 @@ class TestArtifact:
 
         artifact = ArtifactDataset(artifact_name="my-artifact", manager=manager_ds)
 
-        artifact_description = "This is a test artifact"
-        res = artifact.push("/path/to/files", description=artifact_description)
+        res = artifact.push("/path/to/files")
 
         assert res == artifact
-        manager.log_files.assert_called_once_with("my-artifact", "/path/to/files", description=artifact_description)
+        manager.log_files.assert_called_once_with("my-artifact", "/path/to/files")
         # Should update version to latest after push
         assert artifact.version == "v2"
 

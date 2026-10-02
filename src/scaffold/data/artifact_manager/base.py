@@ -73,7 +73,6 @@ class DirectoryLogger:
         self,
         artifact_manager: "ArtifactManager",
         artifact_name: str,
-        artifact_description: str,
         collection: Optional[str] = None,
     ) -> None:
         """Initialize a DirectoryLogger.
@@ -81,16 +80,11 @@ class DirectoryLogger:
         Args:
             artifact_manager (ArtifactManager): The artifact manager to use.
             artifact_name (str): The artifact name.
-            artifact_description:
-                Description of the artifact.
-                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
-                and serves to reduce undocumented artifact clutter.
             collection (Optional[str]): The collection name. Defaults to the artifact manager's active collection.
         """
         self.artifact_manager = artifact_manager
         self._artifact_name = artifact_name
         self._collection = artifact_manager._collection(collection)
-        self._artifact_description = artifact_description
         self.tempdir = tempfile.mkdtemp()
         # None until __exit__, and still None if nothing was written: an empty directory
         # is not logged and so has no version.
@@ -109,9 +103,7 @@ class DirectoryLogger:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Log the folder if non-empty, recording the version, and clean up."""
         if os.listdir(self.artifact_dir):
-            self.artifact = self.artifact_manager.log_files(
-                self._artifact_name, self.artifact_dir, self._artifact_description, self._collection
-            )
+            self.artifact = self.artifact_manager.log_files(self._artifact_name, self.artifact_dir, self._collection)
         shutil.rmtree(self.tempdir)
 
 
@@ -181,7 +173,6 @@ class ArtifactManager(ABC):
         self,
         artifact_name: str,
         local_path: Path,
-        description: str,
         collection: Optional[str] = None,
         artifact_path: Optional[Path] = None,
     ) -> Artifact:
@@ -191,7 +182,6 @@ class ArtifactManager(ABC):
         Args:
             artifact_name: Name of artifact to log
             local_path: Local path to the file or folder to log
-            description: Description of the artifact, will be logged to improve documentation.
             collection: Name of collection to log to, defaults to the active collection
             artifact_path: path under which to log the files within the artifact, defaults to "./"
         Returns:
@@ -332,21 +322,20 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
-    def set_description(self, artifact_name: str, description: str, collection: Optional[str] = None) -> None:
-        """Record an artifact's description, which belongs to the artifact and not a version.
-
-        :meth:`log_files` writes the description as part of logging. A write that happens
-        in place has no such step, so the description is available on its own.
+    def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: Optional[str] = None) -> None:
+        """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
 
         Args:
             artifact_name (str): The artifact name.
-            description (str): The description to record.
+            agentsmd (str | Path): The AGENTS.md to upload, either as string (contents) or as local file path.
             collection (Optional[str]): The collection name. Defaults to the active collection.
         """
         raise NotImplementedError
 
-    def log_folder(
-        self, artifact_name: str, artifact_description: str, collection: Optional[str] = None
-    ) -> DirectoryLogger:
+    def read_agentsmd(self, artifact_name: str, collection: Optional[str] = None) -> str:
+        """Read an artifact's AGENTS.md as String (utf-8)."""
+        raise NotImplementedError
+
+    def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:
         """Create a context manager for logging a directory of files as a single artifact."""
-        return DirectoryLogger(self, artifact_name, artifact_description, collection)
+        return DirectoryLogger(self, artifact_name, collection)
