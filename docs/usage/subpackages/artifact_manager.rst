@@ -174,7 +174,7 @@ locally first. ``reserve_version`` reserves a version instead, and you write int
 An artifact can carry an ``AGENTS.md`` that explains what it is and how it was generated.
 It belongs to the artifact rather than a version, and lives at
 ``<artifact_root>/meta/AGENTS.md``. Logging does not write one, so set it explicitly,
-either from a string or from a local file. ``read_agentsmd`` returns an empty string if
+either from a string or from a local file. ``read_agentsmd`` returns none if
 none was set.
 
 .. code-block:: python

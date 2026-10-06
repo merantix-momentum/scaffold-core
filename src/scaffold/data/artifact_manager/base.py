@@ -322,6 +322,35 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    def write_metafile(
+        self,
+        artifact_name: str,
+        contents: str | Path,
+        metafile_name: str,
+        collection: Optional[str] = None,
+    ) -> None:
+        """Write a metadata file of an artifact, which belongs to the artifact and not a version.
+
+        An existing file of the same name is replaced.
+
+        Args:
+            artifact_name (str): The artifact name.
+            contents (str | Path): The contents to write, either as string or as local file path.
+            metafile_name (str): The file name within the artifact's metadata directory.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        raise NotImplementedError
+
+    def read_metafile(self, artifact_name: str, metafile_name: str, collection: Optional[str] = None) -> str | None:
+        """Read a metadata file of an artifact as string (utf-8), None if none is present.
+
+        Args:
+            artifact_name (str): The artifact name.
+            metafile_name (str): The file name within the artifact's metadata directory.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        raise NotImplementedError
+
     def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: Optional[str] = None) -> None:
         """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
 
@@ -332,8 +361,8 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
-    def read_agentsmd(self, artifact_name: str, collection: Optional[str] = None) -> str:
-        """Read an artifact's AGENTS.md as String (utf-8)."""
+    def read_agentsmd(self, artifact_name: str, collection: Optional[str] = None) -> str | None:
+        """Read an artifact's AGENTS.md as String (utf-8), None if none is present."""
         raise NotImplementedError
 
     def log_folder(self, artifact_name: str, collection: Optional[str] = None) -> DirectoryLogger:

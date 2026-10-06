@@ -367,14 +367,14 @@ def test_setting_agentsmd_again_replaces_it(artifact_manager):
     assert artifact_manager.read_agentsmd("store") == "second"
 
 
-def test_reading_agentsmd_that_was_never_set_returns_empty(artifact_manager, temp_src_dir):
-    """An artifact logged without an AGENTS.md reads back as an empty string."""
+def test_reading_agentsmd_that_was_never_set_returns_none(artifact_manager, temp_src_dir):
+    """An artifact logged without an AGENTS.md reads back as None."""
     artifact_manager, _ = artifact_manager
     with open(join_path(temp_src_dir, "a.txt"), "w") as f:
         f.write("x")
     artifact_manager.log_files("data", temp_src_dir)
 
-    assert artifact_manager.read_agentsmd("data") == ""
+    assert artifact_manager.read_agentsmd("data") is None
 
 
 def test_a_version_can_be_removed_so_a_run_that_keeps_checkpointing_does_not_grow(artifact_manager):

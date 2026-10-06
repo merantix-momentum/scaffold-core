@@ -198,6 +198,58 @@ class FileSystemArtifactManager(ArtifactManager):
             )
         self.fs.rm(self.artifact_url(artifact_name, artifact.version, collection), recursive=True)
 
+    def _metafile_path(self, artifact_name: str, metafile_name: str, collection: str) -> str:
+        """Where a metadata file of an artifact lives, under the artifact's metadata directory."""
+        return join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR, metafile_name)
+
+    def write_metafile(
+        self,
+        artifact_name: str,
+        contents: str | Path,
+        metafile_name: str,
+        collection: t.Optional[str] = None,
+    ) -> None:
+        """Write a metadata file of an artifact, which belongs to the artifact and not a version.
+
+        An existing file of the same name is replaced.
+
+        Args:
+            artifact_name (str): The artifact name.
+            contents (str | Path): The contents to write, either as string or as local file path.
+            metafile_name (str): The file name within the artifact's metadata directory.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Raises:
+            ValueError: If ``contents`` is a Path that is not a file.
+        """
+        if isinstance(contents, Path):
+            if not contents.is_file():
+                raise ValueError(f"Error uploading {metafile_name}: {contents} is not a file.")
+            contents = contents.read_text(encoding="utf-8")
+
+        collection = self._collection(collection)
+        path = self._metafile_path(artifact_name, metafile_name, collection)
+        self.fs.mkdirs(self.fs._parent(path), exist_ok=True)
+        with self.fs.open(path, "w") as f:
+            f.write(contents)
+
+    def read_metafile(self, artifact_name: str, metafile_name: str, collection: t.Optional[str] = None) -> str | None:
+        """Read a metadata file of an artifact as string (utf-8).
+
+        Args:
+            artifact_name (str): The artifact name.
+            metafile_name (str): The file name within the artifact's metadata directory.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            The file content, None if not found.
+        """
+        collection = self._collection(collection)
+        path = self._metafile_path(artifact_name, metafile_name, collection)
+        if self.fs.exists(path):
+            return self.fs.cat_file(path).decode("utf-8")
+        return None
+
     def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: t.Optional[str] = None) -> None:
         """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
 
@@ -206,33 +258,19 @@ class FileSystemArtifactManager(ArtifactManager):
             agentsmd (str | Path): The AGENTS.md to upload, either as string (contents) or as local file path.
             collection (Optional[str]): The collection name. Defaults to the active collection.
         """
+        self.write_metafile(artifact_name, agentsmd, ARTIFACT_AGENTSMD_FILE, collection)
 
-        if isinstance(agentsmd, Path):
-            if agentsmd.is_file():
-                agentsmd = agentsmd.read_text(encoding="utf-8")
-            else:
-                raise ValueError(f"Error uploading AGENTS.md: {agentsmd} is not a file.")
-
-        collection = self._collection(collection)
-        meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
-        self.fs.mkdirs(meta_dir, exist_ok=True)
-        with self.fs.open(join_path(meta_dir, ARTIFACT_AGENTSMD_FILE), "w") as f:
-            f.write(agentsmd)
-
-    def read_agentsmd(self, artifact_name: str, collection: t.Optional[str] = None) -> str:
+    def read_agentsmd(self, artifact_name: str, collection: t.Optional[str] = None) -> str | None:
         """Read an artifact's AGENTS.md as String (utf-8).
+
         Args:
             artifact_name (str): The artifact name.
             collection (Optional[str]): The collection name. Defaults to the active collection.
+
         Returns:
-            the file content, empty if not found.
+            The file content, None if not found.
         """
-        collection = self._collection(collection)
-        meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
-        path = join_path(meta_dir, ARTIFACT_AGENTSMD_FILE)
-        if self.fs.exists(path):
-            return self.fs.cat_file(path).decode("utf-8")
-        return ""
+        return self.read_metafile(artifact_name, ARTIFACT_AGENTSMD_FILE, collection)
 
     def log_files(
         self,
