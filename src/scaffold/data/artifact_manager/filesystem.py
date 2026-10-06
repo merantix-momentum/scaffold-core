@@ -2,8 +2,9 @@ import logging
 import os
 import re
 import typing as t
+from pathlib import Path
 
-from scaffold.constants import ARTIFACT_DESCRIPTION_FILE, ARTIFACT_META_DIR
+from scaffold.constants import ARTIFACT_AGENTSMD_FILE, ARTIFACT_META_DIR
 from scaffold.data.artifact_manager.base import Artifact, ArtifactManager, TmpArtifact
 from scaffold.data.fs import get_fs_from_url, join_path
 
@@ -197,28 +198,84 @@ class FileSystemArtifactManager(ArtifactManager):
             )
         self.fs.rm(self.artifact_url(artifact_name, artifact.version, collection), recursive=True)
 
-    def set_description(self, artifact_name: str, description: str, collection: t.Optional[str] = None) -> None:
-        """Record an artifact's description, which belongs to the artifact and not to a version.
+    def _metafile_path(self, artifact_name: str, metafile_name: str, collection: str) -> str:
+        """Where a metadata file of an artifact lives, under the artifact's metadata directory."""
+        return join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR, metafile_name)
 
-        :meth:`log_files` writes the description as part of logging. A write that happens
-        in place has no such step, so the description is exposed on its own.
+    def write_metafile(
+        self,
+        artifact_name: str,
+        contents: str | Path,
+        metafile_name: str,
+        collection: t.Optional[str] = None,
+    ) -> None:
+        """Write a metadata file of an artifact, which belongs to the artifact and not a version.
+
+        An existing file of the same name is replaced.
 
         Args:
             artifact_name (str): The artifact name.
-            description (str): The description to record.
+            contents (str | Path): The contents to write, either as string or as local file path.
+            metafile_name (str): The file name within the artifact's metadata directory.
             collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Raises:
+            ValueError: If ``contents`` is a Path that is not a file.
+        """
+        if isinstance(contents, Path):
+            if not contents.is_file():
+                raise ValueError(f"Error uploading {metafile_name}: {contents} is not a file.")
+            contents = contents.read_text(encoding="utf-8")
+
+        collection = self._collection(collection)
+        path = self._metafile_path(artifact_name, metafile_name, collection)
+        self.fs.mkdirs(self.fs._parent(path), exist_ok=True)
+        with self.fs.open(path, "w") as f:
+            f.write(contents)
+
+    def read_metafile(self, artifact_name: str, metafile_name: str, collection: t.Optional[str] = None) -> str | None:
+        """Read a metadata file of an artifact as string (utf-8).
+
+        Args:
+            artifact_name (str): The artifact name.
+            metafile_name (str): The file name within the artifact's metadata directory.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            The file content, None if not found.
         """
         collection = self._collection(collection)
-        meta_dir = join_path(self._artifact_dir(artifact_name, collection), ARTIFACT_META_DIR)
-        self.fs.mkdirs(meta_dir, exist_ok=True)
-        with self.fs.open(join_path(meta_dir, ARTIFACT_DESCRIPTION_FILE), "w") as f:
-            f.write(description)
+        path = self._metafile_path(artifact_name, metafile_name, collection)
+        if self.fs.exists(path):
+            return self.fs.cat_file(path).decode("utf-8")
+        return None
+
+    def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: t.Optional[str] = None) -> None:
+        """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
+
+        Args:
+            artifact_name (str): The artifact name.
+            agentsmd (str | Path): The AGENTS.md to upload, either as string (contents) or as local file path.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+        """
+        self.write_metafile(artifact_name, agentsmd, ARTIFACT_AGENTSMD_FILE, collection)
+
+    def read_agentsmd(self, artifact_name: str, collection: t.Optional[str] = None) -> str | None:
+        """Read an artifact's AGENTS.md as String (utf-8).
+
+        Args:
+            artifact_name (str): The artifact name.
+            collection (Optional[str]): The collection name. Defaults to the active collection.
+
+        Returns:
+            The file content, None if not found.
+        """
+        return self.read_metafile(artifact_name, ARTIFACT_AGENTSMD_FILE, collection)
 
     def log_files(
         self,
         artifact_name: str,
         local_path: str,
-        description: str,
         collection: t.Optional[str] = None,
         artifact_path: t.Optional[str] = None,
     ) -> Artifact:
@@ -232,10 +289,6 @@ class FileSystemArtifactManager(ArtifactManager):
         Args:
             artifact_name (str): The artifact name.
             local_path (str): The local path to the file or folder.
-            description:
-                Description of the artifact.
-                Will be logged at <artifact_root>/ARTIFACT_META_DIR/ARTIFACT_DESCRIPTION_FILE
-                and serves to reduce undocumented artifact clutter.
             collection (Optional[str]): The collection name. Defaults to the active collection.
             artifact_path (Optional[str]): The subpath within the artifact for single file uploads.
         Returns:
@@ -246,8 +299,6 @@ class FileSystemArtifactManager(ArtifactManager):
         local_path = str(local_path)
         artifact = self.reserve_version(artifact_name, collection)
         target_dir = self.artifact_url(artifact_name, artifact.version, collection)
-
-        self.set_description(artifact_name, description, collection)
 
         if artifact_path or not get_fs_from_url(local_path).isdir(local_path):
             # A single file goes to target_dir/artifact_path, or keeps its name at the version
