@@ -227,6 +227,7 @@ class ArtifactManager(ABC):
             if COLLECTION_PATTERN.fullmatch(collection)
         )
 
+    @abstractmethod
     def list_versions(self, artifact_name: str, collection: Optional[str] = None) -> List[str]:
         """The versions of an artifact, oldest first.
 
@@ -239,6 +240,11 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def list_artifacts(self, collection: str | None = None) -> List[str]:
+        raise NotImplementedError
+
+    @abstractmethod
     def resolve(
         self,
         artifact_name: str,
@@ -265,6 +271,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def artifact_url(self, artifact_name: str, version: str, collection: Optional[str] = None) -> str:
         """Where a version's contents live, for a reader or writer that opens them in place.
 
@@ -284,6 +291,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def reserve_version(self, artifact_name: str, collection: Optional[str] = None) -> Artifact:
         """Reserve the next version of an artifact, for a write that happens in place.
 
@@ -300,6 +308,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def remove_version(self, artifact_name: str, version: str, collection: Optional[str] = None) -> None:
         """Delete one version of an artifact and everything under it, irreversibly.
 
@@ -322,6 +331,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def write_metafile(
         self,
         artifact_name: str,
@@ -341,6 +351,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def read_metafile(self, artifact_name: str, metafile_name: str, collection: Optional[str] = None) -> str | None:
         """Read a metadata file of an artifact as string (utf-8), None if none is present.
 
@@ -351,6 +362,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def set_agentsmd(self, artifact_name: str, agentsmd: str | Path, collection: Optional[str] = None) -> None:
         """Set an artifact's AGENTS.md, which belongs to the artifact and not a version.
 
@@ -361,6 +373,7 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def read_agentsmd(self, artifact_name: str, collection: Optional[str] = None) -> str | None:
         """Read an artifact's AGENTS.md as String (utf-8), None if none is present."""
         raise NotImplementedError
