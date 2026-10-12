@@ -242,6 +242,15 @@ class ArtifactManager(ABC):
 
     @abstractmethod
     def list_artifacts(self, collection: str | None = None) -> List[str]:
+        """List the names of the artifacts in a collection.
+
+        Args:
+            collection (str | None): Collection name. Defaults to the active collection.
+
+        Returns:
+            List[str]: The artifact names, empty if the collection does not exist.
+        """
+
         raise NotImplementedError
 
     @abstractmethod
