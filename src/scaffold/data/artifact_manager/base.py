@@ -280,7 +280,6 @@ class ArtifactManager(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def artifact_url(self, artifact_name: str, version: str, collection: Optional[str] = None) -> str:
         """Where a version's contents live, for a reader or writer that opens them in place.
 
