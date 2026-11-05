@@ -126,6 +126,10 @@ docs = [
     "sphinx-rtd-theme==3.0.2",
 ]
 
+[tool.uv]
+# aim caps filelock below 4 as a precaution; aim works on 4.x, and 4.2.1 fixes GHSA-v4x8-3wr5-3wq8.
+override-dependencies = ["filelock>=4.2.1"]
+
 [[tool.uv.index]]
 name = "PyPI"
 priority = "primary"
